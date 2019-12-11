@@ -1,0 +1,113 @@
+{% load otree %}
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<style>
+    .locations {
+        display: flex;
+        flex-direction: row;
+
+    }
+    .locations > input {
+        margin: 10px;
+        padding: 50px;
+    }
+</style>
+
+<div id="app">
+
+    <div class="card bg-light instructions">
+        <div class="card-body">
+            <h3>
+                Player <span id="playerId">{{player.id}}</span> Instructions
+            </h3>
+        </div>
+    </div>
+
+    <input type="radio" id="one" value="1" v-model="picked">
+    <label for="one">One</label>
+    <br>
+    <input type="radio" id="two" value="2" v-model="picked">
+    <label for="two">Two</label>
+    <br>
+    <input type="radio" id="three" value="3" v-model="picked">
+    <label for="two">Three</label>
+    <br>
+    <input type="radio" id="four" value="4" v-model="picked">
+    <label for="two">Four</label>
+    <br>
+    <input type="radio" id="five" value="5" v-model="picked">
+    <label for="two">Five</label>
+    <br>
+    <input type="radio" id="six" value="6" v-model="picked">
+    <label for="two">Six</label>
+    <br>
+    <br>
+    
+    <!-- <input id="chat-message-submit" type="button" value="Send"/> -->
+    <br>
+    <br>
+    send data to a server multiple times.
+    <input v-on:click="throttle(5)" type="button" value="5">
+    <input v-on:click="throttle(10)" type="button" value="10">
+    <input v-on:click="throttle(15)" type="button" value="15">
+    <input v-on:click="throttle(20)" type="button" value="20">
+    <input v-on:click="throttle(25)" type="button" value="25">
+
+    <h4>Latest udate from server:</h4>
+    <div>
+        <p v-for="message in messages">
+            <!-- [["player " + message.playerID + " | location " + message.location]] -->
+            [[message]]
+        </p>
+    </div>
+    <!-- <span>Location: [[ picked ]]</span> -->
+</div>
+
+<script>
+
+    var app = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        data: {
+            playerId: null,
+            messages: [],
+            message: 'No players have moved yet!',
+            location: null,
+            picked: true,
+            chatSock: null
+        },
+        methods: {
+            select: function(id) {
+                debugger;
+                this.location=id
+                console.log(id + " selected")
+            },
+            throttle: function(n) {
+                let that  = this
+                for (var i = 0; i < n; i++) {
+                    that.updateLocation()
+                }
+            },
+            updateLocation() {
+                this.chatSocket.send(JSON.stringify({
+                    'text_data': this.playerId + " is in " + this.location 
+                }));
+            }
+        },
+        created: function() {
+            console.log('heyooo');
+            this.playerId = document.getElementById('playerId')
+            this.chatSocket = new WebSocket('ws://' + window.location.host + '/tag/'),
+            this.chatSocket.onmessage = function(e) {
+                console.log(e.data);
+                // var data = JSON.parse(e.data);
+                // var message = data['message'];
+                // console.log(message);
+            };
+
+            this.chatSocket.onclose = function(e) {
+                console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
+            };
+        },
+    });
+</script>
