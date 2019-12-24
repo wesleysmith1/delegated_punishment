@@ -4,6 +4,7 @@ from .models import Constants
 
 
 class Introduction(Page):
-    pass
+    def vars_for_template(self):
+        pass
 
 page_sequence = [Introduction]

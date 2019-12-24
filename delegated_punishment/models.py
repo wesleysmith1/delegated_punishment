@@ -11,18 +11,18 @@ from otree.api import (
 
 
 doc = """
-This bargaining game involves 2 players. Each demands for a portion of some
+This Delegated Punishment game involves 2 players. Each demands for a portion of some
 available amount. If the sum of demands is no larger than the available
 amount, both players get demanded portions. Otherwise, both get nothing.
 """
 
 
 class Constants(BaseConstants):
-    name_in_url = 'bargaining' #todo
+    name_in_url = 'delegated_punishment' #todo
     players_per_group = 5
-    num_rounds = 1
+    num_rounds = 1 #todo
 
-    instructions_template = 'bargaining/instructions.html'
+    instructions_template = 'delegated_punishment/instructions.html'
 
     # amount_shared = c(100)
 
@@ -46,9 +46,9 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
-    lives = models.IntegerField(initial=5)
-    isIt = models.BooleanField(initial=False)
+    balance = models.IntegerField(initial=0)
     location = models.IntegerField() #todo can this be null?
+    isit = models.BooleanField(initial=False)
 
-    def other_player(self):
+    def other_players(self):
         return self.get_others_in_group()

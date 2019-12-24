@@ -1,0 +1,206 @@
+{% load otree %}
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<script src="{% static 'global/main.js' %}"></script>
+
+<style>
+    .locations {
+        display: flex;
+        flex-direction: row;
+
+    }
+    .locations span button {
+        margin: 20px;
+        padding: 20px;
+    }
+    .occupied{
+        background-color:red;
+    }
+    .messageBox {
+        overflow-y: hidden;
+        height: 200px;
+        width: 400px;
+        position : relative; 
+        bottom:0;
+        border: 1px solid black;
+    }
+        
+</style>
+
+<div>
+
+    <div class="card bg-light instructions">
+        <div class="card-body">
+            <h2>
+                Player <span id="playerId">{{player.id_in_group}}</span> <span id="groupPlayerId" style="display:none">{{player.id_in_group}}</span>
+            </h2>
+        </div>
+    </div>
+
+    {% verbatim %}
+    <div id="app">
+        <h4>Select a location to begin playing, but don't get caught.</h4>
+
+        <span v-if="playerGroupId=='1'">. You are it!</span>
+
+        <h2>Balance: {{balance}}</h2>
+
+        <div class="locations">
+            <span style="margin: 20px;" v-for="location in locations" v-bind:class="{ occupied: location.isActive }" v-on:click="updateLocation(location)">
+                <button-location v-bind:location="location" v-bind:selected="activeLocation"></button-location>
+            </span>
+        </div>
+
+        <h4>General Feed:</h4>
+
+        <div id="generalFeed" class="messageBox">
+            <div v-for="message in messages">
+                <!-- [["player " + message.playerID + " | location " + message.location]] -->
+                <div v-if="playerId == message.p_id">You: {{message}}</div>
+                <div v-else><b>{{message}}</b></div>
+                
+            </div>
+            <div>LATEST MESSAGE: {{singleMessage}}</div>
+        </div>
+
+        <h4>Throttle Test</h4>
+        <input v-on:click="throttle(5)" type="button" value="5">
+        <input v-on:click="throttle(10)" type="button" value="10">
+        <input v-on:click="throttle(15)" type="button" value="15">
+        <input v-on:click="throttle(20)" type="button" value="20">
+        <input v-on:click="throttle(25)" type="button" value="25">
+    </div>
+    {% endverbatim %}
+    <!-- <span>Location: [[ picked ]]</span> -->
+</div>
+{% verbatim %}
+<script>
+
+    // let NotificationsComponent = {
+    //         props: { location: Object,},
+    //         data: function () {
+    //             return {
+    //             }
+    //         },
+    //         computed: {
+
+    //         },
+    //         created: function () {
+    //         },
+    //         methods: {
+
+    //         },
+    //         template: '<div><button type="button"">{{location.name}}</button></div>'
+    //     }
+
+    var app = new Vue({
+        // delimiters: ['[[', ']]'],
+        el: '#app',
+        components: {
+            'button-location': buttonLocationComponent
+        },
+        data: {
+            that: this,
+            playerId: null,
+            playerGroupId: null,
+            messages: [],
+            message: 'No players have moved yet!',
+            singleMessage: null,
+            activeLocation: -1,
+            locations: [],
+            locationCount: 5,
+            picked: true,
+            chatSock: null,
+            balance: 0
+        },
+        methods: {
+            select: function(id) {
+                this.location=id
+            },
+            throttle: function(n) {
+                for (var i = 0; i < n; i++) {
+                    this.gameSocket.send(JSON.stringify({
+                        'test': 'test send by player: ' + this.playerId 
+                    }));
+                }
+            },
+            resetLocation() {
+                this.locations.forEach(function (location) {
+                    location.isActive = false;
+                });
+            },
+            updateLocation(x) {
+                if (this.activeLocation == x.name)
+                    return;
+
+                this.resetLocation()
+
+                x.isActive = true;
+                this.activeLocation = x.name;
+
+                let update = JSON.stringify({
+                    'p_id': this.playerId,
+                    'location': x.name
+                })
+
+                debugger;
+
+                this.gameSocket.send(update);
+            },
+            addMessage(message) {
+                if (message['test']) {
+                    // this.messages.unshift(message['test'])
+                    this.singleMessage = message['test']
+                    return;
+                }
+
+                let caught_ids = message['ids'];
+                let data = message['data']
+                // if (message.p_id == this.player_id)
+                //     update = "YOU " + message.text
+                // else 
+                //     update = "PLAYER " + message.p_id + " " + message.text
+                update = (caught_ids.toString() ? "Players caught by ID: " + caught_ids.toString() : null)
+                if (update) {
+                    // this.messages.unshift(update)
+                    this.singleMessage = update
+                }
+                console.log(update)
+                if (data[this.playerId]) {
+                    if (this.balance == data[this.playerId])
+                        return;
+                        
+                    this.balance = data[this.playerId]
+                    update = 'Your balance has been updated to: ' + this.balance
+                    console.log(update)
+                    // this.messages.unshift(update)
+                    this.singleMessage = update
+                }
+            }
+        },
+        created: function() {
+
+            this.playerId = document.getElementById('playerId').textContent;
+            this.playerGroupId = document.getElementById('groupPlayerId').textContent;
+
+            for (let i = 0; i < this.locationCount; i++) {
+                this.locations.push({name: i, isActive: false})
+            }
+
+            let x = this;
+            this.gameSocket = new WebSocket('ws://' + window.location.host + '/tag/'),
+            this.gameSocket.onmessage = function(e) {
+                console.log(e.data);
+                debugger;
+                var data = JSON.parse(e.data);
+                // var data = e.data;
+                x.addMessage(data)
+            };
+
+            this.gameSocket.onclose = function(e) {
+                console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
+            };
+        },
+    });
+</script>
+{% endverbatim %}

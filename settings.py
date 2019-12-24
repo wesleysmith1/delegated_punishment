@@ -5,7 +5,7 @@ from os import environ
 # the session config can be accessed from methods in your apps as self.session.config,
 # e.g. self.session.config['participation_fee']
 EXTENSION_APPS = [
-    'bargaining',
+    'delegated_punishment',
 ]
 
 SESSION_CONFIG_DEFAULTS = dict(
@@ -14,29 +14,29 @@ SESSION_CONFIG_DEFAULTS = dict(
 
 
 SESSION_CONFIGS = [
+    # dict(
+    #     name='public_goods',
+    #     display_name="Public Goods",
+    #     num_demo_participants=3,
+    #     app_sequence=['public_goods', 'payment_info'],
+    # ),
+    # dict(
+    #     name='guess_two_thirds',
+    #     display_name="Guess 2/3 of the Average",
+    #     num_demo_participants=3,
+    #     app_sequence=['guess_two_thirds', 'payment_info'],
+    # ),
+    # dict(
+    #     name='survey',
+    #     display_name='survey',
+    #     num_demo_participants=1,
+    #     app_sequence=['survey', 'payment_info'],
+    # ),
     dict(
-        name='public_goods',
-        display_name="Public Goods",
-        num_demo_participants=3,
-        app_sequence=['public_goods', 'payment_info'],
-    ),
-    dict(
-        name='guess_two_thirds',
-        display_name="Guess 2/3 of the Average",
-        num_demo_participants=3,
-        app_sequence=['guess_two_thirds', 'payment_info'],
-    ),
-    dict(
-        name='survey',
-        display_name='survey',
-        num_demo_participants=1,
-        app_sequence=['survey', 'payment_info'],
-    ),
-    dict(
-        name='bargaining', 
-        display_name="Bargaining Game", 
+        name='delegated_punishment', 
+        display_name="Delegated Punishment Game", 
         num_demo_participants=5,
-        app_sequence=['bargaining', 'payment_info'],
+        app_sequence=['delegated_punishment', 'payment_info'],
     ),
 ]
 

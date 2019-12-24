@@ -1,4 +1,4 @@
-from bargaining.models import Player, Group
+from delegated_punishment.models import Player, Group
 from otree.models import Participant
 from otree.models_concrete import ParticipantToPlayerLookup
 from django.urls import re_path
