@@ -1,0 +1,216 @@
+body {
+    margin: 0;
+}
+
+#app {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+
+.steal {
+    height: 100%;
+}
+.officer {
+    height: 100%;
+}
+.harvest {
+    height: 100%;
+}
+
+.locations {
+    display: flex;
+    flex-direction: row;
+
+}
+.locations span button {
+    margin: 20px;
+    padding: 20px;
+}
+.occupied{
+    background-color:red;
+}
+.messageBox {
+    overflow-y: hidden;
+    height: 90%;
+    width: 100%;
+    border: 1px solid black;
+}
+
+.panel {
+    padding: 10px;
+    width: 100%;
+}
+
+.game {
+    width:  100%;
+    flex-direction: column;
+}
+
+.upper {
+    height: 50%;
+    border-bottom: 1px solid black;
+}
+
+.lower {
+    height: 50%;
+}
+
+.status {
+    border-left: 1px solid black;
+    width: 30%;
+}
+
+.balance-container {
+    height: 50%;
+    /* background: white; */
+}
+
+.balance {
+    margin-top: 50%;
+    font-size: 50px;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.notifications-container {
+    height: 50%;
+    /* background: white; */
+}
+
+.toggle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+    
+.house {
+    border: 1px solid black;
+    margin: 50px;
+}
+
+.property-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.property {
+    background: powderblue;
+    margin: 10px;
+    /* padding: 10px; */
+    width: 200px;
+    /* min-width: 200px;
+    max-width: 200px; */
+    height: 200px;
+    /* max-height: 200px;
+    min-height: 200px; */
+}
+
+.harvest-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    background: skyblue;
+
+    height: 100%;
+}
+
+.harvest-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: powderblue;
+    border: 1px solid black;
+    width: 100px;
+    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.trag-test {
+    display: block;
+    position: relative;
+    height: 50px;
+    width: 50px;
+    background: red;
+    margin: 5px;
+}
+.location-start {
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+}
+#location {
+    /* padding: 10px;
+    border-radius: 5px;
+    height: 1px;
+    width: 1px;
+    background: red;
+    border: 1px solid black; */
+
+}
+.officer-data {
+    margin: 10px;
+}
+.officer-units {
+    display: flex;
+}
+.officer-unit {
+    opacity: .5;
+    width: 20px;
+    height: 20px;
+    margin-left: 15px;
+    background: black;
+}
+#officer-detective-container {
+    width: 100px;
+    height: 100px;
+    background: royalblue;
+}
+.harvest-complete-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: green;
+    
+    text-align: center;
+    height: 100%;
+    width: 100%;
+}
+.harvest-complete-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.harvest-complete-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    width: 100px;
+    background: green;
+    border: 1px solid black;
+}
+.police-log {
+    width: 50%;
+    margin: 10px;
+    border: 1px solid black;    
+}
+.bar {
+    height: 20px;
+    width: 200px;
+    border: 3px solid black;
+}
+.culprit {
+    height: 100%;
+    background: black;
+}
+.innocent {
+    height: 100%;
+    background: black;
+}

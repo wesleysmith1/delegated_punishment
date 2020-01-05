@@ -1,35 +1,23 @@
 {% load otree %}
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/Draggable.min.js"></script>
 
-<script src="{% static 'global/main.js' %}"></script>
+<!-- <script src="{% static 'global/main.js' %}"></script> -->
+<script src="{% static 'global/officer.js' %}"></script>
+<script src="{% static 'global/harvest.js' %}"></script>
+<script src="{% static 'global/steal.js' %}"></script>
+
 
 <style>
-    .locations {
-        display: flex;
-        flex-direction: row;
-
-    }
-    .locations span button {
-        margin: 20px;
-        padding: 20px;
-    }
-    .occupied{
-        background-color:red;
-    }
-    .messageBox {
-        overflow-y: hidden;
-        height: 200px;
-        width: 400px;
-        position : relative; 
-        bottom:0;
-        border: 1px solid black;
-    }
-        
+    
 </style>
+
+<link rel="stylesheet" type="text/css" href="{% static 'global/main.css' %}"></link>
 
 <div>
 
-    <div class="card bg-light instructions">
+    <div class="card bg-light instructions" style="display: none">
         <div class="card-body">
             <h2>
                 Player <span id="playerId">{{player.id_in_group}}</span> <span id="groupPlayerId" style="display:none">{{player.id_in_group}}</span>
@@ -39,41 +27,35 @@
 
     {% verbatim %}
     <div id="app">
-        <h4>Select a location to begin playing, but don't get caught.</h4>
-
-        <span v-if="playerGroupId=='1'">. You are it!</span>
-
-        <h2>Balance: {{balance}}</h2>
-
-        <div class="locations">
-            <span style="margin: 20px;" v-for="location in locations" v-bind:class="{ occupied: location.isActive }" v-on:click="updateLocation(location)">
-                <button-location v-bind:location="location" v-bind:selected="activeLocation"></button-location>
-            </span>
-        </div>
-
-        <h4>General Feed:</h4>
-
-        <div id="generalFeed" class="messageBox">
-            <div v-for="message in messages">
-                <!-- [["player " + message.playerID + " | location " + message.location]] -->
-                <div v-if="playerId == message.p_id">You: {{message}}</div>
-                <div v-else><b>{{message}}</b></div>
-                
+        <div class="panel game">
+            <div id="officerGame" v-if="isOfficer">
+                <police-game-component :properties="properties" :officer-units="officerUnits"></police-game-component>
             </div>
-            <div>LATEST MESSAGE: {{singleMessage}}</div>
-        </div>
+            <div id="harvestGame" v-else>
+                <harvest-items-component class="harvest" v-show="harvest" style="display:flex;"></harvest-items-component>
+                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId"></steal-game-component>
+                <button v-show="!isOfficer" v-on:click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
+            </div>
 
-        <h4>Throttle Test</h4>
-        <input v-on:click="throttle(5)" type="button" value="5">
-        <input v-on:click="throttle(10)" type="button" value="10">
-        <input v-on:click="throttle(15)" type="button" value="15">
-        <input v-on:click="throttle(20)" type="button" value="20">
-        <input v-on:click="throttle(25)" type="button" value="25">
+        </div>
+        <div class="panel status">
+            <div class="balance-container">
+                <div class="balance">Balance: {{balance}}</div>
+            </div>
+            <div class="notifications-container">
+                <div>Notifications: {{singleMessage}}</div>
+                <div id="generalFeed" class="messageBox">
+                    <div v-for="message in messages">
+                        <div v-if="playerId == message.p_id">You: {{message}}</div>
+                        <div v-else><b>{{message}}</b></div>
+                    </div>
+                </div>  
+            </div>
+        </div>
+        {% endverbatim %}
+        <!-- <span>Location: [[ picked ]]</span> -->
     </div>
-    {% endverbatim %}
-    <!-- <span>Location: [[ picked ]]</span> -->
-</div>
-{% verbatim %}
+    {% verbatim %}
 <script>
 
     // let NotificationsComponent = {
@@ -93,13 +75,44 @@
     //         template: '<div><button type="button"">{{location.name}}</button></div>'
     //     }
 
+    // ANIMATINO DRAGGABLE CODE
+    // gsap.registerPlugin(Draggable);
+    // Draggable.create("#id", {
+    //     type:"x,y",
+    //     bounds: document.getElementById("tester"),
+    //     inertia: true,
+    //     onClick: function() {
+    //         console.log("clicked");
+    //     },
+    //     onDragEnd: function() {
+    //         console.log("drag ended");
+    //     }
+    // });
+
+    Vue.component('alert-box', {
+        template: `
+            <div class="demo-alert-box">
+            <strong>Error!</strong>
+            <slot></slot>
+            </div>
+        `
+        })
+
     var app = new Vue({
         // delimiters: ['[[', ']]'],
         el: '#app',
         components: {
-            'button-location': buttonLocationComponent
+            'button-location': buttonLocationComponent,
+            'police-log-component': policeLogComponent,
+            'property-component': propertyComponent,
+            'harvest-items-component': harvestItemsComponent,
+            'steal-component': stealComponent,
+            'steal-game-component': stealGameComponent,
+            'police-game-component': policeGameComponent,
         },
         data: {
+            isOfficer: true,
+            harvest: true,
             that: this,
             playerId: null,
             playerGroupId: null,
@@ -108,10 +121,13 @@
             singleMessage: null,
             activeLocation: -1,
             locations: [],
+            properties: [],
             locationCount: 5,
             picked: true,
             chatSock: null,
-            balance: 0
+            balance: 0,
+            harvestItems: [],
+            officerUnits: [],
         },
         methods: {
             select: function(id) {
@@ -180,8 +196,25 @@
         },
         created: function() {
 
+            this.officerUnits = [1,2,3,4,5,6,7,8,9,10]
+
             this.playerId = document.getElementById('playerId').textContent;
             this.playerGroupId = document.getElementById('groupPlayerId').textContent;
+            this.isOfficer = this.playerGroupId == 1
+
+            const harvestItemNames = ['a', 'b', 'c', 'd'];
+
+            harvestItemNames.forEach(name => {
+
+            });
+
+            // load harvest data
+            for(let i = 0; i < harvestItemNames.length; i++) {
+                this.harvestItems.push({id: i, name: harvestItemNames[i]});
+            }
+
+            // get player properties
+            this.properties = [1, 2, 3, 4];
 
             for (let i = 0; i < this.locationCount; i++) {
                 this.locations.push({name: i, isActive: false})
