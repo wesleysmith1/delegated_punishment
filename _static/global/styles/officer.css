@@ -1,0 +1,36 @@
+.police-log {
+    width: 50%;
+    margin: 10px;
+    border: 1px solid black;
+}
+.bar {
+    height: 20px;
+    width: 200px;
+    border: 3px solid blue;
+}
+.culprit {
+    height: 100%;
+    background: blue;
+}
+.innocent {
+    height: 100%;
+    background: blue;
+}
+.officer-data {
+    margin: 10px;
+}
+.officer-units {
+    display: flex;
+}
+.officer-unit {
+    opacity: .5;
+    width: 50px;
+    height: 50px;
+    margin-left: 15px;
+    background: green;
+}
+#officer-detective-container {
+    width: 100px;
+    height: 100px;
+    background: blue;
+}

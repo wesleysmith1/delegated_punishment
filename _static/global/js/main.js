@@ -17,7 +17,7 @@ let harvestItemsComponent = {
       }
   },
   mounted: function() {
-    for (var i = 0; i < this.items.length; i++) {
+    for (let i = 0; i < this.items.length; i++) {
       let that = this;
       Draggable.create("#" + this.items[i], {
         bounds: document.getElementById("harvestGame"),
@@ -358,7 +358,7 @@ let policeGameComponent = {
             <div class="lower" style="display:flex;">
               <police-log-component></police-log-component>
               <div class="officer-data">
-                Punishment Map
+                Investigation
                 <div id="officer-detective-container" ref='detectivecontainer'></div>
 
                 Probability Punish Innocent {{probPunishInnocent}} / 100

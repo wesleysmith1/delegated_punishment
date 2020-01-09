@@ -3,20 +3,23 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/Draggable.min.js"></script>
 
-<!-- <script src="{% static 'global/main.js' %}"></script> -->
-<script src="{% static 'global/officer.js' %}"></script>
-<script src="{% static 'global/harvest.js' %}"></script>
-<script src="{% static 'global/steal.js' %}"></script>
+<!-- <script src="{% static 'global/js/main.js' %}"></script> -->
+<script src="{% static 'global/js/officer.js' %}"></script>
+<script src="{% static 'global/js/harvest.js' %}"></script>
+<script src="{% static 'global/js/steal.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'global/styles/main.css' %}"></link>
+<link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}"></link>
+<link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}"></link>
+<link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}"></link>
 
 
-<style>
-    
-</style>
-
-<link rel="stylesheet" type="text/css" href="{% static 'global/main.css' %}"></link>
+<script>
+    var player = {{ pjson|json }}
+    console.log(player);
+</script>
 
 <div>
-
     <div class="card bg-light instructions" style="display: none">
         <div class="card-body">
             <h2>
@@ -29,14 +32,12 @@
     <div id="app">
         <div class="panel game">
             <div id="officerGame" v-if="isOfficer">
-                <police-game-component :properties="properties" :officer-units="officerUnits"></police-game-component>
+                <police-game-component :properties="properties" :officer-units="officerUnits" v-on:token-update="tokenUpdate"></police-game-component>
             </div>
             <div id="harvestGame" v-else>
                 <harvest-items-component class="harvest" v-show="harvest" style="display:flex;"></harvest-items-component>
-                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId"></steal-game-component>
-                <button v-show="!isOfficer" v-on:click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
+                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId" :player-location="playerLocation" v-on:location-update="locationUpdate"></steal-game-component>
             </div>
-
         </div>
         <div class="panel status">
             <div class="balance-container">
@@ -51,52 +52,13 @@
                     </div>
                 </div>  
             </div>
+            <button v-show="!isOfficer" @click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
         </div>
         {% endverbatim %}
         <!-- <span>Location: [[ picked ]]</span> -->
     </div>
     {% verbatim %}
 <script>
-
-    // let NotificationsComponent = {
-    //         props: { location: Object,},
-    //         data: function () {
-    //             return {
-    //             }
-    //         },
-    //         computed: {
-
-    //         },
-    //         created: function () {
-    //         },
-    //         methods: {
-
-    //         },
-    //         template: '<div><button type="button"">{{location.name}}</button></div>'
-    //     }
-
-    // ANIMATINO DRAGGABLE CODE
-    // gsap.registerPlugin(Draggable);
-    // Draggable.create("#id", {
-    //     type:"x,y",
-    //     bounds: document.getElementById("tester"),
-    //     inertia: true,
-    //     onClick: function() {
-    //         console.log("clicked");
-    //     },
-    //     onDragEnd: function() {
-    //         console.log("drag ended");
-    //     }
-    // });
-
-    Vue.component('alert-box', {
-        template: `
-            <div class="demo-alert-box">
-            <strong>Error!</strong>
-            <slot></slot>
-            </div>
-        `
-        })
 
     var app = new Vue({
         // delimiters: ['[[', ']]'],
@@ -106,16 +68,17 @@
             'police-log-component': policeLogComponent,
             'property-component': propertyComponent,
             'harvest-items-component': harvestItemsComponent,
-            'steal-component': stealComponent,
             'steal-game-component': stealGameComponent,
             'police-game-component': policeGameComponent,
         },
         data: {
             isOfficer: true,
-            harvest: true,
+            harvest: false,
             that: this,
+            player: {},
             playerId: null,
             playerGroupId: null,
+            playerLocation: {},
             messages: [],
             message: 'No players have moved yet!',
             singleMessage: null,
@@ -129,12 +92,106 @@
             harvestItems: [],
             officerUnits: [],
         },
+        created: function() {
+
+            // generate objects for officer tokens
+            for (let i = 1; i<=5; i++)
+                this.officerUnits.push({num: i, property: null, x: null, y: null}) //todo change num to id from api when loading from rendered template into javascript
+
+            this.player = JSON.parse(player)
+
+            this.playerId = document.getElementById('playerId').textContent;
+            this.playerGroupId = document.getElementById('groupPlayerId').textContent;
+            this.isOfficer = this.playerGroupId == 1
+
+            if (!this.isOfficer) {
+                //todo: load location from db
+                this.playerLocation = {'player': this.playerGroupId, 'property': this.player.property, 'x': this.player.x, 'y': this.player.y} // todo integrate this into app
+            } else if (this.isOfficer) {
+                //todo: load officer locations
+            }
+
+            const harvestItemNames = ['a', 'b', 'c', 'd'];
+
+            // load harvest data
+            for(let i = 0; i < harvestItemNames.length; i++) {
+                this.harvestItems.push({id: i, name: harvestItemNames[i]});
+            }
+
+            // get player properties
+            this.properties = [1, 2, 3, 4];
+
+            for (let i = 0; i < this.locationCount; i++) {
+                this.locations.push({name: i, isActive: false})
+            }
+
+            let that = this;
+            this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId +'/'),
+            this.gameSocket.onmessage = function(e) {
+                console.log(e.data);
+                let data = JSON.parse(e.data);
+                if (data.general) {
+                    let message = "general message"
+                    that.addMessage(message)
+                } else if (data.personal) {
+                    let message = "personal message"
+                    that.addMessage(message)
+                } else if (data.intersections) {
+                    data.intersections.forEach(function(i) {
+                        console.log('intersection: ', i)
+                        // animate
+                        that.addMessage("P" + i.player + " - Property" + i.property + " - Location: " + Math.round(10*i.x)/10 + ", " + Math.round(10*i.y)/10)
+                        that.showIntersection(i)
+                        if(i.player == that.playerId) {
+                            that.qwerty()
+                        }
+                    })
+                }
+            };
+
+            this.gameSocket.onclose = function(e) {
+                console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
+            };
+        },
         methods: {
+            qwerty: function() {
+                gsap.to('#location', .5, {x: 0, y: 0})
+                //gsap.to('#locationrect', {fill: 'purple'})
+                // snap back
+            },
+            tokenUpdate: function(token) {
+                this.gameSocket.send(JSON.stringify({
+                    'token': token,
+                    'player_id': this.playerId,
+                    'group_id': 1, //todo fix this to be variable group id
+                }));
+            },
+            locationUpdate: function(location) {
+                console.log(location)
+                this.gameSocket.send(JSON.stringify({
+                    'steal': location,
+                    'player_id': this.playerId,
+                    'group_id': 1, //todo fix this to be variable group id
+                }));
+            },
+            harvestUpdate: function(harvest) {
+                this.gameSocket.send(JSON.stringify({
+                    'harvest': harvest, //current,
+                    'player_id': this.player_id,
+                    'group_id': this.group_id,
+                }));
+            },
+            showIntersection: function(i) {
+                let selector = '#indicator' + i.property + '-' + i.player
+                gsap.to(selector, 0, {left: i.x-15, top: i.y-10})
+                gsap.to(selector, {visibility: 'visible'})
+                gsap.to(selector, {visibility: 'hidden', delay: 2})
+            },
             select: function(id) {
                 this.location=id
             },
             throttle: function(n) {
-                for (var i = 0; i < n; i++) {
+                for (let i = 0; i < n; i++) {
                     this.gameSocket.send(JSON.stringify({
                         'test': 'test send by player: ' + this.playerId 
                     }));
@@ -149,90 +206,23 @@
                 if (this.activeLocation == x.name)
                     return;
 
-                this.resetLocation()
-
+                this.resetLocation() //todo: prob remove this old game logic
                 x.isActive = true;
                 this.activeLocation = x.name;
 
-                let update = JSON.stringify({
+                this.gameSocket.send(JSON.stringify({
                     'p_id': this.playerId,
                     'location': x.name
-                })
-
-                debugger;
-
-                this.gameSocket.send(update);
+                }));
             },
             addMessage(message) {
                 if (message['test']) {
-                    // this.messages.unshift(message['test'])
                     this.singleMessage = message['test']
                     return;
                 }
 
-                let caught_ids = message['ids'];
-                let data = message['data']
-                // if (message.p_id == this.player_id)
-                //     update = "YOU " + message.text
-                // else 
-                //     update = "PLAYER " + message.p_id + " " + message.text
-                update = (caught_ids.toString() ? "Players caught by ID: " + caught_ids.toString() : null)
-                if (update) {
-                    // this.messages.unshift(update)
-                    this.singleMessage = update
-                }
-                console.log(update)
-                if (data[this.playerId]) {
-                    if (this.balance == data[this.playerId])
-                        return;
-                        
-                    this.balance = data[this.playerId]
-                    update = 'Your balance has been updated to: ' + this.balance
-                    console.log(update)
-                    // this.messages.unshift(update)
-                    this.singleMessage = update
-                }
+                this.messages.push(message)
             }
-        },
-        created: function() {
-
-            this.officerUnits = [1,2,3,4,5,6,7,8,9,10]
-
-            this.playerId = document.getElementById('playerId').textContent;
-            this.playerGroupId = document.getElementById('groupPlayerId').textContent;
-            this.isOfficer = this.playerGroupId == 1
-
-            const harvestItemNames = ['a', 'b', 'c', 'd'];
-
-            harvestItemNames.forEach(name => {
-
-            });
-
-            // load harvest data
-            for(let i = 0; i < harvestItemNames.length; i++) {
-                this.harvestItems.push({id: i, name: harvestItemNames[i]});
-            }
-
-            // get player properties
-            this.properties = [1, 2, 3, 4];
-
-            for (let i = 0; i < this.locationCount; i++) {
-                this.locations.push({name: i, isActive: false})
-            }
-
-            let x = this;
-            this.gameSocket = new WebSocket('ws://' + window.location.host + '/tag/'),
-            this.gameSocket.onmessage = function(e) {
-                console.log(e.data);
-                debugger;
-                var data = JSON.parse(e.data);
-                // var data = e.data;
-                x.addMessage(data)
-            };
-
-            this.gameSocket.onclose = function(e) {
-                console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
-            };
         },
     });
 </script>

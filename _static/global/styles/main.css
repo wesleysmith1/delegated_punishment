@@ -1,0 +1,102 @@
+body {
+    margin: 0;
+}
+#app {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+.steal {
+    height: 100%;
+}
+.officer {
+    height: 100%;
+}
+.harvest {
+    height: 100%;
+}
+.locations {
+    display: flex;
+    flex-direction: row;
+}
+.locations span button {
+    margin: 20px;
+    padding: 20px;
+}
+.occupied{
+    background-color:red;
+}
+.messageBox {
+    overflow-y: hidden;
+    height: 90%;
+    width: 100%;
+    border: 1px solid black;
+}
+.panel {
+    padding: 10px;
+    width: 100%;
+}
+.game {
+    width:  100%;
+    flex-direction: column;
+}
+.upper {
+    height: 50%;
+    border-bottom: 1px solid black;
+}
+.lower {
+    height: 50%;
+}
+.status {
+    border-left: 1px solid black;
+    width: 30%;
+}
+
+.balance-container {
+    height: 50%;
+}
+.balance {
+    margin-top: 50%;
+    font-size: 50px;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.notifications-container {
+    height: 50%;
+}
+
+.toggle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+
+.property {
+    position: relative;
+    margin: 10px;
+    /* padding: 10px; */
+    width: 200px;
+     min-width: 200px;
+    max-width: 200px;
+    height: 200px;
+     max-height: 200px;
+    min-height: 200px;
+}
+
+.property.self {
+    background: darkgrey;
+}
+.property.other {
+    background: white;
+    border: 1px solid black;
+}
+.indicator {
+    position: relative;
+    left: 100px;
+    top: 100px;
+    visibility: hidden;
+    z-index: 900;
+}
+
+

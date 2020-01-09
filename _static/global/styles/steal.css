@@ -1,0 +1,17 @@
+.location-start {
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+}
+
+.property-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.steal-notification {
+    text-align: center;
+    min-height: 50px;
+    color: red;
+    font-size: 24px;
+}

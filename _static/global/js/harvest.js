@@ -2,7 +2,7 @@
 let harvestItemsComponent = {
     data: function () {
         return {
-          items: ['seed', 'water', 'plow', 'harvest'], // todo: add none here for when nothing has been done or the user just dragged the harvest item successfully
+          items: ['plow', 'seed', 'water', 'harvest'], // todo: add none here for when nothing has been done or the user just dragged the harvest item successfully
           lastCompleted: null,
           currentStage: 0,
         }
@@ -45,7 +45,6 @@ let harvestItemsComponent = {
   
       }
     },
-      // <img src="{% static 'global/water.png' %}" style="height: 100px; width: 100px;"/>
     template: `
   
       <div id="harvest-container" class="game">
@@ -53,7 +52,7 @@ let harvestItemsComponent = {
             <div class='harvest-items'>
               <div v-for='(i, index) in items' :id='i' :index='index' :ref='i' class='harvest-item'>
                 {{i}}
-                <img :src="'/static/global/' + items[index] + '.png'" style="width: 50%; height: 50%"/>
+                <img :src="'/static/global/images/' + i + '.png'" style="width: 50%; height: 50%"/>
               </div>
             </div>
         </div>
@@ -61,12 +60,12 @@ let harvestItemsComponent = {
             <div class="harvest-complete-items">
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img :src="'/static/global/' + items[currentStage] + '.png'" style="width: 50%; height: 50%"/>
+                  <img v-if="currentStage > 0" :src="'/static/global/images/harvest' + (currentStage+1) + '.png'" style="width: 50%; height: 50%"/>
                 </div>
               </div>
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img :src="'/static/global/' + items[currentStage] + '.png'" style="width: 50%; height: 50%"/>
+                  <img v-if="currentStage > 0" :src="'/static/global/images/harvest' + (currentStage+1) + '.png'" style="width: 50%; height: 50%"/>
                 </div>
               </div>  
             </div>

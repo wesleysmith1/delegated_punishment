@@ -8,7 +8,7 @@ from otree.api import (
     Currency as c,
     currency_range,
 )
-
+from otree.db.models import Model, ForeignKey
 
 doc = """
 This Delegated Punishment game involves 2 players. Each demands for a portion of some
@@ -26,10 +26,15 @@ class Constants(BaseConstants):
 
     # amount_shared = c(100)
 
-
 class Subsession(BaseSubsession):
-    pass
 
+    def before_session_starts(self):
+        # OfficerToken.objects.all().delete()
+        groups = self.get_groups()
+
+        for g in groups:    
+            for i in range(10):
+                OfficerToken.objects.create(number=i, group=g)
 
 class Group(BaseGroup):
     pass
@@ -46,9 +51,26 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    # role
+    x = models.FloatField(blank=True)
+    y = models.FloatField(blank=True)
+    property = models.IntegerField(blank=True)
+    last_updated = models.IntegerField(blank=True)
+    status = models.IntegerField(
+        choices=[
+            [1, 'Harvest'],
+            [2, 'Steal'],
+        ]
+    )
+    roi = models.IntegerField()
     balance = models.IntegerField(initial=0)
-    location = models.IntegerField() #todo can this be null?
-    isit = models.BooleanField(initial=False)
 
     def other_players(self):
         return self.get_others_in_group()
+
+class OfficerToken(Model):
+    group = ForeignKey(Group, on_delete='CASCADE')
+    number = models.IntegerField()
+    property = models.IntegerField(blank=True)
+    x = models.FloatField(blank=True)
+    y = models.FloatField(blank=True)

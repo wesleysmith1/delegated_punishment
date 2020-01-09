@@ -70,6 +70,8 @@ SECRET_KEY = '6lertt4wlb09zj@4wyuy-p-6)i$vh!ljwx&r9bti6kgw54k-h8'
 
 INSTALLED_APPS = ['otree']
 
+# ROOT_URLCONF = 'urls'
+
 # inactive session configs
 # dict(name='trust', display_name="Trust Game", num_demo_participants=2, app_sequence=['trust', 'payment_info']),
 # dict(name='prisoner', display_name="Prisoner's Dilemma", num_demo_participants=2,

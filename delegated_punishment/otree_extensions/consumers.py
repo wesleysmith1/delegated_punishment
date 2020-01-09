@@ -3,12 +3,16 @@ from channels.generic.websocket import WebsocketConsumer
 import json
 from random import random
 
-from delegated_punishment.models import Player, Group
+from delegated_punishment.models import Player, Group, OfficerToken
+
 
 class GameConsumer(WebsocketConsumer):
-    def connect(self):
-        self.room_name = 'room'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.room_group_name = 'group'
+        self.room_name = 'room'
+
+    def connect(self):
 
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
@@ -31,91 +35,105 @@ class GameConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
-        data_json = json.loads(text_data)
-        # x = Player.objects.all()
-        # y = Group.objects.all()
-        # player = Player.objects.first()
-        # player.balance = 1
-        # player.save()
-        # player = Player.objects.first()
-        # Send message to room group
 
-        print('YOU HAVE ARRIVED')
+        # todo: save block size somewhere else
+        block_size = 50
+
+        data_json = json.loads(text_data)
         print(data_json)
 
-        if data_json.get('test'):
-            print(str(random()*1000))
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'test_update',
-                    'message': str(random())
-                }
-            )
-        else:
-            print('MAKING AN UPDATE CALL')
-            location = data_json['location']
-            p_id = data_json['p_id']
+        group_id = data_json['group_id']
+        player_id = data_json['player_id']
+        player = Player.objects.get(pk=player_id)
+        group = Group.objects.get(pk=group_id)
 
-            player = Player.objects.get(pk=p_id)
-            players_in_location = Player.objects.filter(location=location)
-            busted_player_ids = []
+        intersections = []
 
-            if player.id_in_group == 1:
-                print('PLAYER IS COP')         
-                #player is it
-                if players_in_location:
-                    
-                    for p in players_in_location:
-                        busted_player_ids.append(p.id)
-                        p.location = -1
-                        p.balance = p.balance-1
-                        player.balance+=1
-
-                    for p in players_in_location:
-                        p.save()
-                else:
-                    print('THERE WERE NO PLAYERS IN THE LOCATION DUMBASS')
-
-                player.location = location
-                player.save()
+        if data_json.get('token'):
+            token_update = data_json['token']
+            token_num = token_update['num']
+            token = OfficerToken.objects.filter(group=group, number=token_num)[0]
+            if token:
+                print('TOKEN ON PROPERTY ' + str(token.property))
+            token.property = token_update['property']
+            if token.property == 11:
+                print('TOKEN ADDED TO INVESTIGATION')
+                token.save()
             else:
-                print('THIS IS NOT A COP')
-                #player is not it
-                cop = Player.objects.filter(id_in_group=1)[0]
-                if cop.location == location:
-                    player.balance = player.balance-1
-                    busted_player_ids.append(player.id)
-                    cop.balance = cop.balance+1
-                    cop.save()
-                else:
-                    player.location = location
-                    player.balance = player.balance+1
-                    # self.send_json(text_data="none")
-                    
-                player.location = location
-                player.save()
+                token.x = token_update['x']
+                token.y = token_update['y']
+                token.save()
+                print('\t LOCATION: ' + str(token.x) + ',' + str(token.y))
+                players_in_prop = Player.objects.filter(group=group, property=token.property)
+                print(' \t THERE ARE ' + str(len(players_in_prop)) + ' PLAYERS IN THIS PROPERTY')
 
-            zzz = Player.objects.all()
-            player_data = {}
-            for p in zzz:
-                player_data[p.id] = p.balance
-                
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'player_update',
-                    'ids': busted_player_ids,
-                    'player_data': player_data
-                }
-            )
+                if players_in_prop:
+                    for p in players_in_prop:
+                        # intersections = Dict
+                        print('\t\tPLAYER:' + str(p.pk) + " X: " + str(p.x) + " Y: " + str(p.y))
+                        if token.x <= p.x <= (token.x + block_size) and token.y <= p.y <= (token.y + block_size):
+                            print('\t\tINTERSECTION')
+                            data = {'player': p.pk, 'y': p.y, 'x': p.x, 'property': p.property}
+                            intersections.append(data)
+                    # if intersections:
+
+            # token.x =
+        # if data_json.get('harvest'):
+        #     harvest_status = data_json['harvest']
+        #     player.harvest_status = harvest_status['current']
+        #     if player.harvest_status == 4:
+        #         player.balance = player.balance+1
+        #         player.harvest_status = 0
+        #     player.save()
+        if data_json.get('steal'):
+            steal_location = data_json['steal']
+            player.x = steal_location['x']
+            player.y = steal_location['y']
+            player.property = steal_location['property']
+            player.save()
+            print('STEAL ON PROPERTY ' + str(steal_location['property']))
+            # check for intersections
+            tokens = OfficerToken.objects.filter(group=group, number=player.property)
+            print(' \t THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS PROPERTY')
+
+            if tokens:
+                for token in tokens:
+                    print('\t\tTOKEN:' + str(token.pk) + " X: " + str(token.x) + " Y: " + str(token.y))
+                    if token.x <= player.x <= (token.x + block_size) and token.y <= player.y <= (token.y + block_size):
+                        print('\t\tINTERSECTION')
+                        data = {'player': player.pk, 'y': player.y, 'x': player.x, 'property': player.property}
+                        intersections.append(data)
+
+        if len(intersections) > 0:
+            num_investigators = OfficerToken.objects.filter(group=group, number=11)
+            print('INVESTIGATION TOKEN COUNT: ' + num_investigators)
+            if len(num_investigators) > 0:
+                for inter in intersections:
+                    #MULTINULI PUNISH?
+                    guilty = inter.player
+                    innocent = inter.property
+                    # police = 
+
+                    #WILL WE AUDIT?
+
+            else:
+                #todo: do we record but don't punish here?
+                print('THERE ARE NO TOKENS IN INVESTIGATIONS')
 
 
-    
+        print('passed logic')
+
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'player_update',
+                'intersections': intersections,
+            }
+        )
+
     # Receive message from room group
     def player_update(self, event):
-        ids = event['ids']
-        player_data = event['player_data']
+        intersections = event['intersections']
 
         # player = Player.objects.first()
         # player.balance = 1
@@ -129,16 +147,11 @@ class GameConsumer(WebsocketConsumer):
         # player.balance = 1
         # player.save()
 
-        # can we send async code here if any updates to individual players
-
-
         # Send message to WebSocket
         self.send(text_data=json.dumps({
-            'ids':ids,
-            'data': player_data
+            'intersections': intersections
         }))
 
-    
     def test_update(self, event):
         # message = event['message']
 
@@ -152,8 +165,5 @@ class GameConsumer(WebsocketConsumer):
 
         # Send message to WebSocket
         self.send(text_data=json.dumps({
-            'test': str(random()*1000)
+            'test': str(random() * 1000)
         }))
-
-    
-    
