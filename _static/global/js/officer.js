@@ -123,12 +123,13 @@ let buttonLocationComponent = {
                     {{property+1}}
                     <!-- svg indicator id format: property-player-->
                     <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (property+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
-                      <circle cx="3" cy="3" r="3" fill="red" />
+                      <circle cx="3" cy="3" r="3" fill="black" />
                     </svg>
                   </div>
                 </div>
                 <div class="officer-units" style="display:flex;">
                   <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
+                    {{unit.number}}
                   </div>
                 </div>
                 <div style="margin: 10px">

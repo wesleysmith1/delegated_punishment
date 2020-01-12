@@ -16,15 +16,15 @@ available amount. If the sum of demands is no larger than the available
 amount, both players get demanded portions. Otherwise, both get nothing.
 """
 
-
 class Constants(BaseConstants):
-    name_in_url = 'delegated_punishment' #todo
+    name_in_url = 'delegated_punishment'  # todo
     players_per_group = 5
-    num_rounds = 1 #todo
+    num_rounds = 1  # todo
 
     instructions_template = 'delegated_punishment/instructions.html'
 
     # amount_shared = c(100)
+
 
 class Subsession(BaseSubsession):
 
@@ -32,9 +32,10 @@ class Subsession(BaseSubsession):
         # OfficerToken.objects.all().delete()
         groups = self.get_groups()
 
-        for g in groups:    
+        for g in groups:
             for i in range(10):
-                OfficerToken.objects.create(number=i, group=g)
+                OfficerToken.objects.create(number=i+1, group=g,)
+
 
 class Group(BaseGroup):
     pass
@@ -61,12 +62,13 @@ class Player(BasePlayer):
             [1, 'Harvest'],
             [2, 'Steal'],
         ]
-    )
+    ) #todo: this field may not need to be stored here, instead just the history table
     roi = models.IntegerField()
     balance = models.IntegerField(initial=0)
 
     def other_players(self):
         return self.get_others_in_group()
+
 
 class OfficerToken(Model):
     group = ForeignKey(Group, on_delete='CASCADE')
@@ -74,3 +76,9 @@ class OfficerToken(Model):
     property = models.IntegerField(blank=True)
     x = models.FloatField(blank=True)
     y = models.FloatField(blank=True)
+
+    def __str__(self):
+        str(self.x) + "," + str(self.y)
+
+    def to_dict(self):
+        return {"number": self.number, "property": self.property, "x": self.x, "y": self.y}

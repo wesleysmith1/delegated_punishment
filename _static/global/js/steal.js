@@ -7,13 +7,13 @@
       properties: Array,
       playerGroupId: String,
       playerLocation: Object,
+        stealNotification: String,
     },
     data: function () {
         return {
             location: null,
           locationx: 0,
           locationy: 0,
-            stealNotification: 'steal notification placeholder',
         }
     },
     mounted: function() {
@@ -43,39 +43,45 @@
       //   }
     },
       methods: {
-      checkLocation: function(that) {
-        if(that.hitTest(this.$refs.htarget, '100%')){
-          //location-center
-          if(that.hitTest(this.$refs.prop2, '1%')) {
-              let property = document.getElementById('prop2').getBoundingClientRect()
-              this.calculateLocation(property, 2);
-          } else if (that.hitTest(this.$refs.prop3, '1%')) {
-              let property = document.getElementById('prop3').getBoundingClientRect()
-              this.calculateLocation(property, 3);
-          } else if (that.hitTest(this.$refs.prop4, '1%')) {
-              let property = document.getElementById('prop4').getBoundingClientRect()
-              this.calculateLocation(property, 4);
-          } else if (that.hitTest(this.$refs.prop5, '1%')) {
-              let property = document.getElementById('prop5').getBoundingClientRect()
-              this.calculateLocation(property, 5);
-          } else {
-              gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
-              gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
-          }
+          checkLocation: function(that) {
+            if(that.hitTest(this.$refs.htarget, '100%')){
+              //location-center
+              if(that.hitTest(this.$refs.prop2, '1%')) {
+                  let property = document.getElementById('prop2').getBoundingClientRect()
+                  this.calculateLocation(property, 2);
+              } else if (that.hitTest(this.$refs.prop3, '1%')) {
+                  let property = document.getElementById('prop3').getBoundingClientRect()
+                  this.calculateLocation(property, 3);
+              } else if (that.hitTest(this.$refs.prop4, '1%')) {
+                  let property = document.getElementById('prop4').getBoundingClientRect()
+                  this.calculateLocation(property, 4);
+              } else if (that.hitTest(this.$refs.prop5, '1%')) {
+                  let property = document.getElementById('prop5').getBoundingClientRect()
+                  this.calculateLocation(property, 5);
+              } else {
+                  gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
+                  gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
+              }
 
-        } else{
-              gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
-             gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
-        }
-      },
-      calculateLocation(property, property_id) { // prop_id is more like the player_id
-        gsap.to('#locationrect', {fill: 'red'})
-        let location = this.$refs.location.getBoundingClientRect()
-        this.locationx = location.x - property.x + .25
-        this.locationy = location.y - property.y + .25 //todo add variable radius here
-          this.$emit('location-update', {x: this.locationx, y: this.locationy, property: property_id});
-      }
-},
+            } else{
+                  gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
+                 gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
+            }
+          },
+          calculateLocation(property, property_id) { // prop_id is more like the player_id
+            gsap.to('#locationrect', {fill: 'red'})
+            let location = this.$refs.location.getBoundingClientRect()
+            this.locationx = location.x - property.x + .25
+            this.locationy = location.y - property.y + .25 //todo add variable radius here
+              this.$emit('location-update', {x: this.locationx, y: this.locationy, property: property_id});
+          },
+          indicatorColor(property) {
+              if (this.playerGroupId == property)
+                  return 'red'
+              else
+                  return 'black'
+          }
+    },
     template: 
       `
       <div class="steal" style="display:flex; flex-wrap: wrap">
@@ -83,7 +89,13 @@
             <div class="">
                 <div id="steal-container">
                     <div ref='htarget' class="property-container">
-                      <div v-for="property in properties" v-bind:class="['property', playerGroupId==(property+1) ? 'self' : 'other']" v-bind:player-id="(property+1)" :id='"prop" + (property+1)' :ref='"prop" + (property+1)'>{{property+1}}</div>
+                      <div v-for="property in properties" v-bind:class="['property', playerGroupId==(property+1) ? 'self' : 'other']" v-bind:player-id="(property+1)" :id='"prop" + (property+1)' :ref='"prop" + (property+1)'>
+                        {{property+1}}
+                        <!-- svg indicator id format: property-player-->
+                        <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (property+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
+                          <circle cx="3" cy="3" r="3" :fill="indicatorColor(property)" />
+                        </svg>
+                      </div>
                     </div>
                     <div class="steal-notification">
                         {{stealNotification}}

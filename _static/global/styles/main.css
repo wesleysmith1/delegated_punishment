@@ -1,5 +1,5 @@
 body {
-    margin: 0;
+    /*margin: 0;*/ todo: remove margin from body
 }
 #app {
     height: 100%;
@@ -33,12 +33,19 @@ body {
     border: 1px solid black;
 }
 .panel {
-    padding: 10px;
-    width: 100%;
+    position: relative;
 }
 .game {
     width:  100%;
     flex-direction: column;
+    position: relative;
+}
+.toggle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+
+    padding: 10px;
 }
 .upper {
     height: 50%;
@@ -51,7 +58,6 @@ body {
     border-left: 1px solid black;
     width: 30%;
 }
-
 .balance-container {
     height: 50%;
 }
@@ -61,20 +67,13 @@ body {
     display: table-cell;
     vertical-align: middle;
 }
-
 .notifications-container {
     height: 50%;
 }
 
-.toggle {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-}
-
 .property {
     position: relative;
-    margin: 10px;
+    /*margin: 10px;*/
     /* padding: 10px; */
     width: 200px;
      min-width: 200px;

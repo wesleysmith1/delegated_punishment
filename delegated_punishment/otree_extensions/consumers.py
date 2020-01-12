@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 import json
 from random import random
+import numpy as np
 
 from delegated_punishment.models import Player, Group, OfficerToken
 
@@ -51,8 +52,15 @@ class GameConsumer(WebsocketConsumer):
 
         if data_json.get('token'):
             token_update = data_json['token']
-            token_num = token_update['num']
-            token = OfficerToken.objects.filter(group=group, number=token_num)[0]
+            token_num = token_update['number']
+            # token = OfficerToken.objects.filter(group=group, number=token_num)[0] #this breaks sucka
+            try:
+                print('LOOKUP TOKEN NUMBER - GROUP: ' + str(token_num) + ' - ' + str(group.pk))
+                token = OfficerToken.objects.get(group=group, number=token_num)
+            except OfficerToken.DoesNotExist:
+                token = None
+                print('NO TOKEN WAS FOUND BRAP BRAP')
+
             if token:
                 print('TOKEN ON PROPERTY ' + str(token.property))
             token.property = token_update['property']
@@ -73,8 +81,17 @@ class GameConsumer(WebsocketConsumer):
                         print('\t\tPLAYER:' + str(p.pk) + " X: " + str(p.x) + " Y: " + str(p.y))
                         if token.x <= p.x <= (token.x + block_size) and token.y <= p.y <= (token.y + block_size):
                             print('\t\tINTERSECTION')
-                            data = {'player': p.pk, 'y': p.y, 'x': p.x, 'property': p.property}
+
+                            # create intersection data
+                            data = {'player': p.pk, 'y': p.y, 'x': p.x, 'property': p.property, 'token': token.number}
                             intersections.append(data)
+
+                            # update player info
+                            p.property = 0
+                            p.x = None
+                            p.y = None
+                            p.save()
+
                     # if intersections:
 
             # token.x =
@@ -88,7 +105,7 @@ class GameConsumer(WebsocketConsumer):
         if data_json.get('steal'):
             steal_location = data_json['steal']
             player.x = steal_location['x']
-            player.y = steal_location['y']
+            player.y = steal_location['y'] #todo: add this later so we only save once, not here then again after intersection
             player.property = steal_location['property']
             player.save()
             print('STEAL ON PROPERTY ' + str(steal_location['property']))
@@ -101,25 +118,36 @@ class GameConsumer(WebsocketConsumer):
                     print('\t\tTOKEN:' + str(token.pk) + " X: " + str(token.x) + " Y: " + str(token.y))
                     if token.x <= player.x <= (token.x + block_size) and token.y <= player.y <= (token.y + block_size):
                         print('\t\tINTERSECTION')
-                        data = {'player': player.pk, 'y': player.y, 'x': player.x, 'property': player.property}
+
+                        # create intersection data
+                        data = {'player': player.pk, 'y': player.y, 'x': player.x, 'property': player.property, 'token': token.number}
                         intersections.append(data)
+
+                        # update player info
+                        player.property = 0
+                        player.x = None
+                        player.y = None
+                        player.save()
 
         if len(intersections) > 0:
             num_investigators = OfficerToken.objects.filter(group=group, number=11)
-            print('INVESTIGATION TOKEN COUNT: ' + num_investigators)
+            print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
             if len(num_investigators) > 0:
                 for inter in intersections:
-                    #MULTINULI PUNISH?
+                    # MULTINULI PUNISH?
                     guilty = inter.player
                     innocent = inter.property
-                    # police = 
-
-                    #WILL WE AUDIT?
+                    # police =
+                    innocent_prob = 1 / 3 - num_investigators / 30
+                    guilty_prob = 1 / 3 + 2 * num_investigators / 30
+                    multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob]
+                    multi[guilty] = guilty_prob
+                    print('MULTI' + multi)
+                    # WILL WE AUDIT?
 
             else:
-                #todo: do we record but don't punish here?
+                # todo: do we record but don't punish here?
                 print('THERE ARE NO TOKENS IN INVESTIGATIONS')
-
 
         print('passed logic')
 
@@ -134,18 +162,6 @@ class GameConsumer(WebsocketConsumer):
     # Receive message from room group
     def player_update(self, event):
         intersections = event['intersections']
-
-        # player = Player.objects.first()
-        # player.balance = 1
-        # player.save()
-        # player = Player.objects.first()
-        # player.balance = 2
-        # player.save()
-        # player = Player.objects.first()
-        # player.balance = 3
-        # player.save()
-        # player.balance = 1
-        # player.save()
 
         # Send message to WebSocket
         self.send(text_data=json.dumps({

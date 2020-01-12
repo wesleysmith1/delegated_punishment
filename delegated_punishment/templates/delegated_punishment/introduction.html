@@ -15,8 +15,10 @@
 
 
 <script>
+    // data is rendered on api here, then later read by vue instance
+    var rand = {{ rand }}
     var player = {{ pjson|json }}
-    console.log(player);
+    var otokens = {{ otokens|json }}
 </script>
 
 <div>
@@ -24,6 +26,7 @@
         <div class="card-body">
             <h2>
                 Player <span id="playerId">{{player.id_in_group}}</span> <span id="groupPlayerId" style="display:none">{{player.id_in_group}}</span>
+                <span id="rand">{{rand}}</span>
             </h2>
         </div>
     </div>
@@ -32,12 +35,13 @@
     <div id="app">
         <div class="panel game">
             <div id="officerGame" v-if="isOfficer">
-                <police-game-component :properties="properties" :officer-units="officerUnits" v-on:token-update="tokenUpdate"></police-game-component>
+                <police-game-component :properties="properties" :officer-units="officerTokens" v-on:token-update="tokenUpdate"></police-game-component>
             </div>
             <div id="harvestGame" v-else>
                 <harvest-items-component class="harvest" v-show="harvest" style="display:flex;"></harvest-items-component>
-                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId" :player-location="playerLocation" v-on:location-update="locationUpdate"></steal-game-component>
+                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId" :player-location="playerLocation" :steal-notification="stealNotification" v-on:location-update="locationUpdate"></steal-game-component>
             </div>
+            <button v-show="!isOfficer" @click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
         </div>
         <div class="panel status">
             <div class="balance-container">
@@ -52,7 +56,6 @@
                     </div>
                 </div>  
             </div>
-            <button v-show="!isOfficer" @click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
         </div>
         {% endverbatim %}
         <!-- <span>Location: [[ picked ]]</span> -->
@@ -83,47 +86,40 @@
             message: 'No players have moved yet!',
             singleMessage: null,
             activeLocation: -1,
-            locations: [],
             properties: [],
             locationCount: 5,
             picked: true,
             chatSock: null,
             balance: 0,
             harvestItems: [],
-            officerUnits: [],
+            officerTokens: [],
+            stealNotification: "",
         },
         created: function() {
 
-            // generate objects for officer tokens
-            for (let i = 1; i<=5; i++)
-                this.officerUnits.push({num: i, property: null, x: null, y: null}) //todo change num to id from api when loading from rendered template into javascript
-
-            this.player = JSON.parse(player)
+            this.player = JSON.parse(player);
 
             this.playerId = document.getElementById('playerId').textContent;
             this.playerGroupId = document.getElementById('groupPlayerId').textContent;
             this.isOfficer = this.playerGroupId == 1
+
+            // delete this
+            let rand = document.getElementById('rand');
+            console.log('rand', rand);
 
             if (!this.isOfficer) {
                 //todo: load location from db
                 this.playerLocation = {'player': this.playerGroupId, 'property': this.player.property, 'x': this.player.x, 'y': this.player.y} // todo integrate this into app
             } else if (this.isOfficer) {
                 //todo: load officer locations
-            }
-
-            const harvestItemNames = ['a', 'b', 'c', 'd'];
-
-            // load harvest data
-            for(let i = 0; i < harvestItemNames.length; i++) {
-                this.harvestItems.push({id: i, name: harvestItemNames[i]});
+                // generate objects for officer tokens
+                //let officerTokens = JSON.parse(otokens)
+                this.officerTokens = JSON.parse(otokens)
+                console.log(this.officerTokens);
             }
 
             // get player properties
             this.properties = [1, 2, 3, 4];
-
-            for (let i = 0; i < this.locationCount; i++) {
-                this.locations.push({name: i, isActive: false})
-            }
 
             let that = this;
             this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId +'/'),
@@ -143,18 +139,19 @@
                         that.addMessage("P" + i.player + " - Property" + i.property + " - Location: " + Math.round(10*i.x)/10 + ", " + Math.round(10*i.y)/10)
                         that.showIntersection(i)
                         if(i.player == that.playerId) {
-                            that.qwerty()
+                            that.resetLocation()
                         }
                     })
                 }
             };
 
             this.gameSocket.onclose = function(e) {
+                alert('chat socket closed');
                 console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
             };
         },
         methods: {
-            qwerty: function() {
+            resetLocation: function() {
                 gsap.to('#location', .5, {x: 0, y: 0})
                 //gsap.to('#locationrect', {fill: 'purple'})
                 // snap back
@@ -182,45 +179,23 @@
                 }));
             },
             showIntersection: function(i) {
+                let isSelf = i.player == this.playerId
+                if (isSelf) {
+                    this.stealNotification = "You were caught!"
+                    let that = this
+                    setTimeout(function(){ that.stealNotification = ''; }, 2000);
+                }
+                debugger;
                 let selector = '#indicator' + i.property + '-' + i.player
                 gsap.to(selector, 0, {left: i.x-15, top: i.y-10})
                 gsap.to(selector, {visibility: 'visible'})
                 gsap.to(selector, {visibility: 'hidden', delay: 2})
-            },
-            select: function(id) {
-                this.location=id
-            },
-            throttle: function(n) {
-                for (let i = 0; i < n; i++) {
-                    this.gameSocket.send(JSON.stringify({
-                        'test': 'test send by player: ' + this.playerId 
-                    }));
-                }
-            },
-            resetLocation() {
-                this.locations.forEach(function (location) {
-                    location.isActive = false;
-                });
-            },
-            updateLocation(x) {
-                if (this.activeLocation == x.name)
-                    return;
-
-                this.resetLocation() //todo: prob remove this old game logic
-                x.isActive = true;
-                this.activeLocation = x.name;
-
-                this.gameSocket.send(JSON.stringify({
-                    'p_id': this.playerId,
-                    'location': x.name
-                }));
             },
             addMessage(message) {
                 if (message['test']) {
                     this.singleMessage = message['test']
                     return;
                 }
-
                 this.messages.push(message)
             }
         },
