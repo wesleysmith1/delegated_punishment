@@ -37,16 +37,19 @@ class GameConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
 
+        PADDING_SIZE = 10
+        PADDING_SIZE_LONG = 25
+
         # todo: save block size somewhere else
         block_size = 50
 
         data_json = json.loads(text_data)
-        print(data_json)
+        # print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id']
         player = Player.objects.get(pk=player_id)
-        group = Group.objects.get(pk=group_id)
+        group = Group.objects.get(pk=group_id) # can we delete this? is it more efficient to search my pk rather than django object
 
         intersections = []
 
@@ -55,32 +58,32 @@ class GameConsumer(WebsocketConsumer):
             token_num = token_update['number']
             # token = OfficerToken.objects.filter(group=group, number=token_num)[0] #this breaks sucka
             try:
-                print('LOOKUP TOKEN NUMBER - GROUP: ' + str(token_num) + ' - ' + str(group.pk))
                 token = OfficerToken.objects.get(group=group, number=token_num)
             except OfficerToken.DoesNotExist:
                 token = None
                 print('NO TOKEN WAS FOUND BRAP BRAP')
 
-            if token:
-                print('TOKEN ON PROPERTY ' + str(token.property))
+            # if token:
+            #     print('TOKEN ON PROPERTY ' + str(token.property))
+
             token.property = token_update['property']
             if token.property == 11:
-                print('TOKEN ADDED TO INVESTIGATION')
+                print("TOKEN --{}-- SET TO INVESTIGATE".format(token_num))
                 token.save()
             else:
                 token.x = token_update['x']
                 token.y = token_update['y']
                 token.save()
-                print('\t LOCATION: ' + str(token.x) + ',' + str(token.y))
+                print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token_num, token.property, token.x, token.y))
                 players_in_prop = Player.objects.filter(group=group, property=token.property)
-                print(' \t THERE ARE ' + str(len(players_in_prop)) + ' PLAYERS IN THIS PROPERTY')
+                print("THERE ARE {} PLAYERS IN PROPERTY {}".format(len(players_in_prop), token.property))
 
                 if players_in_prop:
                     for p in players_in_prop:
                         # intersections = Dict
-                        print('\t\tPLAYER:' + str(p.pk) + " X: " + str(p.x) + " Y: " + str(p.y))
+                        print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('PLAYER'.ljust(PADDING_SIZE_LONG), p.pk, p.property, p.x, p.y))
                         if token.x <= p.x <= (token.x + block_size) and token.y <= p.y <= (token.y + block_size):
-                            print('\t\tINTERSECTION')
+                            print('{} {} AND PLAYER {}'.format('INTERSECTION BETWEEN TOKEN'.ljust(PADDING_SIZE_LONG),token.number, p.pk))
 
                             # create intersection data
                             data = {'player': p.pk, 'y': p.y, 'x': p.x, 'property': p.property, 'token': token.number}
@@ -108,14 +111,15 @@ class GameConsumer(WebsocketConsumer):
             player.y = steal_location['y'] #todo: add this later so we only save once, not here then again after intersection
             player.property = steal_location['property']
             player.save()
-            print('STEAL ON PROPERTY ' + str(steal_location['property']))
+            print("{} -- {} -- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(PADDING_SIZE_LONG), player.pk, player.property, player.x, player.y))
             # check for intersections
             tokens = OfficerToken.objects.filter(group=group, number=player.property)
-            print(' \t THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS PROPERTY')
+            print('THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS PROPERTY')
+            print("THERE ARE {} TOKENS IN PROPERTY {}".format(len(tokens), player.property))
 
             if tokens:
                 for token in tokens:
-                    print('\t\tTOKEN:' + str(token.pk) + " X: " + str(token.x) + " Y: " + str(token.y))
+                    print("{} -- {}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token.number, token.property, token.x, token.y))
                     if token.x <= player.x <= (token.x + block_size) and token.y <= player.y <= (token.y + block_size):
                         print('\t\tINTERSECTION')
 
@@ -131,7 +135,7 @@ class GameConsumer(WebsocketConsumer):
 
         if len(intersections) > 0:
             num_investigators = OfficerToken.objects.filter(group=group, number=11)
-            print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
+            print('INVESTIGATION TOKEN COUNT: ' + str(len(num_investigators)))
             if len(num_investigators) > 0:
                 for inter in intersections:
                     # MULTINULI PUNISH?
@@ -149,7 +153,7 @@ class GameConsumer(WebsocketConsumer):
                 # todo: do we record but don't punish here?
                 print('THERE ARE NO TOKENS IN INVESTIGATIONS')
 
-        print('passed logic')
+        print('END TRANSACTION\n')
 
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
