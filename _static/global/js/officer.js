@@ -51,9 +51,9 @@ let buttonLocationComponent = {
         let drag = Draggable.create("#unit" + i, {
           zIndexBoost: false,
           bounds: document.getElementById("officerGame"), //todo add ref stuff
-          // onDragStart: function() {
-          //   that.tokenDragStart(this, that.officerUnits[i])
-          // },
+          onDragStart: function() {
+            that.tokenDragStart(this, that.officerUnits[i])
+          },
           onDragEnd: function () {
             that.checkLocation(this, that.officerUnits[i])
           },
@@ -63,13 +63,14 @@ let buttonLocationComponent = {
     },
     methods: {
       tokenDragStart: function(that, item) {
-        this.property = 0
-        item.property = 0
-        item.x = -100
-        item.y = -100
-
-        // update api with unit location
-        this.updateOfficerToken(item);
+        console.log('DRAGGING TOKEN')
+        // this.property = 0
+        // item.property = 0
+        // item.x = -100
+        // item.y = -100
+        //
+        // // update api with unit location
+        // this.updateOfficerToken(item);
       },
       checkLocation: function (that, item) {
         if (that.hitTest(this.$refs.officergame, '100%')) {

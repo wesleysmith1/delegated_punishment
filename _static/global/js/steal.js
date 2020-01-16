@@ -25,6 +25,9 @@
         bounds: document.getElementById("steal-container"), //todo add ref stuff
         snap: function(val) {
         },
+        onDragStart: function() {
+          that.locationDragStart(this)
+        },
         onDragEnd: function() {
           that.checkLocation(this)
         },
@@ -43,6 +46,19 @@
       //   }
     },
       methods: {
+          locationDragStart: function(that) {
+              console.log('dragging location');
+              // if (this.property <= 0) {
+              //     console.log("not dragging from active location")
+              //     return;
+              // }
+              //
+              //   gsap.to('#locationrect', {fill: 'greed'})
+              //   let location = this.$refs.location.getBoundingClientRect()
+              //   this.locationx = -100
+              //   this.locationy = -100
+              //   this.$emit('location-update', {x: this.locationx, y: this.locationy, property: 0});
+          },
           checkLocation: function(that) {
             if(that.hitTest(this.$refs.htarget, '100%')){
               //location-center
@@ -62,9 +78,8 @@
                   gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
                   gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
               }
-
             } else{
-                  gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
+                 gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
                  gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
             }
           },

@@ -192,19 +192,20 @@
                 // snap back
             },
             tokenUpdate: function(token) {
-                this.gameSocket.send(JSON.stringify({
-                    'token': token,
-                    'player_id': this.playerId,
-                    'group_id': 1, //todo fix this to be variable group id
-                }));
+                console.log(token)
+                //this.gameSocket.send(JSON.stringify({
+                 //   'token': token,
+                //    'player_id': this.playerId,
+               //     'group_id': 1, //todo fix this to be variable group id
+               // }));
             },
             locationUpdate: function(location) {
                 console.log(location)
-                this.gameSocket.send(JSON.stringify({
-                    'steal': location,
-                    'player_id': this.playerId,
-                    'group_id': 1, //todo fix this to be variable group id
-                }));
+                //this.gameSocket.send(JSON.stringify({
+                 //   'steal': location,
+                 //   'player_id': this.playerId,
+                 //   'group_id': 1, //todo fix this to be variable group id
+                //}));
             },
             showIntersection: function(i) {
                 let isSelf = i.player == this.playerId

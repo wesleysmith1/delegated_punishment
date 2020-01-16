@@ -89,7 +89,7 @@ class Player(BasePlayer):
             return self.balance
         elif not self.last_updated:
             return -99
-        else: 
+        else:
             return self.balance + self.roi * ((date_now_milli() - self.last_updated)/1000)%60
 
     def increase_roi(self):
@@ -122,3 +122,23 @@ class OfficerToken(Model):
 
     def to_dict(self):
         return {"number": self.number, "property": self.property, "x": self.x, "y": self.y}
+
+class GameData(Model):
+    experiment_start = models.FloatField(blank=True)
+    global_parameters = models.StringField(blank=True)
+    session_id = models.IntegerField(blank=True)
+    payment_scheme = models.IntegerField(blank=True)
+    income_distribution = models.IntegerField(blank=True)
+    player_id = models.IntegerField(blank=True)
+    player_role = models.IntegerField(blank=True)
+    period = models.IntegerField(blank=True)
+    current_time = models.FloatField(blank=True)
+    balance = models.FloatField(blank=True)
+    screen = models.IntegerField(blank=True)
+    steal_token = models.StringField(blank=True)
+    production_inputs = models.StringField(blank=True)
+    punished = models.IntegerField(blank=True)
+    defendTokens = models.StringField(blank=True)
+    punishment_events = models.StringField(blank=True)
+
+    # frame number?

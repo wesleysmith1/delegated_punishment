@@ -5,7 +5,7 @@ import datetime
 from random import random
 import numpy as np
 
-from delegated_punishment.models import Player, Group, OfficerToken, Constants
+from delegated_punishment.models import Player, Group, OfficerToken, Constants, GameData
 
 
 def date_now_milli(): # todo: move this to another file
