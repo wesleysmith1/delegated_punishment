@@ -175,7 +175,7 @@
                             'group_id': 1,
                         }));
                     } else {
-                        console.log('the web socket is not connected')
+                        // console.log('the web socket is not connected')
                     }
                 }, 1000);
             },
@@ -192,7 +192,7 @@
                 // snap back
             },
             tokenUpdate: function(token) {
-                console.log(token)
+                // console.log(token)
                 this.gameSocket.send(JSON.stringify({
                     'token': token,
                     'player_id': this.playerId,
@@ -200,7 +200,7 @@
                 }));
             },
             locationUpdate: function(location) {
-                console.log(location)
+                // console.log(location)
                 this.gameSocket.send(JSON.stringify({
                     'steal': location,
                     'player_id': this.playerId,

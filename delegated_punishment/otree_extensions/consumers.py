@@ -28,7 +28,7 @@ class GameConsumer(WebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
-        print("DISCONNECTING")
+        # print("DISCONNECTING")
         # async_to_sync(self.channel_layer.group_discard)(
         #     self.room_group_name,
         #     self.channel_name
@@ -44,7 +44,7 @@ class GameConsumer(WebsocketConsumer):
         PADDING_SIZE_LONG = 25
 
         data_json = json.loads(text_data)
-        print(data_json)
+        # print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id'] #todo make this player_id_in_group?
@@ -72,12 +72,12 @@ class GameConsumer(WebsocketConsumer):
                     token = OfficerToken.objects.get(group=group, number=token_num) # todo this will error if there are more than one result
                 except OfficerToken.DoesNotExist:
                     token = None
-                    print('NO TOKEN WAS FOUND')
+                    # print('NO TOKEN WAS FOUND')
                     # todo: research how we should exit here to prevent executing any more code
 
                 token.property = token_update['property']
                 if token.property == 11:
-                    print("TOKEN --{}-- SET TO INVESTIGATE".format(token_num))
+                    # print("TOKEN --{}-- SET TO INVESTIGATE".format(token_num))
                     token.x = -1
                     token.y = -1
                     token.save()
@@ -87,16 +87,16 @@ class GameConsumer(WebsocketConsumer):
                     token.save()
                     players_in_prop = Player.objects.filter(group=group, property=token.property)
 
-                    print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token_num, token.property, token.x, token.y))
-                    print("THERE ARE {} PLAYERS IN PROPERTY {}".format(len(players_in_prop), token.property))
+                    # print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token_num, token.property, token.x, token.y))
+                    # print("THERE ARE {} PLAYERS IN PROPERTY {}".format(len(players_in_prop), token.property))
 
                     if players_in_prop:
                         for p in players_in_prop:
                             # intersections = Dict
-                            print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('PLAYER'.ljust(PADDING_SIZE_LONG), p.pk, p.property, p.x, p.y))
+                            # print("{} --{}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('PLAYER'.ljust(PADDING_SIZE_LONG), p.pk, p.property, p.x, p.y))
                             if token.x <= p.x <= (token.x + Constants.officer_token_size) and token.y <= p.y <= (token.y + Constants.officer_token_size):
 
-                                print('{} {} AND PLAYER {}'.format('INTERSECTION BETWEEN TOKEN'.ljust(PADDING_SIZE_LONG), token.number, p.pk))
+                                # print('{} {} AND PLAYER {}'.format('INTERSECTION BETWEEN TOKEN'.ljust(PADDING_SIZE_LONG), token.number, p.pk))
 
                                 # create intersection data
                                 data = {'player': p.pk, 'y': p.y, 'x': p.x, 'property': p.property, 'token': token.number}
@@ -120,7 +120,7 @@ class GameConsumer(WebsocketConsumer):
                                 p.y = -1
                                 p.last_updated = date_now_milli()
                                 p.save()
-                                print("PLAYER {} UPDATED AT {:6.2f}".format(p.pk, p.last_updated))
+                                # print("PLAYER {} UPDATED AT {:6.2f}".format(p.pk, p.last_updated))
 
             if data_json.get('harvest'):
                 harvest_status = data_json['harvest']
@@ -131,8 +131,8 @@ class GameConsumer(WebsocketConsumer):
                     player.balance = player.balance + Constants.civilian_income
                     player.harvest_status = 0
 
-                print("PLAYER {} UPDATED HARVEST STATUS TO {}".format(player.pk, player.harvest_status))
-                print("PLAYER BALANCE: {}".format(player.balance))
+                # print("PLAYER {} UPDATED HARVEST STATUS TO {}".format(player.pk, player.harvest_status))
+                # print("PLAYER BALANCE: {}".format(player.balance))
                 player.save()
 
             if data_json.get('steal'):
@@ -146,18 +146,18 @@ class GameConsumer(WebsocketConsumer):
                 is_in_own_property = player.property == player.id_in_group
 
                 # player.save()
-                print("{} -- {} -- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(PADDING_SIZE_LONG), player.pk, player.property, player.x, player.y))
+                # print("{} -- {} -- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(PADDING_SIZE_LONG), player.pk, player.property, player.x, player.y))
 
                 # check for intersections
                 tokens = OfficerToken.objects.filter(group=group, property=player.property)
-                print('THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS PROPERTY')
-                print("THERE ARE {} TOKENS IN PROPERTY {}".format(len(tokens), player.property))
+                # print('THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS PROPERTY')
+                # print("THERE ARE {} TOKENS IN PROPERTY {}".format(len(tokens), player.property))
 
                 if tokens:
                     for token in tokens:
-                        print("{} -- {}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token.number, token.property, token.x, token.y))
+                        # print("{} -- {}-- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(PADDING_SIZE_LONG), token.number, token.property, token.x, token.y))
                         if token.x <= player.x <= (token.x + Constants.officer_token_size) and token.y <= player.y <= (token.y + Constants.officer_token_size):
-                            print('\t\tINTERSECTION')
+                            # print('\t\tINTERSECTION')
 
                             # create intersection data
                             data = {'player': player.pk, 'y': player.y, 'x': player.x, 'property': player.property, 'token': token.number}
@@ -182,16 +182,16 @@ class GameConsumer(WebsocketConsumer):
                     victim.save()
 
                 player.last_updated = date_now_milli()
-                print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
+                # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
 
             num_investigators = len(OfficerToken.objects.filter(group=group, property=11))
-            print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
+            # print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
             if num_investigators > 0:
                 for inter in intersections:
                     # MULTINULI PUNISH?
-                    print(inter)
-                    print('\t\tSTARTING NUMPY CALCULATIONS')
+                    # print(inter)
+                    # print('\t\tSTARTING NUMPY CALCULATIONS')
                     guilty = inter['player']
                     innocent = inter['property']
                     # police = 0
@@ -201,7 +201,7 @@ class GameConsumer(WebsocketConsumer):
                     # subtract 1 for 0 based index
                     multi[guilty - 1] = guilty_prob
                     multi[innocent - 1] = innocent_prob
-                    print('\t\tMULTI' + str(multi))
+                    # print('\t\tMULTI' + str(multi))
 
                     result = np.random.multinomial(1, multi, 1)[0]
                     convicted_player = -1
@@ -210,17 +210,17 @@ class GameConsumer(WebsocketConsumer):
                         if result[i] == 1:
                             convicted_pid = int(i + 1)
                             break
-                    print('\t\tHERE IS THE NUMPY RESULT ' + str(result))
+                    # print('\t\tHERE IS THE NUMPY RESULT ' + str(result))
 
                     # updated convicted plater balance
-                    print('CONVICTED PLAYER: ' + str(convicted_pid))
+                    # print('CONVICTED PLAYER: ' + str(convicted_pid))
                     convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid)
                     convicted_player.balance -= Constants.civilian_conviction_amount
                     convicted_player.save()
 
                     # CALCULATE IF INTERSECTION WILL BE REVIEWED?
                     audit = np.random.binomial(1, Constants.officer_review_probability)  # todo check the syntax on this
-                    print('HERE IS THE AUDIT RESULT: ' + str(audit))
+                    # print('HERE IS THE AUDIT RESULT: ' + str(audit))
 
                     # UPDATE OFFICER BALANCE
                     officer = Player.objects.get(group=group, id_in_group=1)
@@ -235,9 +235,9 @@ class GameConsumer(WebsocketConsumer):
                     inter['officer_bonus'] = Constants.officer_intersection_payout
                     inter['officer_reprimand'] = Constants.officer_reprimand_amount
                 else:
-                    print('THERE ARE NO TOKENS IN INVESTIGATIONS')
+                    # print('THERE ARE NO TOKENS IN INVESTIGATIONS')
 
-            print('END TRANSACTION\n')
+            # print('END TRANSACTION\n')
 
             #todo do we have to return something here? like if a harvest confirmation?
             async_to_sync(self.channel_layer.group_send)(
