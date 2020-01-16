@@ -108,7 +108,7 @@
 
             // delete this
             let rand = document.getElementById('rand');
-            console.log('rand', rand);
+            // console.log('rand', rand);
 
             if (!this.isOfficer) {
                 //todo: load location from db
@@ -118,7 +118,7 @@
                 // generate objects for officer tokens
                 //let officerTokens = JSON.parse(otokens)
                 this.officerTokens = JSON.parse(otokens)
-                console.log(this.officerTokens);
+                // console.log(this.officerTokens);
             }
 
             // get player properties
@@ -127,7 +127,7 @@
             let that = this;
             this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId +'/'),
             this.gameSocket.onmessage = function(e) {
-                console.log(e.data);
+                // console.log(e.data);
                 let data = JSON.parse(e.data);
                 if (data.general) {
                     let message = "general message"
@@ -137,7 +137,7 @@
                     that.addMessage(message)
                 } else if (data.intersections) {
                     data.intersections.forEach(function(i) {
-                        console.log('intersection: ', i)
+                        // console.log('intersection: ', i)
 
                         if (i.convicted)
                             that.addMessage("Civ punished " + i.convicted + " | Officer bonus" + i.officer_bonus + " - Officer Reprimand: " + i.officer_reprimand)
@@ -150,7 +150,7 @@
                         }
                     })
                 } else { // todo set up a better condition here. it should be
-                    console.log(data)
+                    // console.log(data)
                     that.balance = Math.floor(data.balance);
                     that.roi = data.roi
                 }
@@ -167,7 +167,7 @@
             subscribeToBalance: function() {
                 let that = this
                 setInterval(function() {
-                    console.log('interval')
+                    // console.log('interval')
                     if (that.gameSocket.readyState == WebSocket.OPEN) {
                         that.gameSocket.send(JSON.stringify({
                             'balance': true,
@@ -177,7 +177,7 @@
                     } else {
                         console.log('the web socket is not connected')
                     }
-                }, 5000);
+                }, 1000);
             },
             harvestUpdate: function(status) {
                 this.gameSocket.send(JSON.stringify({
@@ -193,19 +193,19 @@
             },
             tokenUpdate: function(token) {
                 console.log(token)
-                //this.gameSocket.send(JSON.stringify({
-                 //   'token': token,
-                //    'player_id': this.playerId,
-               //     'group_id': 1, //todo fix this to be variable group id
-               // }));
+                this.gameSocket.send(JSON.stringify({
+                    'token': token,
+                    'player_id': this.playerId,
+                    'group_id': 1, //todo fix this to be variable group id
+                }));
             },
             locationUpdate: function(location) {
                 console.log(location)
-                //this.gameSocket.send(JSON.stringify({
-                 //   'steal': location,
-                 //   'player_id': this.playerId,
-                 //   'group_id': 1, //todo fix this to be variable group id
-                //}));
+                this.gameSocket.send(JSON.stringify({
+                    'steal': location,
+                    'player_id': this.playerId,
+                    'group_id': 1, //todo fix this to be variable group id
+                }));
             },
             showIntersection: function(i) {
                 let isSelf = i.player == this.playerId

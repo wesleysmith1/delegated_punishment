@@ -22,13 +22,13 @@ class Constants(BaseConstants):
     players_per_group = 5
     num_rounds = 1  # todo
 
-    civilian_income = 100  # y: todo make this change per harvest cycle (WILL CHANGE BETWEEN PERIOD GROUPS)
-    civilian_steal_rate = 1  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
-    civilian_conviction_amount = 150
+    civilian_income = 40  # y: todo make this change per harvest cycle (WILL CHANGE BETWEEN PERIOD GROUPS)
+    civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+    civilian_conviction_amount = 540
 
-    officer_intersection_payout = 50  # b: how much officer makes for intersection
-    officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
-    officer_reprimand_amount = 150  # P punishment for officer if innocent civilian is punished
+    officer_intersection_payout = 10  # b: how much officer makes for intersection
+    officer_review_probability = .1  # THETA: chance that an intersection result will be reviewed
+    officer_reprimand_amount = 100  # P punishment for officer if innocent civilian is punished
 
     officer_token_size = 50  # this is the size of the tokens that players with role of officer drag around
     epoch = datetime.datetime.utcfromtimestamp(0)

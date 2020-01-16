@@ -18,7 +18,7 @@ https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#o-tree-serve
 ---
 # Install latest release
 
-Login to server `ssh ubuntu@34.221.168.234`
+Login to server `ssh ubuntu@34.215.160.83`
 
 To initially install
 ```bash
