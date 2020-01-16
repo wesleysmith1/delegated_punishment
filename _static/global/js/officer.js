@@ -118,7 +118,7 @@ let buttonLocationComponent = {
         <div class="officer" style="display:flex;">
           <div class="game" ref="officergame">
               <div class="upper">             
-                <div style="display: flex">
+                <div style="display: flex; justify-content: space-between;">
                   <div class="property other" v-for="property in properties" v-bind:player-id="(property+1)" :id='"prop" + (property+1)' :ref='"prop" + (property+1)'>
                     {{property+1}}
                     <!-- svg indicator id format: property-player-->

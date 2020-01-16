@@ -17,11 +17,11 @@ class Introduction(Page):
 
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
-        vars_dict['rand'] = str(random() * 1000)
+        vars_dict['rand'] = str(random() * 1000) #todo: remove
         if self.player.id_in_group == 1:
             officer_tokens = OfficerToken.objects.filter(group=self.group)
-            for o in officer_tokens:
-                print('TOKEN - PROPERTY' + str(o.number) + '-' + str(o.property))
+            # for o in officer_tokens:
+                # print("TOKEN {} - PROPERTY  {} - X {:6.2f} - Y {:6.2f}".format(o.number, str(o.property), o.x, o.y)) #todo: these values are correct. Why are they not getting passed down to client?
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['otokens'] = json.dumps(results)
 

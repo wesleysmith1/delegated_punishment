@@ -38,14 +38,16 @@
                 <police-game-component :properties="properties" :officer-units="officerTokens" v-on:token-update="tokenUpdate"></police-game-component>
             </div>
             <div id="harvestGame" v-else>
-                <harvest-items-component class="harvest" v-show="harvest" style="display:flex;"></harvest-items-component>
+                <harvest-items-component class="harvest" v-show="harvest" style="display:flex;" v-on:harvest-update="harvestUpdate"></harvest-items-component>
                 <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId" :player-location="playerLocation" :steal-notification="stealNotification" v-on:location-update="locationUpdate"></steal-game-component>
             </div>
             <button v-show="!isOfficer" @click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
         </div>
         <div class="panel status">
             <div class="balance-container">
-                <div class="balance">Balance: {{balance}}</div>
+                <div>ROI: {{ roi }}</div>
+                <div class="balance-label">Balance</div>
+                <div class="balance"> {{balance}}</div>
             </div>
             <div class="notifications-container">
                 <div>Notifications: {{singleMessage}}</div>
@@ -91,6 +93,8 @@
             picked: true,
             chatSock: null,
             balance: 0,
+            roi: 0,
+            balanceIncreasing: true,
             harvestItems: [],
             officerTokens: [],
             stealNotification: "",
@@ -135,22 +139,50 @@
                 } else if (data.intersections) {
                     data.intersections.forEach(function(i) {
                         console.log('intersection: ', i)
-                        // animate
-                        that.addMessage("P" + i.player + " - Property" + i.property + " - Location: " + Math.round(10*i.x)/10 + ", " + Math.round(10*i.y)/10)
+
+                        that.addMessage("Civ punished " + i.convicted + " | Officer bonus" + i.officer_bonus + " - Officer Reprimand: " + i.officer_reprimand)
                         that.showIntersection(i)
                         if(i.player == that.playerId) {
                             that.resetLocation()
                         }
                     })
+                } else { // todo set up a better condition here. it should be
+                    console.log(data)
+                    that.balance = Math.floor(data.balance);
+                    that.roi = data.roi
                 }
             };
 
+            this.subscribeToBalance()
+
             this.gameSocket.onclose = function(e) {
-                alert('chat socket closed');
-                console.error('CHAT SOCKET CLOSED UNEXPECTEDLY');
+                alert('channel closed');
+                console.error('CHANNEL CLOSED UNEXPECTEDLY');
             };
         },
         methods: {
+            subscribeToBalance: function() {
+                let that = this
+                setInterval(function() {
+                    console.log('interval')
+                    if (that.gameSocket.readyState == WebSocket.OPEN) {
+                        that.gameSocket.send(JSON.stringify({
+                            'balance': true,
+                            'player_id': that.playerId,
+                            'group_id': 1,
+                        }));
+                    } else {
+                        console.log('the web socket is not connected brah')
+                    }
+                }, 5000);
+            },
+            harvestUpdate: function(status) {
+                this.gameSocket.send(JSON.stringify({
+                    'harvest': status, //current,
+                    'player_id': this.playerId,
+                    'group_id': 1,
+                }));
+            },
             resetLocation: function() {
                 gsap.to('#location', .5, {x: 0, y: 0})
                 //gsap.to('#locationrect', {fill: 'purple'})
@@ -171,13 +203,6 @@
                     'group_id': 1, //todo fix this to be variable group id
                 }));
             },
-            harvestUpdate: function(harvest) {
-                this.gameSocket.send(JSON.stringify({
-                    'harvest': harvest, //current,
-                    'player_id': this.player_id,
-                    'group_id': this.group_id,
-                }));
-            },
             showIntersection: function(i) {
                 let isSelf = i.player == this.playerId
                 if (isSelf) {
@@ -185,7 +210,6 @@
                     let that = this
                     setTimeout(function(){ that.stealNotification = ''; }, 2000);
                 }
-                debugger;
                 let selector = '#indicator' + i.property + '-' + i.player
                 gsap.to(selector, 0, {left: i.x-15, top: i.y-10})
                 gsap.to(selector, {visibility: 'visible'})

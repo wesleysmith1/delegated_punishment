@@ -22,21 +22,19 @@ let harvestItemsComponent = {
       checkLocation: function(that, id) {
         let index = that.target.attributes.index.value;
         if( index==this.currentStage && that.hitTest(this.$refs.htarget, '100%') ){
-          // $('#info').text('x: ' + targetX + ', y: ' + targetY );
+          //hide item and move it back to start
           var tl = gsap.timeline({onComplete: this.updateHarvestStatus});
           tl.to(that.target, .5, {autoAlpha:0});
           tl.to(that.target, {x:0, y:0});
-          // this.updateHarvestStatus()
+
         } else{
           gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
         }
       },
       updateHarvestStatus() {
         this.currentStage++;
-  
-        //todo update api with currentStage
-  
-  
+        // debugger;
+        this.$emit('harvest-update', {status: this.currentStage, });  
   
         if (this.currentStage == 4) {
           this.currentStage = 0; 
