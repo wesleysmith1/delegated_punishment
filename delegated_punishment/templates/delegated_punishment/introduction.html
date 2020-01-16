@@ -3,7 +3,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/Draggable.min.js"></script>
 
-<!-- <script src="{% static 'global/js/main.js' %}"></script> -->
 <script src="{% static 'global/js/officer.js' %}"></script>
 <script src="{% static 'global/js/harvest.js' %}"></script>
 <script src="{% static 'global/js/steal.js' %}"></script>
@@ -45,7 +44,7 @@
         </div>
         <div class="panel status">
             <div class="balance-container">
-                <div>ROI: {{ roi }}</div>
+                <div>DEBUG: ROI: {{ roi }}</div>
                 <div class="balance-label">Balance</div>
                 <div class="balance"> {{balance}}</div>
             </div>
@@ -56,7 +55,7 @@
                         <div v-if="playerId == message.p_id">You: {{message}}</div>
                         <div v-else><b>{{message}}</b></div>
                     </div>
-                </div>  
+                </div>
             </div>
         </div>
         {% endverbatim %}
@@ -140,7 +139,11 @@
                     data.intersections.forEach(function(i) {
                         console.log('intersection: ', i)
 
-                        that.addMessage("Civ punished " + i.convicted + " | Officer bonus" + i.officer_bonus + " - Officer Reprimand: " + i.officer_reprimand)
+                        if (i.convicted)
+                            that.addMessage("Civ punished " + i.convicted + " | Officer bonus" + i.officer_bonus + " - Officer Reprimand: " + i.officer_reprimand)
+                        else
+                            that.addMessage("NOBODY WAS CONVICTED")
+
                         that.showIntersection(i)
                         if(i.player == that.playerId) {
                             that.resetLocation()
@@ -172,7 +175,7 @@
                             'group_id': 1,
                         }));
                     } else {
-                        console.log('the web socket is not connected brah')
+                        console.log('the web socket is not connected')
                     }
                 }, 5000);
             },

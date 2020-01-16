@@ -51,6 +51,9 @@ let buttonLocationComponent = {
         let drag = Draggable.create("#unit" + i, {
           zIndexBoost: false,
           bounds: document.getElementById("officerGame"), //todo add ref stuff
+          // onDragStart: function() {
+          //   that.tokenDragStart(this, that.officerUnits[i])
+          // },
           onDragEnd: function () {
             that.checkLocation(this, that.officerUnits[i])
           },
@@ -59,6 +62,15 @@ let buttonLocationComponent = {
       }
     },
     methods: {
+      tokenDragStart: function(that, item) {
+        this.property = 0
+        item.property = 0
+        item.x = -100
+        item.y = -100
+
+        // update api with unit location
+        this.updateOfficerToken(item);
+      },
       checkLocation: function (that, item) {
         if (that.hitTest(this.$refs.officergame, '100%')) {
           //location-center
@@ -95,7 +107,7 @@ let buttonLocationComponent = {
           gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
         }
       },
-      calculateLocation(property, unitContext, item) {
+      calculateLocation(property, unitContext, item) { // todo: how is the function even working? make it: calculateLocation: function() {}
         if (this.probPunishInnocent < 100) this.probPunishInnocent = this.probPunishInnocent + 10; //todo fix this logic
 
         let unit = unitContext.target.getBoundingClientRect()
@@ -133,6 +145,7 @@ let buttonLocationComponent = {
                   </div>
                 </div>
                 <div style="margin: 10px">
+                <div>DEBUG:</div>
                   last dropped<br>
                   property: {{property}}<br>
                   x: {{locationx}}<br>
@@ -142,7 +155,10 @@ let buttonLocationComponent = {
               <div class="lower" style="display:flex;">
                 <police-log-component></police-log-component>
                 <div class="officer-data">
-                  Investgation
+                  <h3>Investgation</h3>
+                    <div>
+                      DEBUG: Investigation Token Count {{investigationTokens}} <br>  
+                    </div>
                   <div id="officer-detective-container" ref='detectivecontainer'></div>
   
                   Probability Punish Innocent {{probPunishInnocent}}

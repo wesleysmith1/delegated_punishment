@@ -11,57 +11,6 @@ from delegated_punishment.models import Player, Group, OfficerToken, Constants
 def date_now_milli(): # todo: move this to another file
     return (datetime.datetime.now() - Constants.epoch).total_seconds() * 1000.0
 
-def calculate_intersection_outcome(intersections, group):
-    num_investigators = len(OfficerToken.objects.filter(group=group, property=11))
-    print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
-    if num_investigators > 0:
-        for inter in intersections:
-            # MULTINULI PUNISH?
-            print(inter)
-            print('\t\tSTARTING NUMPY CALCULATIONS')
-            guilty = inter['player']
-            innocent = inter['property']
-            # police = 0
-            innocent_prob = 1 / 3 - num_investigators / 30
-            guilty_prob = 1 / 3 + 2 * num_investigators / 30
-            multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob]
-            # subtract 1 for 0 based index
-            multi[guilty - 1] = guilty_prob
-            multi[innocent - 1] = innocent_prob
-            print('\t\tMULTI' + str(multi))
-
-            result = np.random.multinomial(1, multi, 1)[0]
-            convicted_player = -1
-            # determine which player was convicted from result
-            for i in range(len(result)):  # search array for result ex; [0,1,0,0,0]
-                if result[i] == 1:
-                    convicted_pid = int(i + 1)
-                    break
-            print('\t\tHERE IS THE NUMPY RESULT ' + str(result))
-
-            # updated convicted plater balance
-            print('CONVICTED PLAYER: ' + str(convicted_pid))
-            convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid)
-            convicted_player.balance -= Constants.civilian_conviction_amount
-            convicted_player.save()
-
-            # CALCULATE IF INTERSECTION WILL BE REVIEWED?
-            audit = np.random.binomial(1, Constants.officer_review_probability)  # todo check the syntax on this
-            print('HERE IS THE AUDIT RESULT: ' + str(audit))
-
-            # UPDATE OFFICER BALANCE
-            officer = Player.objects.get(group=group, id_in_group=1)
-            officer.balance += Constants.officer_intersection_payout
-
-            if audit:
-                officer.balance -= Constants.officer_reprimand_amount
-            officer.save()
-
-            # update intersection object
-            inter['convicted'] = convicted_pid
-            inter['officer_bonus'] = Constants.officer_intersection_payout
-            inter['officer_reprimand'] = Constants.officer_reprimand_amount
-
 class GameConsumer(WebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -192,6 +141,10 @@ class GameConsumer(WebsocketConsumer):
                 player.x = steal_location['x']
                 player.y = steal_location['y'] #todo: add this later so we only save once, not here then again after intersection
                 player.property = steal_location['property']
+
+                #todo: if player is in own property we should just save their property=0, x=-100, y=-100, update roi if they were in another property before, last_updated
+                is_in_own_property = player.property == player.id_in_group
+
                 # player.save()
                 print("{} -- {} -- PROPERTY: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(PADDING_SIZE_LONG), player.pk, player.property, player.x, player.y))
 
@@ -232,11 +185,57 @@ class GameConsumer(WebsocketConsumer):
                 print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
 
-            if len(intersections) > 0:
-                calculate_intersection_outcome(intersections, group)
-            else:
-                # todo: do we record but don't punish here?
-                print('THERE ARE NO TOKENS IN INVESTIGATIONS')
+            num_investigators = len(OfficerToken.objects.filter(group=group, property=11))
+            print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
+            if num_investigators > 0:
+                for inter in intersections:
+                    # MULTINULI PUNISH?
+                    print(inter)
+                    print('\t\tSTARTING NUMPY CALCULATIONS')
+                    guilty = inter['player']
+                    innocent = inter['property']
+                    # police = 0
+                    innocent_prob = 1 / 3 - num_investigators / 30
+                    guilty_prob = 1 / 3 + 2 * num_investigators / 30
+                    multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob]
+                    # subtract 1 for 0 based index
+                    multi[guilty - 1] = guilty_prob
+                    multi[innocent - 1] = innocent_prob
+                    print('\t\tMULTI' + str(multi))
+
+                    result = np.random.multinomial(1, multi, 1)[0]
+                    convicted_player = -1
+                    # determine which player was convicted from result
+                    for i in range(len(result)):  # search array for result ex; [0,1,0,0,0]
+                        if result[i] == 1:
+                            convicted_pid = int(i + 1)
+                            break
+                    print('\t\tHERE IS THE NUMPY RESULT ' + str(result))
+
+                    # updated convicted plater balance
+                    print('CONVICTED PLAYER: ' + str(convicted_pid))
+                    convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid)
+                    convicted_player.balance -= Constants.civilian_conviction_amount
+                    convicted_player.save()
+
+                    # CALCULATE IF INTERSECTION WILL BE REVIEWED?
+                    audit = np.random.binomial(1, Constants.officer_review_probability)  # todo check the syntax on this
+                    print('HERE IS THE AUDIT RESULT: ' + str(audit))
+
+                    # UPDATE OFFICER BALANCE
+                    officer = Player.objects.get(group=group, id_in_group=1)
+                    officer.balance += Constants.officer_intersection_payout
+
+                    if audit:
+                        officer.balance -= Constants.officer_reprimand_amount
+                    officer.save()
+
+                    # update intersection object
+                    inter['convicted'] = convicted_pid
+                    inter['officer_bonus'] = Constants.officer_intersection_payout
+                    inter['officer_reprimand'] = Constants.officer_reprimand_amount
+                else:
+                    print('THERE ARE NO TOKENS IN INVESTIGATIONS')
 
             print('END TRANSACTION\n')
 

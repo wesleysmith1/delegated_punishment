@@ -12,16 +12,16 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc=""
 )
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'django_db',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
-}
+# DATABASES = {
+# #     'default': {
+# #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+# #         'NAME': 'django_db',
+# #         'USER': 'postgres',
+# #         'PASSWORD': 'password',
+# #         'HOST': 'localhost',
+# #         'PORT': '5432'
+# #     }
+# # }
 
 
 SESSION_CONFIGS = [

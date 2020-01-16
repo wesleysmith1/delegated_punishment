@@ -48,7 +48,7 @@ let harvestItemsComponent = {
 
 
       if (this.currentStage == 4) {
-        this.currentStage = 0; 
+        this.currentStage = 0;
         gsap.to('#seed, #water, #plow, #harvest', 0.5, {autoAlpha:1});
       }
 
@@ -125,11 +125,11 @@ let stealComponent = {
             let property = document.getElementById('prop4').getBoundingClientRect()
             this.calculateLocation(property);
         } else {
-            gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref 
+            gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
         }
-        
+
       } else{
-        gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref 
+        gsap.to('#locationrect', .1, {fill: 'green'}) // todo make queryselector a vue ref
       }
     },
     calculateLocation(property) {
@@ -177,7 +177,7 @@ let stealGameComponent = {
       playerId: Number
     }
   },
-  template: 
+  template:
     `
     <div class="steal" style="display:flex; flex-wrap: wrap">
       <div class="game">
@@ -217,7 +217,7 @@ let officerUnitsComponent = {
         onDragEnd: function() {
           that.checkLocation(this)
         },
-        
+
       });
     }
   },
@@ -240,7 +240,7 @@ let officerUnitsComponent = {
         } else {
             // gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
         }
-        
+
       } else{
         // gsap.to(that.target, 0.5, {x:0, y:0, ease: Back.easeOut});
       }
@@ -251,7 +251,7 @@ let officerUnitsComponent = {
         this.locationy = location.y - property.y
     }
   },
-  template: 
+  template:
     `
       <div class="officer-units" style="display:flex; flex-wrap: flex;">
         <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
@@ -285,7 +285,7 @@ let policeGameComponent = {
   created: function() {
     this.locationx = '';
     this.locationy = '';
-    this.property = '';   
+    this.property = '';
   },
   mounted: function() {
     for (var i = 0; i < this.officerUnits.length; i++) {
@@ -334,7 +334,7 @@ let policeGameComponent = {
         this.locationy = unit.y - property.y
     }
   },
-  template: 
+  template:
     `
       <div class="officer" style="display:flex;">
         <div class="game" ref="officergame">
@@ -362,6 +362,7 @@ let policeGameComponent = {
                 <div id="officer-detective-container" ref='detectivecontainer'></div>
 
                 Probability Punish Innocent {{probPunishInnocent}} / 100
+                INVESTIGATION TOKEN COUNT: {{investigationTokens}}
                 <div class='bar'>
                   <div class="innocent" :style="{'width':(probPunishInnocent+'%')}">
                   </div>

@@ -77,7 +77,7 @@ class Player(BasePlayer):
         ]
     ) #todo: this field may not need to be stored here, instead just the history table
     roi = models.IntegerField(initial=0) # rate of increase per millisecond
-    balance = models.IntegerField(initial=0)
+    balance = models.FloatField(initial=0)
     harvest_status = models.IntegerField(initial=0)
 
     def other_players(self):
@@ -90,7 +90,7 @@ class Player(BasePlayer):
         elif not self.last_updated:
             return -99
         else: 
-            return self.balance + self.roi * (date_now_milli() - self.last_updated)
+            return self.balance + self.roi * ((date_now_milli() - self.last_updated)/1000)%60
 
     def increase_roi(self):
         # calculate balance
