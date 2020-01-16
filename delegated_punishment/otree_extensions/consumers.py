@@ -235,6 +235,7 @@ class GameConsumer(WebsocketConsumer):
                     inter['officer_bonus'] = Constants.officer_intersection_payout
                     inter['officer_reprimand'] = Constants.officer_reprimand_amount
                 else:
+                    pass
                     # print('THERE ARE NO TOKENS IN INVESTIGATIONS')
 
             # print('END TRANSACTION\n')
