@@ -1,7 +1,17 @@
+.police-log-container {
+    border-right: 1px solid black;
+    flex-grow: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .police-log {
-    width: 50%;
-    margin: 10px;
-    border: 1px solid black;
+    height: 45vh;
+
+    width: 100%;
+    margin: 50px;
 }
 .bar {
     height: 20px;
@@ -17,16 +27,18 @@
     background: blue;
 }
 .officer-data {
-    margin: 10px;
+    flex-grow: 1;
+    padding: 50px;
+    box-sizing: border-box;
 }
 .officer-units {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
 }
 .officer-unit {
     opacity: .5;
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
     background: green;
 }
 #officer-detective-container {
