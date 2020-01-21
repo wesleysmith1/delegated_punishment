@@ -1,11 +1,20 @@
 body {
-    /*margin: 0;*/ todo: remove margin from body
+    margin: 0;
+    /* background: black; */
 }
 #app {
     height: 100%;
     width: 100%;
     display: flex;
+    overflow: hidden;
 }
+
+.bar {
+    height: 20px;
+    width: 200px;
+    border: 1px solid black;
+}
+
 .steal {
     height: 100%;
 }
@@ -30,7 +39,7 @@ body {
     overflow-y: hidden;
     height: 90%;
     width: 100%;
-    border: 1px solid black;
+    /*border: 1px solid black;*/
 }
 .panel {
     position: relative;
@@ -42,14 +51,27 @@ body {
 }
 .toggle {
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: 10px;
+    bottom: 10px;
+    cursor: pointer;
 
+    min-width: 100px;
+    background: yellow;
+    border: 2px solid black;
     padding: 10px;
+    text-align: center;
+    border-radius: 25px;
 }
 .upper {
     height: 50%;
     border-bottom: 1px solid black;
+    padding: 50px;
+    box-sizing: border-box;
+}
+.upper-harvest {
+    height: 50%;
+    border-bottom: 1px solid black;
+    box-sizing: border-box;
 }
 .lower {
     height: 50%;
@@ -73,14 +95,27 @@ body {
 .balance {
     font-size: 75px;
 }
-.notifications-container {
-    height: 50%;
+
+.indicator {
+    position: relative;
+    left: 100px;
+    top: 100px;
+    visibility: hidden;
+    z-index: 900;
+}
+.title {
+    text-align: center;
+    font-size: 30px;
+    margin-bottom: 25px;
 }
 
+.title-small {
+    font-size: 20px;
+}
+
+/*property maps*/
 .property {
     position: relative;
-    /*margin: 10px;*/
-    /* padding: 10px; */
     width: 200px;
      min-width: 200px;
     max-width: 200px;
@@ -89,19 +124,61 @@ body {
     min-height: 200px;
 }
 
-.property.self {
-    background: darkgrey;
-}
-.property.other {
-    background: white;
-    border: 1px solid black;
-}
-.indicator {
-    position: relative;
-    left: 100px;
-    top: 100px;
-    visibility: hidden;
-    z-index: 900;
+.properties-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
 }
 
+.property-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.property-label {
+    text-align: center;
+}
+
+.property.self {
+    background: darkgrey;
+    border: 1px solid black;
+}
+.property.other {
+    border: 1px solid black;
+}
+
+.police-log-container {
+    flex-grow: 1;
+    border-right: 1px solid black;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.police-log {
+    border: 1px solid black;
+
+    height: 45vh;
+    width: 100%;
+    margin: 50px;
+}
+.notifications-container {
+    height: 50%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.notifications {
+    border: 1px solid black;
+    height: 45vh;
+
+    width: 100%;
+    margin: 50px;
+}
+
+.token-container {
+    margin: 25px;
+}
 

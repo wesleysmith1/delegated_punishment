@@ -7,25 +7,26 @@
 <script src="{% static 'global/js/harvest.js' %}"></script>
 <script src="{% static 'global/js/steal.js' %}"></script>
 
-<link rel="stylesheet" type="text/css" href="{% static 'global/styles/main.css' %}"></link>
 <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}"></link>
 <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}"></link>
 <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}"></link>
-
+<link rel="stylesheet" type="text/css" href="{% static 'global/styles/main.css' %}"></link>
 
 <script>
     // data is rendered on api here, then later read by vue instance
-    var rand = {{ rand }}
-    var player = {{ pjson|json }}
-    var otokens = {{ otokens|json }}
+    var player =
+    {{ pjson|json }}
+    var otokens =
+    {{ otokens|json }}
 </script>
 
 <div>
+    <!-- this section is where we pull data from rendered template -->
     <div class="card bg-light instructions" style="display: none">
         <div class="card-body">
             <h2>
-                Player <span id="playerId">{{player.id_in_group}}</span> <span id="groupPlayerId" style="display:none">{{player.id_in_group}}</span>
-                <span id="rand">{{rand}}</span>
+                Player <span id="playerId">{{ player.id_in_group }}</span> <span
+                    id="groupPlayerId">{{ player.id_in_group }}</span>
             </h2>
         </div>
     </div>
@@ -34,13 +35,39 @@
     <div id="app">
         <div class="panel game">
             <div id="officerGame" v-if="isOfficer">
-                <police-game-component :properties="properties" :officer-units="officerTokens" v-on:token-update="tokenUpdate"></police-game-component>
+                <police-game-component
+                        :properties="properties"
+                        :officer-units="officerTokens"
+                        :investigation-count=investigationCount
+                        :prob-culprit="probabilityCulprit"
+                        :prob-innocent="probabilityInnocent"
+                        @token-drag="tokenDrag"
+                        @token-update="tokenUpdate"
+                        @investigation-update="investigationUpdate">
+                </police-game-component>
             </div>
             <div id="harvestGame" v-else>
-                <harvest-items-component class="harvest" v-show="harvest" style="display:flex;" v-on:harvest-update="harvestUpdate"></harvest-items-component>
-                <steal-game-component v-show="!harvest" :properties="properties" :player-group-id="playerGroupId" :player-location="playerLocation" :steal-notification="stealNotification" v-on:location-update="locationUpdate"></steal-game-component>
+                <harvest-items-component
+                        v-if="harvest"
+                        class="harvest"
+                        style="display:flex;"
+                        :harvest-status="harvestStatus"
+                        @harvest-update="harvestUpdate">
+                </harvest-items-component>
+                <steal-game-component
+                        v-show="!harvest"
+                        :properties="properties"
+                        :player-group-id="playerGroupId"
+                        :player-location="playerLocation"
+                        :steal-notification="stealNotification"
+                        :investigation-count="investigationCount"
+                        :prob-culprit="probabilityCulprit"
+                        :prob-innocent="probabilityInnocent"
+                        @location-drag="locationDrag"
+                        @location-update="locationUpdate">
+                </steal-game-component>
             </div>
-            <button v-show="!isOfficer" @click='harvest = !harvest' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</button>
+            <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</div>
         </div>
         <div class="panel status">
             <div class="balance-container">
@@ -49,184 +76,257 @@
                 <div class="balance"> {{balance}}</div>
             </div>
             <div class="notifications-container">
-                <div>Notifications: {{singleMessage}}</div>
-                <div id="generalFeed" class="messageBox">
-                    <div v-for="message in messages">
-                        <div v-if="playerId == message.p_id">You: {{message}}</div>
-                        <div v-else><b>{{message}}</b></div>
+                <div class="notifications">
+                    <div id="generalFeed" class="messageBox">
+                        Notifications:
+                        <div v-for="message in messages">
+                            <div v-if="playerId == message.p_id">You: {{message}}</div>
+                            <div v-else><b>{{message}}</b></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {% endverbatim %}
-        <!-- <span>Location: [[ picked ]]</span> -->
     </div>
     {% verbatim %}
-<script>
+    <script>
 
-    var app = new Vue({
-        // delimiters: ['[[', ']]'],
-        el: '#app',
-        components: {
-            'button-location': buttonLocationComponent,
-            'police-log-component': policeLogComponent,
-            'property-component': propertyComponent,
-            'harvest-items-component': harvestItemsComponent,
-            'steal-game-component': stealGameComponent,
-            'police-game-component': policeGameComponent,
-        },
-        data: {
-            isOfficer: true,
-            harvest: false,
-            that: this,
-            player: {},
-            playerId: null,
-            playerGroupId: null,
-            playerLocation: {},
-            messages: [],
-            message: 'No players have moved yet!',
-            singleMessage: null,
-            activeLocation: -1,
-            properties: [],
-            locationCount: 5,
-            picked: true,
-            chatSock: null,
-            balance: 0,
-            roi: 0,
-            balanceIncreasing: true,
-            harvestItems: [],
-            officerTokens: [],
-            stealNotification: "",
-        },
-        created: function() {
+        let app = new Vue({
+            el: '#app',
+            components: {
+                'police-log-component': policeLogComponent,
+                'harvest-items-component': harvestItemsComponent,
+                'steal-game-component': stealGameComponent,
+                'police-game-component': policeGameComponent,
+                'probability-bar-component': probabilityBarComponent,
+            },
+            data: {
+                harvest: true,
+                that: this,
+                player: {},
+                isOfficer: true,
+                playerId: null,
+                playerGroupId: null,
+                playerLocation: {},
+                policeLogMessages : [],
+                messages: [],
+                singleMessage: null,
+                properties: [],
+                locationCount: 5,
+                balance: 0,
+                roi: 0,
+                harvestItems: [],
+                harvestStatus: 0,
+                officerTokens: [],
+                investigationCount: 0,
+                stealNotification: "",
+            },
+            created: function () {
 
-            this.player = JSON.parse(player);
+                this.player = JSON.parse(player);
 
-            this.playerId = document.getElementById('playerId').textContent;
-            this.playerGroupId = document.getElementById('groupPlayerId').textContent;
-            this.isOfficer = this.playerGroupId == 1
+                this.playerId = document.getElementById('playerId').textContent;
+                this.playerGroupId = document.getElementById('groupPlayerId').textContent;
+                this.isOfficer = this.playerGroupId == 1
 
-            // delete this
-            let rand = document.getElementById('rand');
-            // console.log('rand', rand);
+                // this code is for handling page refreshes
+                if (!this.isOfficer) {
+                    this.playerLocation = {
+                        'player': this.playerGroupId,
+                        'property': this.player.property,
+                        'x': this.player.x,
+                        'y': this.player.y
+                    } // todo integrate this into app
+                } else if (this.isOfficer) {
+                    this.officerTokens = JSON.parse(otokens)
+                }
 
-            if (!this.isOfficer) {
-                //todo: load location from db
-                this.playerLocation = {'player': this.playerGroupId, 'property': this.player.property, 'x': this.player.x, 'y': this.player.y} // todo integrate this into app
-            } else if (this.isOfficer) {
-                //todo: load officer locations
-                // generate objects for officer tokens
-                //let officerTokens = JSON.parse(otokens)
-                this.officerTokens = JSON.parse(otokens)
-                // console.log(this.officerTokens);
-            }
+                // player properties
+                this.properties = [1, 2, 3, 4]
 
-            // get player properties
-            this.properties = [1, 2, 3, 4];
+                let that = this;
+                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId + '/'),
+                    this.gameSocket.onmessage = function (e) {
+                        let data = JSON.parse(e.data);
+                        console.log('UPDATED GAME DATA FROM SERVER BELOW: ')
+                        console.log(data)
+                        if (data.personal) {
+                            let message = "personal message"
+                            that.addMessage(message)
+                        } else if (data.intersections) {
+                            data.intersections.forEach(function (i) {
+                                if (i.convicted)
+                                    that.addMessage("Civ punished " + i.convicted + " | Officer bonus " + i.officer_bonus + " | Officer Reprimand: " + (i.officer_reprimand ? i.officer_reprimand : 'N/A'))
+                                else
+                                    that.addMessage("NOBODY WAS CONVICTED")
 
-            let that = this;
-            this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId +'/'),
-            this.gameSocket.onmessage = function(e) {
-                // console.log(e.data);
-                let data = JSON.parse(e.data);
-                if (data.general) {
-                    let message = "general message"
-                    that.addMessage(message)
-                } else if (data.personal) {
-                    let message = "personal message"
-                    that.addMessage(message)
-                } else if (data.intersections) {
-                    data.intersections.forEach(function(i) {
-                        // console.log('intersection: ', i)
-
-                        if (i.convicted)
-                            that.addMessage("Civ punished " + i.convicted + " | Officer bonus" + i.officer_bonus + " - Officer Reprimand: " + i.officer_reprimand)
-                        else
-                            that.addMessage("NOBODY WAS CONVICTED")
-
-                        that.showIntersection(i)
-                        if(i.player == that.playerId) {
-                            that.resetLocation()
+                                that.showIntersection(i)
+                                if (i.player == that.playerId) {
+                                    that.resetLocation()
+                                }
+                            })
+                        } else if (data.balance) { // todo set up a better condition here. it should be
+                            that.balance = Math.floor(data.balance);
+                            that.roi = data.roi
+                        } else if (data.investigation_update) {
+                            console.log('INVESTIGATION RESULTS', data.investigation_update)
+                            that.investigationCount = data.investigation_update
                         }
-                    })
-                } else { // todo set up a better condition here. it should be
-                    // console.log(data)
-                    that.balance = Math.floor(data.balance);
-                    that.roi = data.roi
-                }
-            };
 
-            this.subscribeToBalance()
+                        // wezza delete this
+                        if (data.np_debug) {
+                            data.np_debug.forEach(function (np) {
+                                console.log('NUMPY DATA BELOW: ')
+                                console.log(np)
+                            })
+                        }
+                    };
 
-            this.gameSocket.onclose = function(e) {
-                alert('channel closed');
-                console.error('CHANNEL CLOSED UNEXPECTEDLY');
-            };
-        },
-        methods: {
-            subscribeToBalance: function() {
-                let that = this
-                setInterval(function() {
-                    // console.log('interval')
-                    if (that.gameSocket.readyState == WebSocket.OPEN) {
-                        that.gameSocket.send(JSON.stringify({
-                            'balance': true,
-                            'player_id': that.playerId,
-                            'group_id': 1,
-                        }));
-                    } else {
-                        // console.log('the web socket is not connected')
+                this.gameSocket.onclose = function (e) {
+                    alert('channel closed');
+                    console.error('CHANNEL CLOSED UNEXPECTEDLY');
+                };
+
+                // this.subscribeToBalance()
+            },
+            methods: {
+                toggle: function() {
+                    console.log('screen toggled')
+                    if (this.harvest) {
+                        this.harvestReset()
                     }
-                }, 1000);
-            },
-            harvestUpdate: function(status) {
-                this.gameSocket.send(JSON.stringify({
-                    'harvest': status, //current,
-                    'player_id': this.playerId,
-                    'group_id': 1,
-                }));
-            },
-            resetLocation: function() {
-                gsap.to('#location', .5, {x: 0, y: 0})
-                //gsap.to('#locationrect', {fill: 'purple'})
-                // snap back
-            },
-            tokenUpdate: function(token) {
-                // console.log(token)
-                this.gameSocket.send(JSON.stringify({
-                    'token': token,
-                    'player_id': this.playerId,
-                    'group_id': 1, //todo fix this to be variable group id
-                }));
-            },
-            locationUpdate: function(location) {
-                // console.log(location)
-                this.gameSocket.send(JSON.stringify({
-                    'steal': location,
-                    'player_id': this.playerId,
-                    'group_id': 1, //todo fix this to be variable group id
-                }));
-            },
-            showIntersection: function(i) {
-                let isSelf = i.player == this.playerId
-                if (isSelf) {
-                    this.stealNotification = "You were caught!"
+                    this.harvest = !this.harvest
+                },
+                harvestReset: function() {
+                    console.log('harvest reset');
+                    this.harvestStatus = 0;
+                    // screen was toggled and harvest needs to be reset
+                    this.gameSocket.send(JSON.stringify({
+                        'harvest': {status: -1},
+                        'player_id': this.playerId,
+                        'group_id': 1,
+                    }));
+                },
+                harvestUpdate: function (status) {
+                    this.harvestStatus++;
+                    console.log('harvest status: ' + this.harvestStatus)
+                    this.gameSocket.send(JSON.stringify({
+                        'harvest': {status: this.harvestStatus},
+                        'player_id': this.playerId,
+                        'group_id': 1,
+                    }));
+                    // reset harvest cycle
+                    if (this.harvestStatus == 4) {
+                        this.harvestStatus = 0;
+                        // reset harvest items
+                        gsap.to('#seed, #water, #plow, #harvest', 0, {autoAlpha: 1});
+                    }
+                },
+                subscribeToBalance: function () {
                     let that = this
-                    setTimeout(function(){ that.stealNotification = ''; }, 2000);
-                }
-                let selector = '#indicator' + i.property + '-' + i.player
-                gsap.to(selector, 0, {left: i.x-15, top: i.y-10})
-                gsap.to(selector, {visibility: 'visible'})
-                gsap.to(selector, {visibility: 'hidden', delay: 2})
+                    setInterval(function () {
+                        if (that.gameSocket.readyState == WebSocket.OPEN) {
+                            that.gameSocket.send(JSON.stringify({
+                                'balance': true,
+                                'player_id': that.playerId,
+                                'group_id': 1,
+                            }));
+                        } else {
+                            console.log('the web socket is not connected')
+                        }
+                    }, 1000);
+                },
+                resetLocation: function () {
+                    gsap.to('#location', .5, {x: 0, y: 0})
+                },
+                tokenDrag: function(token) {
+                    console.log('token drag')
+                    this.gameSocket.send(JSON.stringify({
+                        'defend_token_drag': token,
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo fix this to be variable group id
+                    }));
+                },
+                tokenUpdate: function (token) {
+                    console.log(token)
+                    this.gameSocket.send(JSON.stringify({
+                        'token': token,
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo fix this to be variable group id
+                    }));
+                },
+                investigationUpdate: function(item) {
+                    console.log('token ' + item.number + ' set to investigation')
+                    this.gameSocket.send(JSON.stringify({
+                        'investigation': item,
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo: fix this to be variable group id
+                    }));
+                },
+                locationDrag: function(location) {
+                    console.log('location drag')
+                    this.gameSocket.send(JSON.stringify({
+                        'location_token_drag': location,
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo fix this to be variable group id
+                    }));
+                },
+                locationUpdate: function (location) {
+                    console.log(location)
+                    this.gameSocket.send(JSON.stringify({
+                        'steal': location,
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo fix this to be variable group id
+                    }));
+                },
+                showIntersection: function (i) {
+                    let isSelf = i.player == this.playerId
+                    if (isSelf) {
+                        this.stealNotification = "You were caught!"
+                        let that = this
+                        setTimeout(function () {
+                            that.stealNotification = '';
+                        }, 2000);
+                    }
+
+                    let selector = '#indicator' + i.property + '-' + i.player
+                    let tl = gsap.timeline();
+                    let left = i.x - 10.5;
+                    let right = i.y - 2;
+                    console.log('INDICATOR AT ' + left + ',' + right)
+                    tl.to(selector, 0, {left: left, top: right});
+                    tl.to(selector, {visibility: 'visible'});
+                    tl.to(selector, {visibility: 'hidden', delay: 2})
+
+                },
+                addPoliceLogMessage: function(message) {
+                    this.policeLogMessages.push(message)
+                },
+                addMessage(message) {
+                    if (message['test']) {
+                        this.singleMessage = message['test']
+                        return;
+                    }
+                    this.messages.push(message)
+                },
             },
-            addMessage(message) {
-                if (message['test']) {
-                    this.singleMessage = message['test']
-                    return;
+            computed: {
+                probabilityCulprit() {
+                    if (this.investigationCount == 0)
+                        return 0
+                    else {
+                        return Math.floor((1 / 3 + 2 * (this.investigationCount) / 30) * 100)
+                    }
+                },
+                probabilityInnocent() {
+                    if (this.investigationCount == 0)
+                        return 0
+                    else {
+                        return Math.floor((1 / 3 - (this.investigationCount) / 30) * 100)
+                    }
                 }
-                this.messages.push(message)
-            }
-        },
-    });
-</script>
-{% endverbatim %}
+            },
+        });
+    </script>
+    {% endverbatim %}
