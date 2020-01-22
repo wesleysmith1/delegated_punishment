@@ -86,7 +86,7 @@ Launch google chrome and sign in students (JA1 ... JAN)
 
 
 Launch Homepage:
- * 34.215.160.83
+ * http://34.215.160.83
 
 Launch Individual Pages:
  * http://34.221.168.234/DelegatedPunishment?username=[+]&password=PoDjangos
