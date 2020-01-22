@@ -75,6 +75,7 @@ let policeGameComponent = {
     },
     methods: {
         tokenDragStart: function (that, item) {
+            //console.log(item)
             this.$emit('token-drag', item);
             // this.property = 0
             // item.property = 0
@@ -107,7 +108,7 @@ let policeGameComponent = {
                     item.property = 4
                     let property = document.getElementById('prop4').getBoundingClientRect()
                     this.calculateLocation(property, that, item);
-                } else if (that.hitTest(this.$refs.detectivecontainer, '100%')) {
+                } else if (that.hitTest(this.$refs.detectivecontainer, '100%')) { // todo: change detectivecontainer to investigationcontainer
                     // token added to investigation
                     // return if already in investigation
                     if (item.property == 11) {
