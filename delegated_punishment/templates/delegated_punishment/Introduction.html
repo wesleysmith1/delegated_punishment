@@ -140,6 +140,7 @@
                     } // todo integrate this into app
                 } else if (this.isOfficer) {
                     this.officerTokens = JSON.parse(otokens)
+                    //console.log(this.officerTokens)
                 }
 
                 // player properties
@@ -149,8 +150,8 @@
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId + '/'),
                     this.gameSocket.onmessage = function (e) {
                         let data = JSON.parse(e.data);
-                        console.log('UPDATED GAME DATA FROM SERVER BELOW: ')
-                        console.log(data)
+                        //console.log('UPDATED GAME DATA FROM SERVER BELOW: ')
+                        //console.log(data)
                         if (data.personal) {
                             let message = "personal message"
                             that.addMessage(message)
@@ -169,9 +170,9 @@
                         } else if (data.balance) { // todo set up a better condition here. it should be
                             that.balance = Math.floor(data.balance);
                             that.roi = data.roi
-                        } else if (data.investigation_update) {
-                            console.log('INVESTIGATION RESULTS', data.investigation_update)
+                        } else if (data.investigation_update || data.investigation_update === 0) { //todo: is there a way to not have to work around truthy 0=false issue?
                             that.investigationCount = data.investigation_update
+                            //console.log('INVESTIGATION RESULTS!', that.investigationCount)
                         }
 
                         // wezza delete this
@@ -188,18 +189,32 @@
                     console.error('CHANNEL CLOSED UNEXPECTEDLY');
                 };
 
-                // this.subscribeToBalance()
+                this.subscribeToBalance()
             },
             methods: {
                 toggle: function() {
-                    console.log('screen toggled')
+                    //console.log('screen toggled')
                     if (this.harvest) {
+                        // reset harvest status and send toggle event to db
                         this.harvestReset()
+                    } else {
+                        // send toggle event to db
+                        this.stealToggle()
                     }
                     this.harvest = !this.harvest
                 },
+                stealToggle: function() {
+                    console.log('player toggled to steal screen');
+                    // todo: find way to send this to api
+                    // screen was toggled to steal
+                    //this.gameSocket.send(JSON.stringify({
+                    //    'harvest': {status: -2},
+                    //    'player_id': this.playerId,
+                    //    'group_id': 1,
+                    //}));
+                },
                 harvestReset: function() {
-                    console.log('harvest reset');
+                    //console.log('harvest reset');
                     this.harvestStatus = 0;
                     // screen was toggled and harvest needs to be reset
                     this.gameSocket.send(JSON.stringify({
@@ -210,7 +225,7 @@
                 },
                 harvestUpdate: function (status) {
                     this.harvestStatus++;
-                    console.log('harvest status: ' + this.harvestStatus)
+                    //console.log('harvest status: ' + this.harvestStatus)
                     this.gameSocket.send(JSON.stringify({
                         'harvest': {status: this.harvestStatus},
                         'player_id': this.playerId,
@@ -241,7 +256,8 @@
                     gsap.to('#location', .5, {x: 0, y: 0})
                 },
                 tokenDrag: function(token) {
-                    console.log('token drag')
+                    //console.log('token drag')
+                    //console.log(token)
                     this.gameSocket.send(JSON.stringify({
                         'defend_token_drag': token,
                         'player_id': this.playerId,
@@ -249,7 +265,7 @@
                     }));
                 },
                 tokenUpdate: function (token) {
-                    console.log(token)
+                    //console.log(token)
                     this.gameSocket.send(JSON.stringify({
                         'token': token,
                         'player_id': this.playerId,
@@ -257,7 +273,10 @@
                     }));
                 },
                 investigationUpdate: function(item) {
-                    console.log('token ' + item.number + ' set to investigation')
+                    //console.log('token ' + item.number + ' set to investigation')
+                    //console.log(item)
+                    // inform the api that the ite is being dragged
+                    item.property = 0
                     this.gameSocket.send(JSON.stringify({
                         'investigation': item,
                         'player_id': this.playerId,
@@ -265,7 +284,7 @@
                     }));
                 },
                 locationDrag: function(location) {
-                    console.log('location drag')
+                    //console.log('location drag')
                     this.gameSocket.send(JSON.stringify({
                         'location_token_drag': location,
                         'player_id': this.playerId,
@@ -273,7 +292,7 @@
                     }));
                 },
                 locationUpdate: function (location) {
-                    console.log(location)
+                    //console.log(location)
                     this.gameSocket.send(JSON.stringify({
                         'steal': location,
                         'player_id': this.playerId,
@@ -294,7 +313,7 @@
                     let tl = gsap.timeline();
                     let left = i.x - 10.5;
                     let right = i.y - 2;
-                    console.log('INDICATOR AT ' + left + ',' + right)
+                    //console.log('INDICATOR AT ' + left + ',' + right)
                     tl.to(selector, 0, {left: left, top: right});
                     tl.to(selector, {visibility: 'visible'});
                     tl.to(selector, {visibility: 'hidden', delay: 2})

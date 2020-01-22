@@ -12,7 +12,7 @@ from otree.api import (
 from otree.db.models import Model, ForeignKey
 
 doc = """
-This Delegated Punishment game involves 2 players. Each demands for a portion of some
+This Delegated Punishment game involves 5 players. Each demands for a portion of some
 available amount. If the sum of demands is no larger than the available
 amount, both players get demanded portions. Otherwise, both get nothing.
 """
