@@ -26,7 +26,7 @@ To initially install
 cd $HOME
 git clone https://github.com/yelsew414/delegated_punishment.git
 cd $HOME/delegated_punishment
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 ```
 
@@ -85,7 +85,10 @@ Launch google chrome and sign in students (JA1 ... JAN)
 </br>
 
 
-Launcher:
+Launch Homepage:
+ * 34.215.160.83
+
+Launch Individual Pages:
  * http://34.221.168.234/DelegatedPunishment?username=[+]&password=PoDjangos
 AutoInc[x] tag 1
 
