@@ -1,0 +1,30 @@
+.notification-log-container {
+    border: 1px solid black;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    background: #eeeeee;
+    font-size: 30px;
+}
+.notification-log-container .notification-log-column {
+    border-right: 1px solid black;
+    flex: 1;
+}
+.notification-log-container .notification-log-column:last-child {
+    border-right: 0;
+}
+.notification-log-container .notification-log-column .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+    border-bottom: 1px solid black;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.notification-log-container .notification-log-column .content {
+    text-align: center;
+    height: 250px;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}

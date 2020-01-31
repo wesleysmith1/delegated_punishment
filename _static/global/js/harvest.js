@@ -6,6 +6,18 @@ let harvestItemsComponent = {
         return {
             items: ['plow', 'seed', 'water', 'harvest'], // todo: add none here for when nothing has been done or the user just dragged the harvest item successfully
             lastCompleted: null,
+            dragmages: {
+                "plow": "https://i.imgur.com/Mv6pDKt.png",
+                "seed": "https://i.imgur.com/LwdI3sm.png",
+                "water": "https://i.imgur.com/MNKHyid.png",
+                "harvest": "https://i.imgur.com/LCo6pjh.png",
+            },
+            statusImages: {
+                "1": "https://i.imgur.com/r9515Qs.png",
+                "2": "https://i.imgur.com/3aKrGqW.png",
+                "3": "https://i.imgur.com/AjhopUY.png",
+                "4": "https://i.imgur.com/vx3FqP2.png",
+            }
         }
     },
     mounted: function () {
@@ -26,7 +38,7 @@ let harvestItemsComponent = {
                 //hide item and move it back to start
                 let tl = gsap.timeline({onComplete: this.updateHarvestStatus});
                 tl.to(that.target, 0, {autoAlpha: 0});
-                tl.to(that.target, {x: 0, y: 0});
+                tl.to(that.target, 0, {x: 0, y: 0});
 
             } else {
                 gsap.to(that.target, 0, {x: 0, y: 0, ease: Back.easeOut});
@@ -43,7 +55,7 @@ let harvestItemsComponent = {
             <div class='harvest-items'>
               <div v-for='(i, index) in items' :id='i' :index='index' :ref='i' class='harvest-item'>
                 {{i}}
-                <img :src="'/static/global/images/' + i + '.png'" style="width: 50%; height: 50%"/>
+                <img :src="dragmages[i]" style="width: 50%; height: 50%"/>
               </div>
             </div>
         </div>
@@ -51,12 +63,12 @@ let harvestItemsComponent = {
             <div class="harvest-complete-items">
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img v-if="harvestStatus > 0" :src="'/static/global/images/harvest' + (harvestStatus+1) + '.png'" style="width: 50%; height: 50%"/>
+                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" style="width: 50%; height: 50%"/>
                 </div>
               </div>
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img v-if="harvestStatus > 0" :src="'/static/global/images/harvest' + (harvestStatus+1) + '.png'" style="width: 50%; height: 50%"/>
+                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" style="width: 50%; height: 50%"/>
                 </div>
               </div>  
             </div>

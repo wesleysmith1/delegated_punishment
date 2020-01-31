@@ -1,35 +1,15 @@
-.police-log-container {
-    border-right: 1px solid black;
-    flex-grow: 1;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.police-log {
-    height: 45vh;
-
-    width: 100%;
-    margin: 50px;
-}
-.bar {
-    height: 20px;
-    width: 200px;
-    border: 1px solid black;
+.investigation-data-container {
+    flex: 0 0 50%;
+    box-sizing: border-box;
+    padding: 50px;
 }
 .culprit {
     height: 100%;
-    background: blue;
+    background: #3261ff;
 }
 .innocent {
     height: 100%;
-    background: blue;
-}
-.officer-data {
-    flex-grow: 1;
-    padding: 50px;
-    box-sizing: border-box;
+    background: #3261ff;
 }
 .officer-units {
     display: flex;
@@ -37,12 +17,13 @@
 }
 .officer-unit {
     opacity: .5;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     background: green;
 }
 #officer-detective-container {
-    width: 100px;
-    height: 100px;
-    background: blue;
+    width: 240px;
+    height: 240px;
+    background: #3261ff;
+    border: 1px solid black;
 }

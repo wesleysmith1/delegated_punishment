@@ -7,10 +7,11 @@ let stealGameComponent = {
         properties: Array,
         playerGroupId: String,
         playerLocation: Object,
-        stealNotification: String,
         investigationCount: Number,
         probCulprit: Number,
         probInnocent: Number,
+        policeLogMessages: Array,
+        mapSize: Number,
     },
     data: function () {
         return {
@@ -24,7 +25,7 @@ let stealGameComponent = {
         let that = this;
         let selector = '#location'
         Draggable.create(selector, {
-            minimumMovement: 1,
+            minimumMovement: .01,
             bounds: document.getElementById("steal-container"), //todo add ref stuff
             snap: function (val) {
             },
@@ -52,54 +53,56 @@ let stealGameComponent = {
         locationDragStart: function (that) {
             // check the current location to see if we need to update api
             this.$emit('location-drag', {x: this.locationx, y: this.locationy, property: 0});
-            // if (this.property <= 0) {
-            //     console.log("not dragging from active location")
-            //     return;
-            // }
-            //
-            //   gsap.to('#location', {fill: 'greed'})
-            //   let location = this.$refs.location.getBoundingClientRect()
-            //   this.locationx = -100
-            //   this.locationy = -100
-            //   this.$emit('location-update', {x: this.locationx, y: this.locationy, property: 0});
         },
         checkLocation: function (that) {
-            if (that.hitTest(this.$refs.htarget, '40%')) {
+            if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-center
-                if (that.hitTest(this.$refs.prop2, '1%') && this.playerGroupId != 2) {
+                if (that.hitTest(this.$refs.prop2, '.000001%') && this.playerGroupId != 2) {
                     let property = document.getElementById('prop2').getBoundingClientRect()
                     this.calculateLocation(property, 2);
-                } else if (that.hitTest(this.$refs.prop3, '1%') && this.playerGroupId != 3) {
+                } else if (that.hitTest(this.$refs.prop3, '.000001%') && this.playerGroupId != 3) {
                     let property = document.getElementById('prop3').getBoundingClientRect()
                     this.calculateLocation(property, 3);
-                } else if (that.hitTest(this.$refs.prop4, '1%') && this.playerGroupId != 4) {
+                } else if (that.hitTest(this.$refs.prop4, '.000001%') && this.playerGroupId != 4) {
                     let property = document.getElementById('prop4').getBoundingClientRect()
                     this.calculateLocation(property, 4);
-                } else if (that.hitTest(this.$refs.prop5, '1%') && this.playerGroupId != 5) {
+                } else if (that.hitTest(this.$refs.prop5, '.000001%') && this.playerGroupId != 5) {
                     let property = document.getElementById('prop5').getBoundingClientRect()
                     this.calculateLocation(property, 5);
                 } else {
-                    gsap.to('#location', .1, {fill: 'green'}) // todo make queryselector a vue ref
-                    gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
+                    gsap.to('#location', .1, {fill: 'green'}) // todo what is this?
+                    gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
+                    this.$emit('location-token-reset')
                 }
             } else {
-                gsap.to('#location', .1, {fill: 'green'}) // todo make queryselector a vue ref
-                gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
+                gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
+                this.$emit('location-token-reset')
             }
         },
         calculateLocation(property, property_id) { // prop_id is more like the player_id
             let location = this.$refs.location.getBoundingClientRect()
             // console.log(this.$refs.location)
             // console.log(location)
-            this.locationx = location.x - property.x + 1.5 - 1
-            this.locationy = location.y - property.y + 1.5 - 1//todo add variable radius here
-            this.$emit('location-update', {x: this.locationx, y: this.locationy, property: property_id});
+            this.locationx = location.x - property.x + 2 - 1 // + radius - border
+            this.locationy = location.y - property.y + 2 - 1
+
+            if (0 <= this.locationx &&
+                this.locationx <= this.mapSize &&
+                0 <= this.locationy &&
+                this.locationy <= this.mapSize
+            ) {
+                this.$emit('location-update', {x: this.locationx, y: this.locationy, property: property_id});
+            } else {
+                gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
+            }
         },
         indicatorColor(property) {
-            if (this.playerGroupId == property) //todo: red is for culprit?
+            if (this.playerGroupId == property) {
                 return 'red'
-            else
+            }
+            else {
                 return 'black'
+            }
         }
     },
     template:
@@ -112,8 +115,8 @@ let stealGameComponent = {
                       <div v-for="property in properties" class="property-container">
                             <div v-bind:class="['property', playerGroupId==(property+1) ? 'self' : 'other']" v-bind:player-id="(property+1)" :id='"prop" + (property+1)' :ref='"prop" + (property+1)'>
                                 <!-- svg indicator id format: property-player-->
-                                <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (property+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
-                                  <circle cx="3" cy="3" r="2" :fill="indicatorColor(property)" />
+                                <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (property+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
+                                  <circle cx="3" cy="3" r="2" :fill="indicatorColor(player_id+1)" />
                                 </svg>
                             </div>
                             <div class="property-label">{{property+1 == playerGroupId ? 'You' : 'Player ' + (property+1)}}</div>
@@ -138,18 +141,19 @@ let stealGameComponent = {
                         y: {{locationy}}<br>
                       </div>
                     </div>
-                    <div class="steal-notification">
-                        {{stealNotification}}
-                    </div>
               </div>
             <div class="lower" style="display:flex;">
-                <police-log-component></police-log-component>
-                <div class="officer-data">
-                  <div class="title">Investigation</div>
-                  <div class="title-small">Defense Tokens: {{investigationCount}}/9</div>
-                  <br>
-                  <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
-                  <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>                    
+                <police-log-component
+                    class="notifications-container"
+                    style="border-right: 1px solid black;"
+                    :messages="policeLogMessages"
+                ></police-log-component>
+                <div class="investigation-data-container">
+                    <div class="title">Investigation</div>
+                    <div class="title-small">Defense Tokens: {{investigationCount}}/9</div>
+                    <br>
+                    <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
+                    <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>                    
                 </div>
             </div>
         </div>

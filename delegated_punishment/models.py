@@ -32,22 +32,22 @@ class Constants(BaseConstants):
     officer_reprimand_amount = 100  # P punishment for officer if innocent civilian is punished
     officer_token_total = 9
 
-    officer_token_size = 50  # this is the size of the tokens that players with role of officer drag around
     epoch = datetime.datetime.utcfromtimestamp(0)
     instructions_template = 'delegated_punishment/instructions.html'  # todo this may be the cuase of the linux issue not finding the file due to case sensitivity
 
-    # amount_shared = c(100)
+    officer_token_size = 36  # this is the size of the tokens that players with role of officer drag around
+    civilian_map_size = 240
 
 
 class Subsession(BaseSubsession):
 
     def before_session_starts(self):
-        # OfficerToken.objects.all().delete()
+        # DefendToken.objects.all().delete()
         groups = self.get_groups()
 
         for g in groups:
             for i in range(Constants.officer_token_total):
-                OfficerToken.objects.create(number=i + 1, group=g, )
+                DefendToken.objects.create(number=i + 1, group=g, )
 
 
 class Group(BaseGroup):
@@ -93,26 +93,28 @@ class Player(BasePlayer):
         elif not self.last_updated:
             return -99
         else:
-            return self.balance + self.roi * ((date_now_milli() - self.last_updated) / 1000) % 60
+            return self.balance + self.roi * (((date_now_milli() - self.last_updated) / 1000) % 60)
 
-    def increase_roi(self):
+    def increase_roi(self, time):
         # calculate balance
         self.balance = self.get_balance()
+        self.last_updated = time
         # update roi
         self.roi += Constants.civilian_steal_rate
 
-        self.save()  # todo we don't want to save here since we save in the model. Consider overriding the save method or something
+        self.save()  # Consider overriding the save method or something
 
-    def decrease_roi(self):  # todo make this dynamic so we can have variable roi values
+    def decrease_roi(self, time):
         # calculate balance
         self.balance = self.get_balance()
+        self.last_updated = time
         # update roi
         self.roi -= Constants.civilian_steal_rate
 
-        self.save()  # todo we don't want to save here since we save in the model. Consider overriding the save method or something
+        self.save()  # Consider overriding the save method or something
 
 
-class OfficerToken(Model):
+class DefendToken(Model):
     group = ForeignKey(Group, on_delete='CASCADE')
     # todo: consider just using pk as number to reduce confusion going forward
     number = models.IntegerField(
@@ -120,6 +122,7 @@ class OfficerToken(Model):
     property = models.IntegerField(initial=0)
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
+    last_updated = models.FloatField(blank=True)
 
     def __str__(self):
         str(self.x) + "," + str(self.y)
@@ -133,21 +136,3 @@ class GameData(Model):
     p = models.IntegerField(initial=0)
     g = models.IntegerField(initial=0)
     jdata = JSONField()
-    # experiment_start = models.FloatField(blank=True)
-    # global_parameters = models.StringField(blank=True)
-    # session_id = models.IntegerField(blank=True)
-    # payment_scheme = models.IntegerField(blank=True)
-    # income_distribution = models.IntegerField(blank=True)
-    # player_id = models.IntegerField(blank=True)
-    # player_role = models.IntegerField(blank=True)
-    # period = models.IntegerField(blank=True)
-    # current_time = models.FloatField(blank=True)
-    # balance = models.FloatField(blank=True)
-    # screen = models.IntegerField(blank=True)
-    # steal_token = models.StringField(blank=True)
-    # production_inputs = models.StringField(blank=True)
-    # punished = models.IntegerField(blank=True)
-    # defendTokens = models.StringField(blank=True)
-    # punishment_events = models.StringField(blank=True)
-
-    # frame number?
