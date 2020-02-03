@@ -1,10 +1,8 @@
 .notification-log-container {
     border: 1px solid black;
     height: 100%;
-    width: 100%;
     display: flex;
     background: #eeeeee;
-    font-size: 30px;
 }
 .notification-log-container .notification-log-column {
     border-right: 1px solid black;
@@ -21,10 +19,16 @@
     border-bottom: 1px solid black;
     white-space: nowrap;
     overflow: hidden;
+    font-size: 25px;
 }
 .notification-log-container .notification-log-column .content {
     text-align: center;
-    height: 250px;
+    /* height: 250px; */
     overflow-y: hidden;
     overflow-x: hidden;
+    font-size: 20px;
+}
+
+.selfmessage {
+    background: darkgrey;
 }

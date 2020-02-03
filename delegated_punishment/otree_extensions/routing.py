@@ -7,7 +7,5 @@ from django.conf.urls import url
 from .consumers import GameConsumer
 
 websocket_routes = [
-    # url(r'^tag/', GameConsumer),
     url(r'^delegated_punishment/(?P<player_pk>[0-9]+)/(?P<group_pk>[0-9]+)/', GameConsumer),
-    #todo make separate officer route
 ]   

@@ -4,7 +4,7 @@ let harvestItemsComponent = {
     },
     data: function () {
         return {
-            items: ['plow', 'seed', 'water', 'harvest'], // todo: add none here for when nothing has been done or the user just dragged the harvest item successfully
+            items: ['plow', 'seed', 'water', 'harvest'],
             lastCompleted: null,
             dragmages: {
                 "plow": "https://i.imgur.com/Mv6pDKt.png",

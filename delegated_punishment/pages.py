@@ -11,7 +11,7 @@ class Introduction(Page):
 
         pjson = dict()
         pjson['player'] = self.player.pk
-        pjson['property'] = self.player.property
+        pjson['map'] = self.player.map
         pjson['x'] = self.player.x
         pjson['y'] = self.player.y
 
@@ -21,7 +21,7 @@ class Introduction(Page):
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
             # for o in officer_tokens:
-                # print("TOKEN {} - PROPERTY  {} - X {:6.2f} - Y {:6.2f}".format(o.number, str(o.property), o.x, o.y)) #todo: these values are correct. Why are they not getting passed down to client?
+                # print("TOKEN {} - MAP  {} - X {:6.2f} - Y {:6.2f}".format(o.number, str(o.map), o.x, o.y)) #todo: these values are correct. Why are they not getting passed down to client?
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 

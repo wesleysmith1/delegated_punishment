@@ -38,7 +38,7 @@
                 id="officerGame"
                 class="game-container"
                 v-if="isOfficer"
-                :properties="properties"
+                :maps="maps"
                 :officer-units="officerTokens"
                 :investigation-count=investigationCount
                 :prob-culprit="probabilityCulprit"
@@ -61,7 +61,7 @@
             </harvest-items-component>
             <steal-game-component
                     v-show="!harvest"
-                    :properties="properties"
+                    :maps="maps"
                     :player-group-id="playerGroupId"
                     :player-location="playerLocation"
                     :investigation-count="investigationCount"
@@ -89,19 +89,19 @@
                     <div class="notification-log-column">
                         <div class="header"><div>Civ Punished</div></div>
                         <div class="content" ref="notificationLog1">
-                            <div v-for="message in messages">{{message.civilianPunished}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.civilianPunished}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
                         <div class="header"><div>Officer Bonus</div></div>
                         <div class="content" ref="notificationLog2">
-                            <div v-for="message in messages">{{message.officerBonus}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.officerBonus}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
                         <div class="header"><div>Officer Reprimand</div></div>
                         <div class="content" ref="notificationLog3">
-                            <div v-for="message in messages">{{message.officerReprimand}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.officerReprimand}}</div>
                         </div>
                     </div>
                 </div>
@@ -134,7 +134,7 @@
                 policeLogMessages : [],
                 messages: [],
                 singleMessage: null,
-                properties: [],
+                maps: [],
                 locationCount: 5,
                 balance: 0,
                 balanceColor: 'black',
@@ -159,7 +159,7 @@
                 if (!this.isOfficer) {
                     this.playerLocation = {
                         'player': this.playerGroupId,
-                        'property': this.player.property,
+                        'map': this.player.map,
                         'x': this.player.x,
                         'y': this.player.y
                     } // todo integrate this into app
@@ -167,8 +167,8 @@
                     this.officerTokens = JSON.parse(dtokens)
                 }
 
-                // player properties
-                this.properties = [1, 2, 3, 4]
+                // player maps
+                this.maps = [1, 2, 3, 4]
 
                 let that = this;
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId + '/'),
@@ -180,7 +180,8 @@
                                 that.balanceColor = "black"
                             } else if (data.balance < that.balance) { // balance decreasing
                                 that.balanceColor = "red"
-                            } else { // balance increasing
+                            } else {
+                                // balance increasing 
                                 that.balanceColor = "green"
                             }
 
@@ -190,7 +191,6 @@
                             console.log(data.intersections)
                             data.intersections.forEach(function (i) {
                                 if (i.guilty) { // only print if there were investigation defense tokens
-                                    // todo we can assume the server is sending in this format at some point
                                     that.addMessage(i)
                                 }
 
@@ -199,7 +199,7 @@
                                     that.resetLocation()
                                 }
                             })
-                        } else if (data.investigation_update || data.investigation_update === 0) { //todo: is there a way to not have to work around truthy 0=false issue?
+                        } else if (data.investigation_update || data.investigation_update === 0) {
                             that.investigationCount = data.investigation_update
                             //console.log('INVESTIGATION RESULTS!', that.investigationCount)
                         }
@@ -302,7 +302,7 @@
                     //console.log('token ' + item.number + ' set to investigation')
                     //console.log(item)
                     // inform the api that the item is being dragged
-                    item.property = 0
+                    item.map = 0
                     this.gameSocket.send(JSON.stringify({
                         'investigation': item,
                         'player_id': this.playerId,

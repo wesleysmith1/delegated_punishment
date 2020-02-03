@@ -4,7 +4,7 @@ let stealGameComponent = {
         'probability-bar-component': probabilityBarComponent,
     },
     props: {
-        properties: Array,
+        maps: Array,
         playerGroupId: String,
         playerLocation: Object,
         investigationCount: Number,
@@ -21,12 +21,13 @@ let stealGameComponent = {
         }
     },
     mounted: function () {
-        // this.location = this.$refs.location todo: implement ref for location and all properties retreived by id
+        // this.location = this.$refs.location todo: implement ref for location and all maps retreived by id
         let that = this;
         let selector = '#location'
         Draggable.create(selector, {
             minimumMovement: .01,
-            bounds: document.getElementById("steal-container"), //todo add ref stuff
+            bounds: that.$refs.stealcontainer,
+            // bounds: document.getElementById("steal-container"), //todo add ref stuff
             snap: function (val) {
             },
             onDragStart: function () {
@@ -37,14 +38,14 @@ let stealGameComponent = {
             },
         });
         // animate to start
-        //   if (this.playerLocation && this.playerLocation.property !== null) {
-        //     this.calculateLocation(property, 2);
+        //   if (this.playerLocation && this.playerLocation.map !== null) {
+        //     this.calculateLocation(map, 2);
         //
-        //       let propertySelector = 'prop' + this.playerLocation.property
-        //       let property = document.getElementById(propertySelector).getBoundingClientRect() //todo use refs
+        //       let mapSelector = 'prop' + this.playerLocation.map
+        //       let map = document.getElementById(mapSelector).getBoundingClientRect() //todo use refs
         //       let location = this.$refs.location.getBoundingClientRect()
-        //       this.locationx = location.x - property.x
-        //       this.locationy = location.y - property.y
+        //       this.locationx = location.x - map.x
+        //       this.locationy = location.y - map.y
         //
         //       gsap.to(selector, {left: this.playerLocation.x-15, top: this.playerLocation.y-10})
         //   }
@@ -52,25 +53,24 @@ let stealGameComponent = {
     methods: {
         locationDragStart: function (that) {
             // check the current location to see if we need to update api
-            this.$emit('location-drag', {x: this.locationx, y: this.locationy, property: 0});
+            this.$emit('location-drag', {x: this.locationx, y: this.locationy, map: 0});
         },
         checkLocation: function (that) {
             if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-center
                 if (that.hitTest(this.$refs.prop2, '.000001%') && this.playerGroupId != 2) {
-                    let property = document.getElementById('prop2').getBoundingClientRect()
-                    this.calculateLocation(property, 2);
+                    let map = document.getElementById('prop2').getBoundingClientRect()
+                    this.calculateLocation(map, 2);
                 } else if (that.hitTest(this.$refs.prop3, '.000001%') && this.playerGroupId != 3) {
-                    let property = document.getElementById('prop3').getBoundingClientRect()
-                    this.calculateLocation(property, 3);
+                    let map = document.getElementById('prop3').getBoundingClientRect()
+                    this.calculateLocation(map, 3);
                 } else if (that.hitTest(this.$refs.prop4, '.000001%') && this.playerGroupId != 4) {
-                    let property = document.getElementById('prop4').getBoundingClientRect()
-                    this.calculateLocation(property, 4);
+                    let map = document.getElementById('prop4').getBoundingClientRect()
+                    this.calculateLocation(map, 4);
                 } else if (that.hitTest(this.$refs.prop5, '.000001%') && this.playerGroupId != 5) {
-                    let property = document.getElementById('prop5').getBoundingClientRect()
-                    this.calculateLocation(property, 5);
+                    let map = document.getElementById('prop5').getBoundingClientRect()
+                    this.calculateLocation(map, 5);
                 } else {
-                    gsap.to('#location', .1, {fill: 'green'}) // todo what is this?
                     gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
                     this.$emit('location-token-reset')
                 }
@@ -79,25 +79,25 @@ let stealGameComponent = {
                 this.$emit('location-token-reset')
             }
         },
-        calculateLocation(property, property_id) { // prop_id is more like the player_id
+        calculateLocation(map, map_id) { // prop_id is more like the player_id
             let location = this.$refs.location.getBoundingClientRect()
             // console.log(this.$refs.location)
             // console.log(location)
-            this.locationx = location.x - property.x + 2 - 1 // + radius - border
-            this.locationy = location.y - property.y + 2 - 1
+            this.locationx = location.x - map.x + 2 - 1 // + radius - border
+            this.locationy = location.y - map.y + 2 - 1
 
             if (0 <= this.locationx &&
                 this.locationx <= this.mapSize &&
                 0 <= this.locationy &&
                 this.locationy <= this.mapSize
             ) {
-                this.$emit('location-update', {x: this.locationx, y: this.locationy, property: property_id});
+                this.$emit('location-update', {x: this.locationx, y: this.locationy, map: map_id});
             } else {
                 gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
             }
         },
-        indicatorColor(property) {
-            if (this.playerGroupId == property) {
+        indicatorColor(map) {
+            if (this.playerGroupId == map) {
                 return 'red'
             }
             else {
@@ -109,17 +109,17 @@ let stealGameComponent = {
         `
       <div class="steal" style="display:flex; flex-wrap: wrap">
         <div class="game">
-            <div id="steal-container" class="upper">
+            <div id="steal-container" class="upper" ref="stealcontainer">
                 <div class='title'>Maps</div> 
-                    <div ref='htarget' class="properties-container">
-                      <div v-for="property in properties" class="property-container">
-                            <div v-bind:class="['property', playerGroupId==(property+1) ? 'self' : 'other']" v-bind:player-id="(property+1)" :id='"prop" + (property+1)' :ref='"prop" + (property+1)'>
-                                <!-- svg indicator id format: property-player-->
-                                <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (property+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
-                                  <circle cx="3" cy="3" r="2" :fill="indicatorColor(player_id+1)" />
+                    <div ref='htarget' class="maps-container">
+                      <div v-for="map in maps" class="map-container">
+                            <div v-bind:class="['map', playerGroupId==(map+1) ? 'self' : 'other']" v-bind:player-id="(map+1)" :id='"prop" + (map+1)' :ref='"prop" + (map+1)'>
+                                <!-- svg indicator id format: map-player-->
+                                <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
+                                  <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
                                 </svg>
                             </div>
-                            <div class="property-label">{{property+1 == playerGroupId ? 'You' : 'Player ' + (property+1)}}</div>
+                            <div class="map-label">{{map+1 == playerGroupId ? 'You' : 'Player ' + (map+1)}}</div>
                       </div>
                     </div>
                     <div class="token-container">
@@ -147,6 +147,7 @@ let stealGameComponent = {
                     class="notifications-container"
                     style="border-right: 1px solid black;"
                     :messages="policeLogMessages"
+                    :player-group-id="playerGroupId"
                 ></police-log-component>
                 <div class="investigation-data-container">
                     <div class="title">Investigation</div>

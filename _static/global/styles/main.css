@@ -158,8 +158,8 @@ body {
     font-size: 20px;
 }
 
-/*property maps*/
-.property {
+/*map maps*/
+.map {
     position: relative;
     width: 240px;
      min-width: 240px;
@@ -169,25 +169,25 @@ body {
     min-height: 240px;
 }
 
-.properties-container {
+.maps-container {
     display: flex;
     justify-content: space-around;
 }
 
-.property-container {
+.map-container {
     display: flex;
     flex-direction: column;
 }
 
-.property-label {
+.map-label {
     text-align: center;
 }
 
-.property.self {
+.map.self {
     background: darkgrey;
     border: 1px solid black;
 }
-.property.other {
+.map.other {
     border: 1px solid black;
 }
 

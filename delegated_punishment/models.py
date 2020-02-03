@@ -71,14 +71,14 @@ class Player(BasePlayer):
     # role
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
-    property = models.IntegerField(initial=0)
+    map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
     status = models.IntegerField(
         choices=[
             [1, 'Harvest'],
             [2, 'Steal'],
         ]
-    )  # todo: this field may not need to be stored here, instead just the history table
+    )
     roi = models.IntegerField(initial=0)  # rate of increase per millisecond
     balance = models.FloatField(initial=0)
     harvest_status = models.IntegerField(initial=0)
@@ -93,7 +93,8 @@ class Player(BasePlayer):
         elif not self.last_updated:
             return -99
         else:
-            return self.balance + self.roi * (((date_now_milli() - self.last_updated) / 1000) % 60)
+            # return self.balance + self.roi * (((date_now_milli() - self.last_updated) / 1000) % 60)
+            return self.balance + self.roi * ((date_now_milli() - self.last_updated) / 1000)
 
     def increase_roi(self, time):
         # calculate balance
@@ -102,7 +103,7 @@ class Player(BasePlayer):
         # update roi
         self.roi += Constants.civilian_steal_rate
 
-        self.save()  # Consider overriding the save method or something
+        # self.save()  # Consider overriding the save method or something
 
     def decrease_roi(self, time):
         # calculate balance
@@ -111,15 +112,13 @@ class Player(BasePlayer):
         # update roi
         self.roi -= Constants.civilian_steal_rate
 
-        self.save()  # Consider overriding the save method or something
+        # self.save()  # Consider overriding the save method or something
 
 
 class DefendToken(Model):
     group = ForeignKey(Group, on_delete='CASCADE')
-    # todo: consider just using pk as number to reduce confusion going forward
-    number = models.IntegerField(
-        initial=0)  # this field does not change and acts an unique identifier within it's group
-    property = models.IntegerField(initial=0)
+    number = models.IntegerField()
+    map = models.IntegerField(initial=0)
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
     last_updated = models.FloatField(blank=True)
@@ -128,7 +127,7 @@ class DefendToken(Model):
         str(self.x) + "," + str(self.y)
 
     def to_dict(self):
-        return {"number": self.number, "property": self.property, "x": self.x, "y": self.y}
+        return {"number": self.number, "map": self.map, "x": self.x, "y": self.y}
 
 from django.contrib.postgres.fields import JSONField
 
