@@ -101,5 +101,7 @@ Admins: username=admin & password=PoDjangos
 
 ## Stop Server Export Data
 
+## Session Restart
+Run 'otree resetdb' on server. This will break all existing session urls in lab. 
 
 
