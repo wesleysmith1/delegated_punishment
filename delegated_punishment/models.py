@@ -1,4 +1,6 @@
 import datetime
+
+from django.contrib.postgres.fields import JSONField
 from otree.api import (
     models,
     widgets,
@@ -10,6 +12,7 @@ from otree.api import (
     currency_range,
 )
 from otree.db.models import Model, ForeignKey
+
 
 doc = """
 This Delegated Punishment game involves 5 players. Each demands for a portion of some
@@ -33,9 +36,9 @@ class Constants(BaseConstants):
     officer_token_total = 9
 
     epoch = datetime.datetime.utcfromtimestamp(0)
-    instructions_template = 'delegated_punishment/instructions.html'  # todo this may be the cuase of the linux issue not finding the file due to case sensitivity
+    instructions_template = 'delegated_punishment/instructions.html'
 
-    officer_token_size = 36  # this is the size of the tokens that players with role of officer drag around
+    defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 240
 
 
@@ -64,41 +67,32 @@ class Group(BaseGroup):
     #             p.payoff = c(0)
 
 
-def date_now_milli():  # todo: move this to another file
-    return (datetime.datetime.now() - Constants.epoch).total_seconds() * 1000.0
-
 class Player(BasePlayer):
     # role
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
     map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
-    status = models.IntegerField(
-        choices=[
-            [1, 'Harvest'],
-            [2, 'Steal'],
-        ]
-    )
     roi = models.IntegerField(initial=0)  # rate of increase per millisecond
     balance = models.FloatField(initial=0)
     harvest_status = models.IntegerField(initial=0)
+    harvest_screen = models.BooleanField(initial=True)
 
     def other_players(self):
         return self.get_others_in_group()
 
-    def get_balance(self):
+    def get_balance(self, time):
         # return calculated balance
         if self.roi == 0:
             return self.balance
         elif not self.last_updated:
             return -99
         else:
-            # return self.balance + self.roi * (((date_now_milli() - self.last_updated) / 1000) % 60)
-            return self.balance + self.roi * ((date_now_milli() - self.last_updated) / 1000)
+            return self.balance + self.roi * (time - self.last_updated)
 
     def increase_roi(self, time):
         # calculate balance
-        self.balance = self.get_balance()
+        self.balance = self.get_balance(time) # we need to set balance with event time here boi
         self.last_updated = time
         # update roi
         self.roi += Constants.civilian_steal_rate
@@ -107,12 +101,17 @@ class Player(BasePlayer):
 
     def decrease_roi(self, time):
         # calculate balance
-        self.balance = self.get_balance()
+        self.balance = self.get_balance(time)
         self.last_updated = time
         # update roi
         self.roi -= Constants.civilian_steal_rate
 
         # self.save()  # Consider overriding the save method or something
+
+    def write_file(self):
+        from django.core.files import File
+        f = open('hello-world3.txt', 'w')
+        print(str(GameData.objects.first()))
 
 
 class DefendToken(Model):
@@ -121,6 +120,9 @@ class DefendToken(Model):
     map = models.IntegerField(initial=0)
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
+    x2 = models.FloatField(initial=0)
+    y2 = models.FloatField(initial=0)
+    # slot = models.IntegerField(initial=0) todo: add slot information here
     last_updated = models.FloatField(blank=True)
 
     def __str__(self):
@@ -129,9 +131,10 @@ class DefendToken(Model):
     def to_dict(self):
         return {"number": self.number, "map": self.map, "x": self.x, "y": self.y}
 
-from django.contrib.postgres.fields import JSONField
 
 class GameData(Model):
     p = models.IntegerField(initial=0)
+    # todo: add round
     g = models.IntegerField(initial=0)
+    event_time = models.FloatField()
     jdata = JSONField()

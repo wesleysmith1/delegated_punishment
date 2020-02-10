@@ -20,14 +20,20 @@
     var dtokens =
     {{ dtokens|json }}
 </script>
+<form method="post" role="form" id="form" autocomplete="off" style="display:none">
+    {% csrf_token %}
+    <button class="otree-btn-next btn btn-primary">Next</button>
 
+</form>
 <div>
     <!-- this section is where we pull data from rendered template -->
-    <div class="card bg-light instructions" style="display: none">
+    <div style="display: none">
         <div class="card-body">
             <h2>
-                Player <span id="playerId">{{ player.id_in_group }}</span> <span
-                    id="groupPlayerId">{{ player.id_in_group }}</span>
+                <!-- todo: make this player id or participant id -->
+                <span id="playerId">{{ player.id_in_group }}</span>
+                <span id="groupPlayerId">{{ player.id_in_group }}</span>
+                <span id="harvestScreen">{{ player.harvest_screen }}</span>
             </h2>
         </div>
     </div>
@@ -53,14 +59,14 @@
         </officer-game-component>
         <div id="harvestGame" class="game-container" v-else>
             <harvest-items-component
-                    v-if="harvest"
+                    v-if="harvestScreen"
                     class="harvest"
                     style="display:flex;"
                     :harvest-status="harvestStatus"
                     @harvest-update="harvestUpdate">
             </harvest-items-component>
             <steal-game-component
-                    v-show="!harvest"
+                    v-show="!harvestScreen"
                     :maps="maps"
                     :player-group-id="playerGroupId"
                     :player-location="playerLocation"
@@ -73,35 +79,42 @@
                     @location-update="locationUpdate"
                     @location-token-reset="locationTokenReset">
             </steal-game-component>
-            <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvest ? 'Steal' : 'Harvest'}}</div>
+            <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
         </div>
         <div class="panel game-status-container">
             <div class="balance-container">
                 <div>DEBUG: ROI: {{ roi }}</div>
                 <div class="balance-label">Balance</div>
                 <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
-                <div class="steal-notification">{{stealNotification}}</div>
             </div>
-            <!--height: 0 is a hack -->
-            <div class="notifications-container" style="height: 0;">
-                <div class="title">Notifications</div>
+            <div class="notifications-container">
+                <div class="notification-label">
+                    News
+                    <div class="steal-notification">{{stealNotification}}</div>
+                </div>
                 <div class="notification-log-container">
                     <div class="notification-log-column">
-                        <div class="header"><div>Civ Punished</div></div>
+                        <div class="header"><div>Civilian Map</div></div>
                         <div class="content" ref="notificationLog1">
-                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.civilianPunished}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.map == playerGroupId }" style="width: 100%;">{{message.map}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
-                        <div class="header"><div>Officer Bonus</div></div>
+                        <div class="header"><div>Civilian Punished</div></div>
                         <div class="content" ref="notificationLog2">
-                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.officerBonus}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.punished==playerGroupId }">{{message.punished}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
                         <div class="header"><div>Officer Reprimand</div></div>
                         <div class="content" ref="notificationLog3">
-                            <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.officerReprimand}}</div>
+                            <div v-for="message in messages">{{message.reprimand}}</div>
+                        </div>
+                    </div>
+                    <div class="notification-log-column">
+                        <div class="header"><div>Officer Bonus</div></div>
+                        <div class="content" ref="notificationLog4">
+                            <div v-for="message in messages">{{message.bonus}}</div>
                         </div>
                     </div>
                 </div>
@@ -124,7 +137,6 @@
                 'probability-bar-component': probabilityBarComponent,
             },
             data: {
-                harvest: true,
                 that: this,
                 player: {},
                 isOfficer: true,
@@ -141,11 +153,13 @@
                 roi: 0,
                 harvestItems: [],
                 harvestStatus: 0,
+                harvestScreen: true,
                 officerTokens: [],
                 investigationCount: 0,
                 stealNotification: "",
                 defendTokenSize: 36,
                 mapSize: 240,
+                // defendTokenSlots: []
             },
             created: function () {
 
@@ -154,6 +168,7 @@
                 this.playerId = document.getElementById('playerId').textContent;
                 this.playerGroupId = document.getElementById('groupPlayerId').textContent;
                 this.isOfficer = this.playerGroupId == 1
+                this.harvestScreen = document.getElementById('harvestScreen')
 
                 // this code is for handling page refreshes
                 if (!this.isOfficer) {
@@ -165,6 +180,13 @@
                     } // todo integrate this into app
                 } else if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens)
+                    // todo
+                    // this.defendTokenSlots = new Array.fill(9).fill(0)
+                    // this.officerTokens.forEach(function(ot) {
+                    //     if (ot.slot) {
+                    //         this.defendTokenSlots[ot.number-1]
+                    //     }
+                    // })
                 }
 
                 // player maps
@@ -188,20 +210,15 @@
                             that.balance = data.balance;
                             that.roi = data.roi
                         } else if (data.intersections) {
-                            console.log(data.intersections)
+                            console.log(data.intersections);
                             data.intersections.forEach(function (i) {
-                                if (i.guilty) { // only print if there were investigation defense tokens
-                                    that.addMessage(i)
-                                }
+                                that.addMessage(i);
 
-                                that.showIntersection(i)
-                                if (i.player == that.playerId) {
-                                    that.resetLocation()
-                                }
+                                that.showIntersection(i);
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
                             that.investigationCount = data.investigation_update
-                            //console.log('INVESTIGATION RESULTS!', that.investigationCount)
+                            console.log('INVESTIGATION RESULTS!', that.investigationCount)
                         }
                     };
 
@@ -215,7 +232,7 @@
             methods: {
                 toggle: function() {
                     // console.log('screen toggled')
-                    if (this.harvest) {
+                    if (this.harvestScreen) {
                         // update local harvest status
                         // console.log('harvest reset')
                         this.harvestStatus = 0;
@@ -231,7 +248,7 @@
                         // reset harvest status and send toggle event to db
                         this.harvestActive()
                     }
-                    this.harvest = !this.harvest
+                    this.harvestScreen = !this.harvestScreen
                 },
                 stealActive: function() {
                     // screen was toggled to steal
@@ -247,7 +264,6 @@
                         'player_id': this.playerId,
                         'group_id': 1,
                     }));
-
                 },
                 harvestUpdate: function (status) {
                     this.harvestStatus++;
@@ -299,12 +315,12 @@
                     }));
                 },
                 investigationUpdate: function(item) {
-                    //console.log('token ' + item.number + ' set to investigation')
-                    //console.log(item)
+                    console.log('token set to investigation')
+                    console.log(item)
                     // inform the api that the item is being dragged
                     item.map = 0
                     this.gameSocket.send(JSON.stringify({
-                        'investigation': item,
+                        'investigation_update': item,
                         'player_id': this.playerId,
                         'group_id': 1, //todo: fix this to be variable group id
                     }));
@@ -312,7 +328,7 @@
                 locationDrag: function(location) {
                     //console.log('location drag')
                     this.gameSocket.send(JSON.stringify({
-                        'location_token_drag': location,
+                        'steal_token_drag': location,
                         'player_id': this.playerId,
                         'group_id': 1, //todo fix this to be variable group id
                     }));
@@ -320,7 +336,7 @@
                 locationUpdate: function (location) {
                     //console.log(location)
                     this.gameSocket.send(JSON.stringify({
-                        'location_token_update': location,
+                        'steal_token_update': location,
                         'player_id': this.playerId,
                         'group_id': 1, //todo fix this to be variable group id
                     }));
@@ -328,33 +344,40 @@
                 locationTokenReset: function() {
                     // this function informs the api that the token has reset
                     this.gameSocket.send(JSON.stringify({
-                        'location_token_reset': true,
+                        'steal_token_reset': true,
                         'player_id': this.playerId,
                         'group_id': 1, //todo fix this to be variable group id
                     }));
                 },
                 defenseTokenReset: function(tokenNumber) {
                     this.gameSocket.send(JSON.stringify({
-                        'defense_token_reset': tokenNumber,
+                        'defend_token_reset': tokenNumber,
                         'player_id': this.playerId,
                         'group_id': 1, //todo fix this to be variable group id
                     }));
                 },
                 showIntersection: function (i) {
                     // console.log(i)
-                    let isSelf = i.player == this.playerId
-                    if (isSelf) {
-                        this.stealNotification = "You were caught!"
+
+                    // was player the culprit
+                    if (i.culprit == this.playerId) {
+                        this.resetLocation()
+                    }
+
+                    if (i.guilty == this.playerId) {
+                        // reset steal token
+
+                        this.stealNotification = "You were punished!"
                         let that = this
                         setTimeout(function () {
                             that.stealNotification = '';
                         }, 2000);
                     }
 
-                    let selector = '#indicator' + i.map + '-' + i.player
+                    let selector = '#indicator' + i.map + '-' + i.culprit
                     let tl = gsap.timeline();
-                    let left = i.player_x - 3;
-                    let right = i.player_y - 3;
+                    let left = i.culprit_x - 3;
+                    let right = i.culprit_y - 3;
                     //console.log('INDICATOR AT ' + left + ',' + right)
                     tl.to(selector, 0, {left: left, top: right});
                     tl.to(selector, {visibility: 'visible'});
@@ -363,15 +386,10 @@
                 },
                 addMessage(message) {
                     this.messages.push({
-                        "civilianPunished": message.guilty,
-                        "officerBonus": message.officer_bonus,
-                        "officerReprimand": message.officer_reprimand,
-                    });
-                    /// police log messages run their own scrollToBottom in police log component
-                    this.policeLogMessages.push({
-                        "civilianPunished": message.guilty,
-                        "mapNumber": message.map,
-                        "time": message.event_time,
+                        "map": message.map,
+                        "punished": message.guilty ? message.guilty : 'None',
+                        "bonus": message.officer_bonus ? message.officer_bonus : 0,
+                        "reprimand": message.officer_reprimand ? message.officer_reprimand : 0,
                     });
                     this.$nextTick(() => {
                         this.scrollToBottom()
@@ -383,6 +401,7 @@
                     this.$refs.notificationLog1.scrollTop = nScrollHeight;
                     this.$refs.notificationLog2.scrollTop = nScrollHeight;
                     this.$refs.notificationLog3.scrollTop = nScrollHeight;
+                    this.$refs.notificationLog4.scrollTop = nScrollHeight;
 
                 }
             },

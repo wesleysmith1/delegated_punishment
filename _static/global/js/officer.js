@@ -25,27 +25,27 @@ let policeLogComponent = {
     template:
         `
         <div class="police-log-container">
-            <div class="title">Police Log</div>
-            <div class="notification-log-container">
-                <div class="notification-log-column">
-                    <div class="header"><div>Civ Punished</div></div>
-                    <div class="content" ref="policeLog1">
-                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.civilianPunished}}</div>
-                    </div>
-                </div>
-                <div class="notification-log-column">
-                    <div class="header"><div>Map Number</div></div>
-                    <div class="content" ref="policeLog2">
-                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.mapNumber}}</div>
-                    </div>
-                </div>
-                <div class="notification-log-column">
-                    <div class="header"><div>Time (seconds)</div></div>
-                    <div class="content" ref="policeLog3">
-                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.time}}</div>
-                    </div>
-                </div>
-            </div>
+<!--            <div class="title">Police Log</div>-->
+<!--            <div class="notification-log-container">-->
+<!--                <div class="notification-log-column">-->
+<!--                    <div class="header"><div>Civ Punished</div></div>-->
+<!--                    <div class="content" ref="policeLog1">-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.civilianPunished}}</div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="notification-log-column">-->
+<!--                    <div class="header"><div>Map Number</div></div>-->
+<!--                    <div class="content" ref="policeLog2">-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.mapNumber}}</div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="notification-log-column">-->
+<!--                    <div class="header"><div>Time (seconds)</div></div>-->
+<!--                    <div class="content" ref="policeLog3">-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.time}}</div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
 
             <!--<button @click="addMessage">add message</button>-->
         </div>
@@ -87,6 +87,7 @@ let officerGameComponent = {
         policeLogMessages: Array,
         mapSize: Number,
         defendTokenSize: Number,
+        // defendTokenSlots: Array todo:
     },
     data: function () {
         return {
@@ -149,12 +150,6 @@ let officerGameComponent = {
                     let map = document.getElementById('map4').getBoundingClientRect()
                     this.calculateLocation(map, that, item);
                 } else if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
-                    // already in investigation
-                    if (item.map == 11) {
-                        return;
-                        // console.log('this token is already in investigation')
-                    }
-
                     item.map = 11
                     this.$emit('investigation-update', item)
                 } else {
@@ -215,20 +210,24 @@ let officerGameComponent = {
                 </div>
               </div>
               <div class="lower">
-                <police-log-component 
-                    class="notifications-container"
-                    style="border-right: 1px solid black;"
-                    :messages="policeLogMessages"
-                    :player-group-id="playerGroupId"
-                ></police-log-component>
+<!--                <police-log-component -->
+<!--                    class="notifications-container"-->
+<!--                    style="border-right: 1px solid black;"-->
+<!--                    :messages="policeLogMessages"-->
+<!--                    :player-group-id="playerGroupId"-->
+<!--                ></police-log-component>-->
                 <div class="investigation-data-container">
-                  <div class="title">Investigation</div>
+                  <div class="title">Investigating</div>
                     <div>
                         DEBUG: Investigation Token Count {{investigationCount}} <br>
                     </div>
-                  <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
-                  <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>
+                    <div>
+                        <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
+                        <br>
+                        <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>
+                    </div>
                   <br>
+                  <div class="title">Investigation Map</div>
                   <div id="officer-investigation-container" ref='investigationcontainer'></div>
     
                 </div>

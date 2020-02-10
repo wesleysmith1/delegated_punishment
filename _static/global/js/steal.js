@@ -143,18 +143,20 @@ let stealGameComponent = {
                     </div>
               </div>
             <div class="lower" style="display:flex;">
-                <police-log-component
-                    class="notifications-container"
-                    style="border-right: 1px solid black;"
-                    :messages="policeLogMessages"
-                    :player-group-id="playerGroupId"
-                ></police-log-component>
+<!--                <police-log-component-->
+<!--                    class="notifications-container"-->
+<!--                    style="border-right: 1px solid black;"-->
+<!--                    :messages="policeLogMessages"-->
+<!--                    :player-group-id="playerGroupId"-->
+<!--                ></police-log-component>-->
                 <div class="investigation-data-container">
-                    <div class="title">Investigation</div>
-                    <div class="title-small">Defense Tokens: {{investigationCount}}/9</div>
-                    <br>
-                    <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
-                    <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>                    
+                    <div class="title">Investigating</div>
+                    <div>
+                        <div class="title-small">Defense Tokens: {{investigationCount}}/9</div>
+                        <br>
+                        <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
+                        <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>  
+                    </div>                  
                 </div>
             </div>
         </div>

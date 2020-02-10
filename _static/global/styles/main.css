@@ -1,6 +1,7 @@
 body {
     margin: 0;
     /* background: black; */
+    background: #eeeeee;
 }
 #app {
     height: 100%;
@@ -26,7 +27,7 @@ body {
     flex-direction: column;
 }
 .balance-container {
-    flex: 0 0 50%;
+    flex: 0 0 25%;
     box-sizing: border-box;
 
     display: flex;
@@ -37,15 +38,16 @@ body {
     border-bottom: 1px solid black;
 }
 .notifications-container {
-    flex: 0 0 50%;
+    flex: 0 0 75%;
     box-sizing: border-box;
 
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
 
-    padding: 50px;
+    padding: 0 50px 0 50px;
+
+    position: relative;
 }
 .toggle {
     position: absolute;
@@ -71,7 +73,14 @@ body {
     text-align: center;
     min-height: 50px;
     color: red;
-    font-size: 24px;
+    font-size: 30px;
+}
+
+.bar {
+    height: 36px;
+    width: 480px;
+    border: 1px solid black;
+    background: white;
 }
 
 
@@ -89,9 +98,12 @@ body {
 }
 .lower {
     flex: 1;
-    display: flex;
-
     overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+    /*justify-content: center;*/
+    align-items: center;
 }
 
 
@@ -189,15 +201,10 @@ body {
 }
 .map.other {
     border: 1px solid black;
+    background: white;
 }
 
 .token-container {
     margin: 25px;
-}
-
-.bar {
-    height: 20px;
-    width: 240px;
-    border: 1px solid black;
 }
 
