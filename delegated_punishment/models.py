@@ -3,16 +3,12 @@ import datetime
 from django.contrib.postgres.fields import JSONField
 from otree.api import (
     models,
-    widgets,
     BaseConstants,
     BaseSubsession,
     BaseGroup,
     BasePlayer,
-    Currency as c,
-    currency_range,
 )
 from otree.db.models import Model, ForeignKey
-
 
 doc = """
 This Delegated Punishment game involves 5 players. Each demands for a portion of some
@@ -54,17 +50,18 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
-    pass
 
-    # def set_payoffs(self):
-    #     players = self.get_players()
-    #     self.total_requests = sum([p.request for p in players])
-    #     if self.total_requests <= Constants.amount_shared:
-    #         for p in players:
-    #             p.payoff = p.request
-    #     else:
-    #         for p in players:
-    #             p.payoff = c(0)
+    def generate_results(self):
+        from delegated_punishment.generate_data import generate_csv
+        players = self.get_players()
+        generate_csv(players, self.subsession.round_number)
+        # self.total_requests = sum([p.request for p in players])
+        # if self.total_requests <= Constants.amount_shared:
+        #     for p in players:
+        #         p.payoff = p.request
+        # else:
+        #     for p in players:
+        #         p.payoff = c(0)
 
 
 class Player(BasePlayer):
@@ -97,21 +94,12 @@ class Player(BasePlayer):
         # update roi
         self.roi += Constants.civilian_steal_rate
 
-        # self.save()  # Consider overriding the save method or something
-
     def decrease_roi(self, time):
         # calculate balance
         self.balance = self.get_balance(time)
         self.last_updated = time
         # update roi
         self.roi -= Constants.civilian_steal_rate
-
-        # self.save()  # Consider overriding the save method or something
-
-    def write_file(self):
-        from django.core.files import File
-        f = open('hello-world3.txt', 'w')
-        print(str(GameData.objects.first()))
 
 
 class DefendToken(Model):
@@ -122,7 +110,6 @@ class DefendToken(Model):
     y = models.FloatField(initial=0)
     x2 = models.FloatField(initial=0)
     y2 = models.FloatField(initial=0)
-    # slot = models.IntegerField(initial=0) todo: add slot information here
     last_updated = models.FloatField(blank=True)
 
     def __str__(self):

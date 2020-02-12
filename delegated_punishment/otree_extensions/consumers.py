@@ -86,7 +86,7 @@ class GameConsumer(WebsocketConsumer):
                 "balance": player.balance,
             })
 
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
         elif data_json.get('toggle'):
             # format
@@ -176,7 +176,7 @@ class GameConsumer(WebsocketConsumer):
                 "player": player.id_in_group,
             }
             # token count is calculated so we save gamedata here
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
             # print('TOKEN WAS DRAGGED AND PROP SET TO ' + str(token.map))
 
@@ -243,7 +243,7 @@ class GameConsumer(WebsocketConsumer):
             player.x = player.y = player.map = 0
             player.save()
 
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
             # print('LOCATION DRAG TRANSCATION COMPLETE AND map SET TO ' + str(player.map))
 
@@ -257,7 +257,7 @@ class GameConsumer(WebsocketConsumer):
                 "player": player.id_in_group,
                 "token_number": token_number,
             }
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
         elif data_json.get('steal_token_reset'):
             event_time = date_now_milli()
@@ -304,7 +304,7 @@ class GameConsumer(WebsocketConsumer):
                 "token_number": token_num,
                 "investigation_count": token_count,
             }
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
             # send token count to group
             async_to_sync(self.channel_layer.group_send)(
@@ -314,6 +314,45 @@ class GameConsumer(WebsocketConsumer):
                     'investigation_count': token_count,
                 }
             )
+
+        elif data_json.get('period_update'):
+            pu = data_json['period_update']
+
+            print("PERIOD UPDATE")
+
+            game_data_dict = {
+                "player": player.id_in_group
+            }
+
+            if pu.get('period_start'):
+                start_time = date_now_milli()
+
+                game_data_dict.update({
+                    'event_time': start_time,
+                    'event_type': 'period_start'
+                }) # todo move event time to top of page after balance or something
+
+                print("PERIOD START EVENT")
+                GameData.objects.create(p=player.id_in_group, g=group.id, event_time=start_time, jdata=game_data_dict)
+
+            elif pu.get('period_end'):
+                end_time = date_now_milli()
+
+                game_data_dict.update({
+                    'event_time': end_time,
+                    'event_type': 'period_end'
+                })
+
+                # final calculation of player balances for results page
+                players = group.get_players()
+                for p in players:
+                    p.balance = p.get_balance(end_time)
+                    p.save()
+
+                print("PERIOD END EVENT")
+                GameData.objects.create(p=player.id_in_group, g=group.id, event_time=end_time, jdata=game_data_dict)
+
+            group.save()
 
         else:
             # the following cases require more computation and send data down to all players
@@ -456,7 +495,7 @@ class GameConsumer(WebsocketConsumer):
 
                                 'culprit': player.id_in_group,
                                 'map': map,  # ?
-                                # 'token_number': token.number, #*
+                                'token_number': token.number,
 
                                 # data for displaying intersections
                                 'culprit_y': y,
@@ -604,7 +643,7 @@ class GameConsumer(WebsocketConsumer):
                     }
                 )
 
-            GameData.objects.create(p=player.id, g=group.id, event_time=event_time, jdata=game_data_dict)
+            GameData.objects.create(p=player.id_in_group, g=group.id, event_time=event_time, jdata=game_data_dict)
 
             # print('END TRANSACTION\n')
 

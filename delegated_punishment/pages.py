@@ -6,18 +6,16 @@ from random import random
 from json import JSONEncoder
 
 
-class Introduction(Page):
+class Game(Page):
     timeout_seconds = 240
     #https://stackoverflow.com/questions/3768895/how-to-make-a-class-json-serializable
     def vars_for_template(self):
-
-        # print('THE PAGE WAS FUCKING REFRESHED: ' + str(self.player.harvest_screen))
 
         # pp = Player.objects.get(pk=1)
         # import pdb;
         # pdb.set_trace()
 
-        #  todo: we need to query player here since a blank model is being created instad
+        #  todo: we need to query player here since a blank model is being created instead
         #   of pulling from db. This is required to load data from the database.
 
         pjson = dict()
@@ -39,8 +37,26 @@ class Introduction(Page):
 
         return vars_dict
 
-class TestWaitPage(WaitPage):
+
+class Wait(WaitPage):
     pass
 
 
-page_sequence = [TestWaitPage, Introduction]
+class ResultsWaitPage(WaitPage):
+    def after_all_players_arrive(self):
+        self.group.generate_results()
+
+
+class ResultsPage(Page):
+    def vars_for_template(self):
+        vars_dict = dict()
+        vars_dict['period'] = self.player.subsession.round_number
+        vars_dict['balance'] = self.player.balance
+        return vars_dict
+
+
+class Intermission(Page):
+    timeout_seconds = 10
+
+
+page_sequence = [Wait, Intermission, Game, ResultsWaitPage, ResultsPage]

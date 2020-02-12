@@ -1,0 +1,24 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+
+{% block content %}
+    <table class=table style="width: auto">
+        <tr>
+            <th>Period Number</th>
+            <td>{{ period }}</td>
+        </tr>
+        <tr>
+            <th>Balance</th>
+            <td>{{ balance }}</td>
+        </tr>
+    </table>
+
+    <p>{% next_button %}</p>
+
+
+{% endblock %}

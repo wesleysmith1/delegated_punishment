@@ -194,6 +194,10 @@
 
                 let that = this;
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId + '/'),
+                    this.gameSocket.onopen = function(e) {
+                        that.startTimer()
+                    };
+
                     this.gameSocket.onmessage = function (e) {
                         let data = JSON.parse(e.data);
                         // console.log(data)
@@ -315,8 +319,8 @@
                     }));
                 },
                 investigationUpdate: function(item) {
-                    console.log('token set to investigation')
-                    console.log(item)
+                    // console.log('token set to investigation')
+                    // console.log(item)
                     // inform the api that the item is being dragged
                     item.map = 0
                     this.gameSocket.send(JSON.stringify({
@@ -403,6 +407,34 @@
                     this.$refs.notificationLog3.scrollTop = nScrollHeight;
                     this.$refs.notificationLog4.scrollTop = nScrollHeight;
 
+                },
+                startTimer: function() {
+                    debugger;
+                    if (this.playerGroupId == 1) {
+                        // set start time
+                        this.gameSocket.send(JSON.stringify({
+                            'period_update': { 'period_start': true },
+                            'player_id': this.playerId,
+                            'group_id': 1, //todo: fix this to be variable group id
+                        }));
+                    }
+                    let that = this
+                    // start 4 minute timer
+                    setTimeout(function() {
+                        // officer records period end
+                        if (that.playerGroupId == 1) that.periodEnd();
+                        document.getElementById('form').submit()
+                    }, 240000);
+
+                },
+                periodEnd: function() {
+                    console.log("ENDING THE PERIOD")
+                    alert("ENDING THE PERIOD")
+                    this.gameSocket.send(JSON.stringify({
+                        'period_update': { 'period_end': true },
+                        'player_id': this.playerId,
+                        'group_id': 1, //todo: fix this to be variable group id
+                    }));
                 }
             },
             computed: {
