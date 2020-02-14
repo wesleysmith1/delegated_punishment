@@ -29,7 +29,7 @@ class Constants(BaseConstants):
     officer_intersection_payout = 10  # b: how much officer makes for intersection
     officer_review_probability = .1  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 100  # P punishment for officer if innocent civilian is punished
-    officer_token_total = 9
+    defend_token_total = 9
 
     epoch = datetime.datetime.utcfromtimestamp(0)
     instructions_template = 'delegated_punishment/instructions.html'
@@ -45,7 +45,7 @@ class Subsession(BaseSubsession):
         groups = self.get_groups()
 
         for g in groups:
-            for i in range(Constants.officer_token_total):
+            for i in range(Constants.defend_token_total):
                 DefendToken.objects.create(number=i + 1, group=g, )
 
 
@@ -54,7 +54,7 @@ class Group(BaseGroup):
     def generate_results(self):
         from delegated_punishment.generate_data import generate_csv
         players = self.get_players()
-        generate_csv(players, self.subsession.round_number)
+        generate_csv(players, self.subsession.round_number, self.subsession.session_id)
         # self.total_requests = sum([p.request for p in players])
         # if self.total_requests <= Constants.amount_shared:
         #     for p in players:

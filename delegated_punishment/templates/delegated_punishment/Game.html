@@ -409,7 +409,6 @@
 
                 },
                 startTimer: function() {
-                    debugger;
                     if (this.playerGroupId == 1) {
                         // set start time
                         this.gameSocket.send(JSON.stringify({
@@ -428,8 +427,6 @@
 
                 },
                 periodEnd: function() {
-                    console.log("ENDING THE PERIOD")
-                    alert("ENDING THE PERIOD")
                     this.gameSocket.send(JSON.stringify({
                         'period_update': { 'period_end': true },
                         'player_id': this.playerId,
