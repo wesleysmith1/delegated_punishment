@@ -102,7 +102,7 @@ class Player(BasePlayer):
     map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
     roi = models.IntegerField(initial=0)
-    balance = models.FloatField(initial=50)
+    balance = models.FloatField(initial=200)
     harvest_status = models.IntegerField(initial=0)
     harvest_screen = models.BooleanField(initial=True)
     income = models.IntegerField(initial=40)
@@ -113,7 +113,7 @@ class Player(BasePlayer):
     def get_balance(self, time):
         # return calculated balance
         if self.roi == 0:
-            return self.balance
+            return self.balance # this is incorrect man!
         elif not self.last_updated:
             return -99
         else:

@@ -30,6 +30,9 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
     event_rows = init_main()
 
+    # todo:
+    # make a constants configuration to pass to functions
+
     # get data
     # game_data = GameData.objects.filter(session=session, group=group, round=round).order_by('event_time')
     game_data = GameData.objects.filter(s=session_id, g=group_id, round_number=round_number,).order_by('event_time')
@@ -64,7 +67,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': player['screen'],
                 'steal_token': format_steal_token(player_id, 0, 0, 0, 'NA'),
                 'production_inputs': player['production_inputs'],
-                'punished': 0,
+                'punished': 'NA',
                 'defend_tokens': 'NA',
                 'intersection_events': 'NA'
             }
@@ -101,7 +104,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                     'screen': victim['screen'],
                     'steal_token': steal_tokens[victim_id].format(),
                     'production_inputs': victim['production_inputs'],
-                    'punished': 0,
+                    'punished': 'NA',
                     'defend_tokens': 'NA',
                     'intersection_events': 'NA'
                 }
@@ -117,7 +120,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': player['screen'],
                 'steal_token': steal_tokens[player_id].format(),
                 'production_inputs': player['production_inputs'],
-                'punished': 0,
+                'punished': 'NA',
                 'defend_tokens': 'NA',
                 'intersection_events': 'NA'
             }
@@ -142,7 +145,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': player['screen'],
                 'steal_token': steal_tokens[player_id].format(),
                 'production_inputs': player['production_inputs'],
-                'punished': 0,
+                'punished': 'NA',
                 'defend_tokens': 'NA',
                 'intersection_events': 'NA'
             }
@@ -189,7 +192,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': player['screen'],
                 'steal_token': steal_tokens[player_id].format(),
                 'production_inputs': player['production_inputs'],
-                'punished': 0,
+                'punished': 'NA',
                 'defend_tokens': 'NA',
                 'intersection_events': 'NA'
             }
@@ -344,7 +347,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                                 'steal_token': steal_tokens[guilty_id].format(),
                                 'production_inputs': guilty['production_inputs'],
                                 'punished': 1,
-                                'defend_tokens': event_defend_tokens,
+                                'defend_tokens': 'NA',
                                 'intersection_events': i,
                             }
                             event_rows[guilty_id].append(guilty_data)
@@ -369,7 +372,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                         'steal_token': steal_tokens[culprit_id].format(),  # todo: update steal token here
                         'production_inputs': culprit['production_inputs'],
                         'punished': culprit_punished,
-                        'defend_tokens': event_defend_tokens,
+                        'defend_tokens': 'NA',
                         'intersection_events': i,  # only add the culprit's intersection
                     }
                     event_rows[culprit_id].append(culprit_data)
@@ -391,7 +394,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                     'steal_token': steal_tokens[victim_id].format(),
                     'production_inputs': victim['production_inputs'],
                     'punished': 0,
-                    'defend_tokens': event_defend_tokens,
+                    'defend_tokens': 'NA',
                     'intersection_events': formatted_intersections,
                 }
                 event_rows[victim_id].append(victim_data)
@@ -408,7 +411,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'steal_token': 'NA',
                 'production_inputs': 'NA',
                 'punished': 'NA',
-                'defend_tokens': event_defend_tokens,
+                'defend_tokens': 'NA',
             })
 
             # update officer data
@@ -485,7 +488,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                             'steal_token': steal_tokens[guilty_id].format(),
                             'production_inputs': guilty['production_inputs'],
                             'punished': 1,
-                            'defend_tokens': event_defend_tokens,
+                            'defend_tokens': 'NA',
                             'intersection_events': "[{}]".format(i)
                         }
 
@@ -515,7 +518,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 "steal_token": steal_tokens[victim_id].format(),
                 "production_inputs": victim['production_inputs'],
                 "punished": 0,
-                "defend_tokens": event_defend_tokens,
+                "defend_tokens": 'NA',
                 "intersection_events": formatted_intersection
             }
             event_rows[victim_id].append(victim_data)
@@ -547,7 +550,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'steal_token': steal_tokens[culprit_id].format(),
                 'production_inputs': culprit['production_inputs'],
                 'punished': punished,
-                'defend_tokens': event_defend_tokens,
+                'defend_tokens': 'NA',
                 'intersection_events': formatted_intersection
             }
 
@@ -555,6 +558,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
         elif event_type == 'period_start':
             period_start = event_time
+            tf = TimeFormatter(period_start)
             for i in range(1, 6):
 
                 player_data = {
@@ -566,7 +570,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                     'screen': players[i]['screen'],
                     'steal_token': steal_tokens[i].format(),
                     'production_inputs': players[i]['production_inputs'],
-                    'punished': 0,
+                    'punished': 'NA',
                     'defend_tokens': 'NA' if i > 1 else formatted_defend_tokens(defend_tokens),
                     'intersection_events': 'NA'
                 }
@@ -586,7 +590,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                     'screen': players[i]['screen'],
                     'steal_token': steal_tokens[i].format(),
                     'production_inputs': players[i]['production_inputs'],
-                    'punished': 0,
+                    'punished': 'NA',
                     'defend_tokens': 'NA' if i > 1 else formatted_defend_tokens(defend_tokens),
                     'intersection_events': 'NA'
                 }
@@ -604,14 +608,13 @@ def generate_csv(group_id, round_number, session_id, session_start):
     session_date = datetime.datetime.today().strftime('%Y%m%d')
     # print out csv files
     for i in range(1, 6):
-        role = 'Enforcer' if i == 1 else 'Civilian'
         start = math.floor(session_start)
-        file_name = "Session_{}_{}_{}_{}_{}.csv".format(session_id, role, i, session_date, start)
+        file_name = "Session_Player_{}_{}_{}_{}.csv".format(session_id, i, session_date, start)
         print(file_name)
-        generate(i, event_rows[i], file_name, period_start, round_number, session_id)
+        generate(i, event_rows[i], file_name, period_start, round_number, session_id, group_id)
 
 
-def generate(pid, event_rows, file_name, period_start, period, session_id):
+def generate(pid, event_rows, file_name, period_start, period, session_id, group_id):
     f = open(file_name, 'a', newline='')  # todo make this append
     with f:
         writer = csv.writer(f)
@@ -619,59 +622,58 @@ def generate(pid, event_rows, file_name, period_start, period, session_id):
         if period == 1:
             writer.writerow(csv_header())
         for row in event_rows:
-            writer.writerow(format_row(pid, row, period_start, period, session_id))
+            writer.writerow(format_row(pid, row, period_start, period, session_id, group_id))
 
 
 def csv_header():
     labels = [
-        'Event Type',
-        'Experiment Start',
-        'Global Parameters',
-        'Session ID',
-        'PaymentScheme',
-        'Income Distribution',
-        'Player ID',
-        'Player Role',
-        'Period',
-        'Current Time',
-        'Balance',
+        'EventType',
+        'Session_ID',
+        'Session_GlobalParameters',
+        'Group_ID',
+        'Group_BonusAmount',
+        'Group_IncomeDistribution',
+        'Player_ID',
+        'Player_Role',
+        'Period_ID',
+        'Period_CurrentTime',
         'ROI',
-        'Screen',
-        'Steal Token',
-        'Production Inputs',
-        'Punished',
-        'Defend Tokens',
-        'Intersection Events'
+        'Player_Balance',
+        'Player_Screen',
+        'Player_StealToken',
+        'Player_ProductionInputs',
+        'Player_Punished',
+        'Player_DefendTokens',
+        'Group_PunishmentEvents',
     ]
     return labels
 
 
-def format_row(pid, r, period_start, period, session_id):
+def format_row(pid, r, period_start, period, session_id, group_id):
     # innocent_prob = 1 / 3 - num_investigators / 30
     # guilty_prob = 1 / 3 + 2 * num_investigators / 30
     return [
         r['event_type'],
-        period_start,
-        "[2,12, 10,1, 10, 300x300, 20, .1]",
+        session_id,
         [
             Constants.civilian_steal_rate,
             Constants.civilian_conviction_amount,
-            "officer_budget_size",
-            "probability function abar parameters",
+            Constants.defend_token_total,
+            "a min 1 , a max 10",
             Constants.defend_token_size,
             Constants.civilian_map_size,
             Constants.officer_reprimand_amount,
             Constants.officer_review_probability,
-        ],
-        session_id,
-        1,  # payment scheme?
-        Constants.civilian_incomes_one if period < 5 else Constants.civilian_incomes_two,
+        ],  # session global params?
+        group_id,
+        Constants.officer_incomes[0],
+        Constants.civilian_incomes_one[0] if period < 5 else Constants.civilian_incomes_two[0],  # group_income_distribution
         pid,
         1 if pid > 1 else 0,
         period,
         r['event_time'],
-        r['balance'],
         r['roi'],
+        r['balance'],
         r['screen'],
         r['steal_token'],
         r['production_inputs'],
@@ -710,7 +712,7 @@ def init_steal_tokens():
 def init_defend_tokens():
     x = {}
     for i in range(1, Constants.defend_token_total+1):
-        x[i+1] = "[{}, {}, {}, {}, {}, {}, {}, {}]".format(i+1, 0, 0, 0, 0, 'NA', 1, 0)
+        x[i] = "[{}, {}, {}, {}, {}, {}, {}, {}]".format(i, 0, 0, 0, 0, 'NA', 1, 0)
     return x
 
 def init_players(start):
@@ -720,10 +722,10 @@ def init_players(start):
             "last_updated": start,
             "player_id": i,
             "player_role": 0 if i == 1 else 1,
-            "balance": 0,
+            "balance": 200,  # todo make this refer to constants
             "screen": 1,
             "roi": 0,
-            'production_inputs': 'NA' if i == 1 else '[0, 0, 0, 0]'
+            'production_inputs': 'NA' if i == 1 else 0
         }
 
     return x
@@ -761,10 +763,11 @@ def decrease_roi(player, event_time):
 
 
 def format_production_inputs(c):
-    p = [0, 0, 0, 0]
-    for i in range(c):
-        p[i] = 1
-    return str(p)
+    # p = [0, 0, 0, 0]
+    # for i in range(c):
+    #     p[i] = 1
+    # return str(p)
+    return c
 
 
 def format_steal_token(token_number, x, y, steal_map, defend_token):

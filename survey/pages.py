@@ -21,7 +21,7 @@ class SurveyWaitPage(WaitPage):
 
 class MainSurvey(Page):
     form_model = 'player'
-    form_fields = ['gender', 'race_ethnicity', 'confused', 'confused_explanation', 'strategy', 'feedback']
+    form_fields = ['gender', 'race_ethnicity', 'strategy', 'feedback']
 
 
 page_sequence = [NameSurvey, SurveyWaitPage, MainSurvey]
