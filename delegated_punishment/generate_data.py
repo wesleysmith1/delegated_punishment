@@ -609,7 +609,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
     # print out csv files
     for i in range(1, 6):
         start = math.floor(session_start)
-        file_name = "data/Session_Player_{}_{}_{}_{}.csv".format(session_id, i, session_date, start)
+        file_name = "data/Session_{}_Group{}_Player_{}_{}_{}.csv".format(session_id, 1, i, session_date, start)
         print(file_name)
         generate(i, event_rows[i], file_name, period_start, round_number, session_id, group_id)
 
