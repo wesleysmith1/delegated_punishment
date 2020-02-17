@@ -34,8 +34,8 @@ SESSION_CONFIGS = [
     dict(
         name='survey',
         display_name='survey',
-        num_demo_participants=5,
-        app_sequence=['survey', 'payment_info'],
+        num_demo_participants=1,
+        app_sequence=['survey'],
     ),
 ]
 

@@ -12,11 +12,13 @@ class NameSurvey(Page):
 
 class SurveyWaitPage(WaitPage):
     def after_all_players_arrive(self):
-        print('ALL PLAYERS HAVE ARRIVED SUCKA {}'.format(self.group.id))
         # generate results here
         from survey.helpers import generate_payouts
         generate_payouts(self.group)
 
+
+class FinalPage(Page):
+    pass
 
 
 class MainSurvey(Page):
@@ -24,4 +26,4 @@ class MainSurvey(Page):
     form_fields = ['gender', 'race_ethnicity', 'strategy', 'feedback']
 
 
-page_sequence = [NameSurvey, SurveyWaitPage, MainSurvey]
+page_sequence = [NameSurvey, SurveyWaitPage, MainSurvey, FinalPage]
