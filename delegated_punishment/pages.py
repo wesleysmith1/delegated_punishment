@@ -1,5 +1,5 @@
 from ._builtin import Page, WaitPage
-import json
+import json, math
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
@@ -7,7 +7,7 @@ from json import JSONEncoder
 
 
 class Game(Page):
-    timeout_seconds = 240
+    timeout_seconds = 240 #todo look into this and consider adding script on front end to get it working dynamically
     #https://stackoverflow.com/questions/3768895/how-to-make-a-class-json-serializable
     def vars_for_template(self):
 
@@ -27,7 +27,7 @@ class Game(Page):
 
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
-        vars_dict['rand'] = str(random() * 1000) #todo: remove
+        vars_dict['rand'] = str(random() * 1000)  # todo: remove
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
             # for o in officer_tokens:
@@ -44,19 +44,32 @@ class Wait(WaitPage):
 
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
+        # todo make sure that we are not doing this 5 times!
         self.group.generate_results()
+
+        for player in self.group.get_players():
+            player.participant.vars['balances'].append(math.floor(player.balance))
 
 
 class ResultsPage(Page):
+    timeout_seconds = 10
+    timer_text = 'Time remaining on results page'
+
     def vars_for_template(self):
         vars_dict = dict()
         vars_dict['period'] = self.player.subsession.round_number
-        vars_dict['balance'] = self.player.balance
+        vars_dict['balance'] = math.floor(self.player.balance)
         return vars_dict
 
 
 class Intermission(Page):
-    timeout_seconds = 10
+    timer_text = 'Please wait for round to start'
+
+    def get_timeout_seconds(self):
+        if self.subsession.round_number == 4:  # longer intermission between rounds 4-5
+            return 120
+        else:
+            return 10
 
 
 page_sequence = [Wait, Intermission, Game, ResultsWaitPage, ResultsPage]

@@ -5,8 +5,6 @@ from otree.api import (
     BaseSubsession,
     BaseGroup,
     BasePlayer,
-    Currency as c,
-    currency_range,
 )
 
 
@@ -14,7 +12,6 @@ class Constants(BaseConstants):
     name_in_url = 'survey'
     players_per_group = None
     num_rounds = 1
-
 
 class Subsession(BaseSubsession):
     pass
@@ -26,7 +23,19 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
 
-    age = models.IntegerField(label='What is your age?', min=13, max=125)
+    name = models.StringField(label="Please enter your name:")
+
+    race_ethnicity = models.StringField(
+        choices=['White', 'Black or African American', 'Asian', 'Indian or Pacific Islander', 'Hispanic', 'Multiracial', 'Other, Prefer not to say'],
+        label="What is your race/ethnicity",
+        widget=widgets.RadioSelect,
+    )
+
+    confused = models.StringField(
+        choices=['Yes', 'No', 'Prefer not to say'],
+        label="Were you confused by anything in the experiment?",
+        widget=widgets.RadioSelect,
+    )
 
     gender = models.StringField(
         choices=[['Male', 'Male'], ['Female', 'Female']],
@@ -34,25 +43,10 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
-    crt_bat = models.IntegerField(
-        label='''
-        A bat and a ball cost 22 dollars in total.
-        The bat costs 20 dollars more than the ball.
-        How many dollars does the ball cost?'''
-    )
+    confused_explanation = models.StringField(blank=True, label="If yes, what confused you?")
+    strategy = models.StringField(label="How did you make your decisions during the experiment?")
+    feedback = models.StringField(label="Is there anything else you would like to tell the experimenters about this experiment?")
 
-    crt_widget = models.IntegerField(
-        label='''
-        "If it takes 5 machines 5 minutes to make 5 widgets,
-        how many minutes would it take 100 machines to make 100 widgets?"
-        '''
-    )
+    payout = models.IntegerField(initial=0)
 
-    crt_lake = models.IntegerField(
-        label='''
-        In a lake, there is a patch of lily pads.
-        Every day, the patch doubles in size.
-        If it takes 48 days for the patch to cover the entire lake,
-        how many days would it take for the patch to cover half of the lake?
-        '''
-    )
+

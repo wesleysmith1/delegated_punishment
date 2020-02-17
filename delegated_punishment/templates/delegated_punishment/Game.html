@@ -30,10 +30,14 @@
     <div style="display: none">
         <div class="card-body">
             <h2>
-                <!-- todo: make this player id or participant id -->
-                <span id="playerId">{{ player.id_in_group }}</span>
+                <span id="playerId">{{ player.id }}</span>
                 <span id="groupPlayerId">{{ player.id_in_group }}</span>
+                <span id="groupId">{{ player.group_id }}</span>
                 <span id="harvestScreen">{{ player.harvest_screen }}</span>
+                <span id="income">{{ player.income }}</span>
+
+                <span id="roundNumber">{{subsession.round_number }}</span>
+                <span id="sessionId">{{ subsession.session_id }}</span>
             </h2>
         </div>
     </div>
@@ -68,13 +72,14 @@
             <steal-game-component
                     v-show="!harvestScreen"
                     :maps="maps"
-                    :player-group-id="playerGroupId"
+                    :group-player-id="groupPlayerId"
                     :player-location="playerLocation"
                     :investigation-count="investigationCount"
                     :prob-culprit="probabilityCulprit"
                     :prob-innocent="probabilityInnocent"
                     :police-log-messages="policeLogMessages"
                     :map-size="mapSize"
+                    :location-location="locationLocation"
                     @location-drag="locationDrag"
                     @location-update="locationUpdate"
                     @location-token-reset="locationTokenReset">
@@ -84,6 +89,7 @@
         <div class="panel game-status-container">
             <div class="balance-container">
                 <div>DEBUG: ROI: {{ roi }}</div>
+                <div>INCOME: {{ income }}</div>
                 <div class="balance-label">Balance</div>
                 <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
             </div>
@@ -96,13 +102,13 @@
                     <div class="notification-log-column">
                         <div class="header"><div>Civilian Map</div></div>
                         <div class="content" ref="notificationLog1">
-                            <div v-for="message in messages" :class="{ selfmessage: message.map == playerGroupId }" style="width: 100%;">{{message.map}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;">{{message.map}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
                         <div class="header"><div>Civilian Punished</div></div>
                         <div class="content" ref="notificationLog2">
-                            <div v-for="message in messages" :class="{ selfmessage: message.punished==playerGroupId }">{{message.punished}}</div>
+                            <div v-for="message in messages" :class="{ selfmessage: message.punished==groupPlayerId }">{{message.punished}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
@@ -137,49 +143,65 @@
                 'probability-bar-component': probabilityBarComponent,
             },
             data: {
-                that: this,
                 player: {},
                 isOfficer: true,
                 playerId: null,
-                playerGroupId: null,
+                groupPlayerId: null,
+                groupId: null,
+                roundNumber: null,
+                sessionId: null,
                 playerLocation: {},
+                locationLocation: 1,
                 policeLogMessages : [],
                 messages: [],
                 singleMessage: null,
                 maps: [],
-                locationCount: 5,
                 balance: 0,
                 balanceColor: 'black',
                 roi: 0,
+                income: null,
                 harvestItems: [],
                 harvestStatus: 0,
                 harvestScreen: true,
                 officerTokens: [],
                 investigationCount: 0,
                 stealNotification: "",
-                defendTokenSize: 36,
-                mapSize: 240,
+                defendTokenSize: 36, // todo load from api?
+                mapSize: 240,  // todo load from api?
+                gameDuration: 240000+900000,  // milliseconds
+                balanceFrequency: 500,
                 // defendTokenSlots: []
             },
             created: function () {
 
+                // todo we need to add way to make sure page was not refreshed or way to get timmer of actualy game instead of starting the timmer again.
+
                 this.player = JSON.parse(player);
 
                 this.playerId = document.getElementById('playerId').textContent;
-                this.playerGroupId = document.getElementById('groupPlayerId').textContent;
-                this.isOfficer = this.playerGroupId == 1
-                this.harvestScreen = document.getElementById('harvestScreen')
+                this.groupPlayerId = document.getElementById('groupPlayerId').textContent;
+                this.groupId = document.getElementById('groupId').textContent;
+                this.isOfficer = this.groupPlayerId == 1;
+                this.harvestScreen = document.getElementById('harvestScreen').textContent;
+                this.roundNumber = document.getElementById('roundNumber').textContent;
+                this.sessionId = document.getElementById('sessionId').textContent;
+
+                // debug
+                this.income = document.getElementById('income').textContent;
 
                 // this code is for handling page refreshes
                 if (!this.isOfficer) {
                     this.playerLocation = {
-                        'player': this.playerGroupId,
+                        'player': this.groupPlayerId,
                         'map': this.player.map,
                         'x': this.player.x,
                         'y': this.player.y
                     } // todo integrate this into app
+
+                    this.locationLocation = Math.floor(Math.random() * 10)+1 // todo duplicated code mode
                 } else if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens)
+                    console.log(this.officerTokens);
                     // todo
                     // this.defendTokenSlots = new Array.fill(9).fill(0)
                     // this.officerTokens.forEach(function(ot) {
@@ -190,44 +212,42 @@
                 }
 
                 // player maps
-                this.maps = [1, 2, 3, 4]
+                this.maps = [1, 2, 3, 4];
 
-                let that = this;
-                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.playerGroupId + '/'),
-                    this.gameSocket.onopen = function(e) {
-                        that.startTimer()
+                // todo look into routing questions
+                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.playerId + '/' + this.groupPlayerId + '/'),
+                    this.gameSocket.onopen = (e) => {
+                        this.startTimer()
                     };
 
-                    this.gameSocket.onmessage = function (e) {
+                    this.gameSocket.onmessage = (e) => { // todo es6
                         let data = JSON.parse(e.data);
-                        // console.log(data)
                         if (data.balance) {
-                            if (data.balance == that.balance) { // balance has not changed
-                                that.balanceColor = "black"
-                            } else if (data.balance < that.balance) { // balance decreasing
-                                that.balanceColor = "red"
+                            if (data.balance == this.balance) { // balance has not changed
+                                this.balanceColor = "black"
+                            } else if (data.balance < this.balance) { // balance decreasing
+                                this.balanceColor = "red"
                             } else {
                                 // balance increasing 
-                                that.balanceColor = "green"
+                                this.balanceColor = "green"
                             }
 
-                            that.balance = data.balance;
-                            that.roi = data.roi
+                            this.balance = data.balance;
+                            this.roi = data.roi
                         } else if (data.intersections) {
                             console.log(data.intersections);
-                            data.intersections.forEach(function (i) {
-                                that.addMessage(i);
+                            data.intersections.forEach((i) => {
+                                this.addMessage(i);
 
-                                that.showIntersection(i);
+                                this.showIntersection(i);
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
-                            that.investigationCount = data.investigation_update
-                            console.log('INVESTIGATION RESULTS!', that.investigationCount)
+                            this.investigationCount = data.investigation_update
+                            console.log('INVESTIGATION RESULTS!', this.investigationCount)
                         }
                     };
 
-                this.gameSocket.onclose = function (e) {
-                    alert('channel closed');
+                this.gameSocket.onclose = (e) => {
                     console.error('CHANNEL CLOSED UNEXPECTEDLY');
                 };
 
@@ -235,22 +255,16 @@
             },
             methods: {
                 toggle: function() {
-                    // console.log('screen toggled')
                     if (this.harvestScreen) {
                         // update local harvest status
-                        // console.log('harvest reset')
                         this.harvestStatus = 0;
-                        // console.log('steal active');
-
                         // send toggle event to db
-                        this.stealActive()
+                        this.stealActive();
                     } else {
                         // reset steal location
-                        this.resetLocation()
-                        // console.log('harvest active');
-
+                        this.resetLocation(Math.floor(Math.random() * 10)+1);
                         // reset harvest status and send toggle event to db
-                        this.harvestActive()
+                        this.harvestActive();
                     }
                     this.harvestScreen = !this.harvestScreen
                 },
@@ -259,24 +273,31 @@
                     this.gameSocket.send(JSON.stringify({
                         'toggle': {harvest: false},
                         'player_id': this.playerId,
-                        'group_id': 1, //todo: change this
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 harvestActive: function() {
                     this.gameSocket.send(JSON.stringify({
                         'toggle': {harvest: true},
                         'player_id': this.playerId,
-                        'group_id': 1,
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 harvestUpdate: function (status) {
                     this.harvestStatus++;
-                    //console.log('harvest status: ' + this.harvestStatus)
+
                     this.gameSocket.send(JSON.stringify({
                         'harvest': {status: this.harvestStatus},
                         'player_id': this.playerId,
-                        'group_id': 1,
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
+
                     // reset harvest cycle
                     if (this.harvestStatus == 4) {
                         this.harvestStatus = 0;
@@ -285,64 +306,73 @@
                     }
                 },
                 subscribeToBalance: function () {
-                    let that = this
-                    setInterval(function () {
-                        if (that.gameSocket.readyState == WebSocket.OPEN) {
-                            that.gameSocket.send(JSON.stringify({
+                    setInterval(() => {
+                        if (this.gameSocket.readyState == WebSocket.OPEN) {
+                            this.gameSocket.send(JSON.stringify({
                                 'balance': true,
-                                'player_id': that.playerId,
-                                'group_id': 1,
+                                'player_id': this.playerId,
+                                'group_id': this.groupId,
+                                'round_number': this.roundNumber,
+                                'session_id': this.sessionId,
                             }));
                         } else {
                             console.log('the web socket is not connected')
                         }
-                    }, 500);
+                    }, this.balanceFrequency);
                 },
-                resetLocation: function () {
-                    gsap.to('#location', .5, {x: 0, y: 0})
+                resetLocation: function (location) {
+                    if (location == 1) {
+
+                    } else {
+
+                    }
+                    gsap.to('#location', .5, {x: 0, y: 0});
                 },
                 tokenDrag: function(token) {
-                    //console.log('token drag')
-                    //console.log(token)
                     this.gameSocket.send(JSON.stringify({
                         'defend_token_drag': token,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 tokenUpdate: function (token) {
-                    //console.log(token)
                     this.gameSocket.send(JSON.stringify({
                         'defend_token_update': token,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 investigationUpdate: function(item) {
-                    // console.log('token set to investigation')
-                    // console.log(item)
                     // inform the api that the item is being dragged
-                    item.map = 0
+                    item.map = 0;
                     this.gameSocket.send(JSON.stringify({
                         'investigation_update': item,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo: fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 locationDrag: function(location) {
-                    //console.log('location drag')
                     this.gameSocket.send(JSON.stringify({
                         'steal_token_drag': location,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 locationUpdate: function (location) {
-                    //console.log(location)
                     this.gameSocket.send(JSON.stringify({
                         'steal_token_update': location,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 locationTokenReset: function() {
@@ -350,45 +380,48 @@
                     this.gameSocket.send(JSON.stringify({
                         'steal_token_reset': true,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 defenseTokenReset: function(tokenNumber) {
                     this.gameSocket.send(JSON.stringify({
                         'defend_token_reset': tokenNumber,
                         'player_id': this.playerId,
-                        'group_id': 1, //todo fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 },
                 showIntersection: function (i) {
                     // console.log(i)
 
                     // was player the culprit
-                    if (i.culprit == this.playerId) {
-                        this.resetLocation()
+                    if (i.culprit == this.groupPlayerId) {
+                        this.resetLocation(i.reset_location);
                     }
 
-                    if (i.guilty == this.playerId) {
+                    if (i.guilty == this.groupPlayerId) {
                         // reset steal token
 
-                        this.stealNotification = "You were punished!"
-                        let that = this
-                        setTimeout(function () {
-                            that.stealNotification = '';
+                        this.stealNotification = "You were punished!";
+                        setTimeout(() => {
+                            this.stealNotification = '';
                         }, 2000);
                     }
 
-                    let selector = '#indicator' + i.map + '-' + i.culprit
+                    let selector = '#indicator' + i.map + '-' + i.culprit;
                     let tl = gsap.timeline();
                     let left = i.culprit_x - 3;
                     let right = i.culprit_y - 3;
-                    //console.log('INDICATOR AT ' + left + ',' + right)
+
                     tl.to(selector, 0, {left: left, top: right});
                     tl.to(selector, {visibility: 'visible'});
                     tl.to(selector, {visibility: 'hidden', delay: 2})
 
                 },
-                addMessage(message) {
+                addMessage: function(message) {
                     this.messages.push({
                         "map": message.map,
                         "punished": message.guilty ? message.guilty : 'None',
@@ -399,8 +432,8 @@
                         this.scrollToBottom()
                     })
                 },
-                scrollToBottom() {
-                    let nScrollHeight = this.$refs.notificationLog1.scrollHeight
+                scrollToBottom: function() {
+                    let nScrollHeight = this.$refs.notificationLog1.scrollHeight;
 
                     this.$refs.notificationLog1.scrollTop = nScrollHeight;
                     this.$refs.notificationLog2.scrollTop = nScrollHeight;
@@ -409,42 +442,49 @@
 
                 },
                 startTimer: function() {
-                    if (this.playerGroupId == 1) {
+                    if (this.groupPlayerId == 1) {
                         // set start time
                         this.gameSocket.send(JSON.stringify({
                             'period_update': { 'period_start': true },
                             'player_id': this.playerId,
-                            'group_id': 1, //todo: fix this to be variable group id
+                            'group_id': this.groupId,
+                            'round_number': this.roundNumber,
+                            'session_id': this.sessionId,
                         }));
                     }
-                    let that = this
                     // start 4 minute timer
-                    setTimeout(function() {
+                    setTimeout(() => {
                         // officer records period end
-                        if (that.playerGroupId == 1) that.periodEnd();
+                        if (this.groupPlayerId == 1)
+                            this.periodEndEvent();
+
+                        // close socket
+                        this.gameSocket.close()
                         document.getElementById('form').submit()
-                    }, 240000);
+                    }, this.gameDuration); // 4 minute periods
 
                 },
-                periodEnd: function() {
+                periodEndEvent: function() {
                     this.gameSocket.send(JSON.stringify({
                         'period_update': { 'period_end': true },
                         'player_id': this.playerId,
-                        'group_id': 1, //todo: fix this to be variable group id
+                        'group_id': this.groupId,
+                        'round_number': this.roundNumber,
+                        'session_id': this.sessionId,
                     }));
                 }
             },
             computed: {
                 probabilityCulprit() {
                     if (this.investigationCount == 0)
-                        return 0
+                        return 0;
                     else {
                         return Math.floor((1 / 3 + 2 * (this.investigationCount) / 30) * 100)
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount == 0)
-                        return 0
+                        return 0;
                     else {
                         return Math.floor((1 / 3 - (this.investigationCount) / 30) * 100)
                     }

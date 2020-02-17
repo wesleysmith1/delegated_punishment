@@ -1,7 +1,7 @@
 let policeLogComponent = {
     props: {
         messages: Array,
-        playerGroupId: String
+        groupPlayerId: String
     },
     watch: {
       	messages: function(newVal, oldVal) {
@@ -30,19 +30,19 @@ let policeLogComponent = {
 <!--                <div class="notification-log-column">-->
 <!--                    <div class="header"><div>Civ Punished</div></div>-->
 <!--                    <div class="content" ref="policeLog1">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.civilianPunished}}</div>-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.civilianPunished}}</div>-->
 <!--                    </div>-->
 <!--                </div>-->
 <!--                <div class="notification-log-column">-->
 <!--                    <div class="header"><div>Map Number</div></div>-->
 <!--                    <div class="content" ref="policeLog2">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.mapNumber}}</div>-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.mapNumber}}</div>-->
 <!--                    </div>-->
 <!--                </div>-->
 <!--                <div class="notification-log-column">-->
 <!--                    <div class="header"><div>Time (seconds)</div></div>-->
 <!--                    <div class="content" ref="policeLog3">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==playerGroupId }">{{message.time}}</div>-->
+<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.time}}</div>-->
 <!--                    </div>-->
 <!--                </div>-->
 <!--            </div>-->
@@ -80,7 +80,7 @@ let officerGameComponent = {
     props: {
         maps: Array,
         officerUnits: Array,
-        playerGroupId: String,
+        groupPlayerId: String,
         investigationCount: Number,
         probCulprit: Number,
         probInnocent: Number,
@@ -214,7 +214,7 @@ let officerGameComponent = {
 <!--                    class="notifications-container"-->
 <!--                    style="border-right: 1px solid black;"-->
 <!--                    :messages="policeLogMessages"-->
-<!--                    :player-group-id="playerGroupId"-->
+<!--                    :player-group-id="groupPlayerId"-->
 <!--                ></police-log-component>-->
                 <div class="investigation-data-container">
                   <div class="title">Investigating</div>

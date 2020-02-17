@@ -7,7 +7,11 @@
 
 
 {% block content %}
-
-    <p style="display: none">{% next_button %}</p>
+    <style>
+        .otree-btn-next {
+            display: none;
+        }
+    </style>
+    <p>{% next_button %}</p>
 
 {% endblock %}

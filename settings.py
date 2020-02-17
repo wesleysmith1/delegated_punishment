@@ -29,7 +29,13 @@ SESSION_CONFIGS = [
         name='delegated_punishment', 
         display_name="Delegated Punishment Game", 
         num_demo_participants=5,
-        app_sequence=['delegated_punishment', 'payment_info'],
+        app_sequence=['delegated_punishment', 'survey'],
+    ),
+    dict(
+        name='survey',
+        display_name='survey',
+        num_demo_participants=5,
+        app_sequence=['survey', 'payment_info'],
     ),
 ]
 

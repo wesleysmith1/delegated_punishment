@@ -15,17 +15,14 @@ class TimeFormatter:
 
 
 # def generate_csv(session, group, round):
-def generate_csv(group_players, round_number, session_id):
+def generate_csv(group_id, round_number, session_id, session_start):
 
     print("HERE IS THE ROUND NUMBER {}".format(round_number))
 
-    # todo: update this so that session start is not made here and only listened for since it should be the first gamedata item
-    session_start = GameData.objects.first().event_time
-    if not session_start:
-        print("DATA NOT AVAILABLE")
-        return
-
     tf = TimeFormatter(session_start)
+
+    # session_start is assigned to this
+    period_start = -1
 
     defend_tokens = init_defend_tokens()
     steal_tokens = init_steal_tokens()
@@ -35,7 +32,9 @@ def generate_csv(group_players, round_number, session_id):
 
     # get data
     # game_data = GameData.objects.filter(session=session, group=group, round=round).order_by('event_time')
-    game_data = GameData.objects.all().order_by('event_time')
+    game_data = GameData.objects.filter(s=session_id, g=group_id, round_number=round_number,).order_by('event_time')
+
+    print("THERE ARE {} EVENTS FOR THIS PERIOD".format(len(game_data)))
 
     for event in game_data:
         # get JSON data
@@ -52,7 +51,7 @@ def generate_csv(group_players, round_number, session_id):
 
             # if harvest complete
             if data['production_inputs'] == 4:
-                player['balance'] += Constants.civilian_income
+                player['balance'] += data['harvest_income']
 
             player['production_inputs'] = format_production_inputs(data['production_inputs'])
 
@@ -323,7 +322,7 @@ def generate_csv(group_players, round_number, session_id):
                         wrongful_conviction = 1 if intersection['wrongful_conviction'] else 0
 
                         # officer bonus
-                        officer['balance'] += Constants.officer_intersection_payout
+                        officer['balance'] += intersection['officer_bonus']
 
                         i = format_intersection(token_number, culprit_id, steal_token_id, defend_map, guilty_id, audit, reprimanded)
 
@@ -454,10 +453,18 @@ def generate_csv(group_players, round_number, session_id):
                     wrongful_conviction = 1 if intersection['wrongful_conviction'] else 0
 
                     # officer bonus
-                    officer['balance'] += Constants.officer_intersection_payout
+                    officer['balance'] += intersection['officer_bonus']
 
                     #todo clean this logic up
-                    i = format_intersection(defend_token_number, culprit_id, steal_token_id, steal_map, 'NA' if guilty_id == 0 else guilty_id, audit, reprimanded)
+                    i = format_intersection(
+                        defend_token_number,
+                        culprit_id,
+                        steal_token_id,
+                        steal_map,
+                        'NA' if guilty_id == 0 else guilty_id,
+                        audit,
+                        reprimanded
+                    )
 
                     # if wrongful conviction
                     if wrongful_conviction:
@@ -547,7 +554,7 @@ def generate_csv(group_players, round_number, session_id):
             event_rows[culprit_id].append(culpit_data)
 
         elif event_type == 'period_start':
-            session_start = event_time
+            period_start = event_time
             for i in range(1, 6):
 
                 player_data = {
@@ -585,30 +592,34 @@ def generate_csv(group_players, round_number, session_id):
                 }
                 event_rows[i].append(player_data)
 
+            # any events after this should not be included
+            break
+
         else:
             print('ERROR: EVENT TYPE NOT RECOGNIZED')
 
-        # variables for csv
-        import datetime, math
+    # variables for csv
+    import datetime, math
 
-        session_date = datetime.datetime.today().strftime('%Y%m%d')
-        # print out csv files
-        for i in range(1, 6):
-            role = 'Enforcer' if i == 1 else 'Civilian'
-            start = math.floor(session_start)
-            file_name = "Session_{}_{}_{}_{}_{}.csv".format(session_id, role, i, session_date, start)
-            print(file_name)
-            generate(i, event_rows[i], session_start, file_name)
+    session_date = datetime.datetime.today().strftime('%Y%m%d')
+    # print out csv files
+    for i in range(1, 6):
+        role = 'Enforcer' if i == 1 else 'Civilian'
+        start = math.floor(session_start)
+        file_name = "Session_{}_{}_{}_{}_{}.csv".format(session_id, role, i, session_date, start)
+        print(file_name)
+        generate(i, event_rows[i], file_name, period_start, round_number, session_id)
 
 
-def generate(pid, event_rows, start, file_name):
+def generate(pid, event_rows, file_name, period_start, period, session_id):
     f = open(file_name, 'a', newline='')  # todo make this append
     with f:
         writer = csv.writer(f)
         # write header
-        writer.writerow(csv_header())
+        if period == 1:
+            writer.writerow(csv_header())
         for row in event_rows:
-            writer.writerow(format_row(pid, row, start))
+            writer.writerow(format_row(pid, row, period_start, period, session_id))
 
 
 def csv_header():
@@ -635,17 +646,29 @@ def csv_header():
     return labels
 
 
-def format_row(pid, r, start):
+def format_row(pid, r, period_start, period, session_id):
+    # innocent_prob = 1 / 3 - num_investigators / 30
+    # guilty_prob = 1 / 3 + 2 * num_investigators / 30
     return [
         r['event_type'],
-        start,
+        period_start,
         "[2,12, 10,1, 10, 300x300, 20, .1]",
-        1,
-        1,
-        "[10,20,30,40,50]",
+        [
+            Constants.civilian_steal_rate,
+            Constants.civilian_conviction_amount,
+            "officer_budget_size",
+            "probability function abar parameters",
+            Constants.defend_token_size,
+            Constants.civilian_map_size,
+            Constants.officer_reprimand_amount,
+            Constants.officer_review_probability,
+        ],
+        session_id,
+        1,  # payment scheme?
+        Constants.civilian_incomes_one if period < 5 else Constants.civilian_incomes_two,
         pid,
         1 if pid > 1 else 0,
-        1,
+        period,
         r['event_time'],
         r['balance'],
         r['roi'],
@@ -680,14 +703,6 @@ def init_steal_tokens():
     x = {}
     for i in range(2,6):
         x[i] = StealToken(i)
-        # x[i + 2] = {
-        #     "number": i + 2,
-        #     "x": 0,
-        #     "y": 0,
-        #     "map": "NA",
-        #     "dropped": 1,
-        #     "defend_token_id": 'NA'
-        # }
     x[1] = 'NA'
     return x
 
@@ -696,16 +711,6 @@ def init_defend_tokens():
     x = {}
     for i in range(1, Constants.defend_token_total+1):
         x[i+1] = "[{}, {}, {}, {}, {}, {}, {}, {}]".format(i+1, 0, 0, 0, 0, 'NA', 1, 0)
-        # x[i + 1] = {
-        #     "number": i + 1,
-        #     "x1": 0,
-        #     "y1": 0,
-        #     "x2": 0,
-        #     "y2": 0,
-        #     "map": "NA",
-        #     "dropped": 1,
-        #     "caught": 0,
-        # }
     return x
 
 def init_players(start):
