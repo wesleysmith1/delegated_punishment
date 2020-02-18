@@ -63,13 +63,14 @@ class ResultsPage(Page):
 
 
 class Intermission(Page):
+    timeout_seconds = 120
     timer_text = 'Please wait for round to start'
 
-    def get_timeout_seconds(self):
-        if self.subsession.round_number == 5:  # longer intermission between rounds 4-5
-            return 120
+    def is_displayed(self):
+        if self.round_number == 5:
+            return True
         else:
-            return 10
+            return False
 
 
 page_sequence = [Wait, Intermission, Game, ResultsWaitPage, ResultsPage]

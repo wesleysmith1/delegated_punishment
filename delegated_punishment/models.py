@@ -20,7 +20,7 @@ amount, both players get demanded portions. Otherwise, both get nothing.
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 5
-    num_rounds = 1
+    num_rounds = 8
 
     # civilian_income = 40  # y: todo make this change per harvest cycle (WILL CHANGE BETWEEN PERIOD GROUPS)
     civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
@@ -37,8 +37,8 @@ class Constants(BaseConstants):
     defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 240
 
-    civilian_incomes_one = [3, 5, 8, 10],
-    civilian_incomes_two = [2, 3, 4, 15],
+    civilian_incomes_low = [3, 5, 8, 10],
+    civilian_incomes_high = [2, 3, 4, 15],
     officer_incomes = [0, 5, 10, 15],
 
 
@@ -54,6 +54,18 @@ class Subsession(BaseSubsession):
 
         groups = self.get_groups()
 
+        # this code is the terrible way that officer income is determined
+        if self.round_number == 1:
+            index = 0
+            for gr in groups:
+                officer_bonus = Constants.officer_incomes[0][index]
+                officer = gr.get_player_by_id(1)
+                officer.income = officer_bonus
+                officer_participant = officer.participant
+                officer_participant.vars['officer_bonus'] = officer_bonus
+                # officer_participant.save()
+                index += 1
+
         for g in groups:
             for p in g.get_players():
                 # initialize balances list
@@ -64,16 +76,13 @@ class Subsession(BaseSubsession):
 
                     # set harvest amount for civilians
                     if p.id_in_group > 1:
-                        incomes = Constants.civilian_incomes_one if self.round_number < 5 \
-                            else Constants.civilian_incomes_two
+                        incomes = Constants.civilian_incomes_low if self.round_number < 5 \
+                            else Constants.civilian_incomes_high
                         i = incomes[0][p.id_in_group-2]
                         p.income = i
                     else:
-                        officer = g.get_player_by_id(1)
-                        officer_income_index = self.round_number%4 - 1
-                        i = Constants.officer_incomes[0][officer_income_index]
-
-                        officer.income = i
+                        # is officer
+                        p.income = p.participant.vars['officer_bonus']
 
                 else:
                     # todo remove this
@@ -91,11 +100,13 @@ class Group(BaseGroup):
         # players = self.get_players()
         # todo: this is here to prevent import error because Constants cannot be loaded.
         from delegated_punishment.generate_data import generate_csv
+        officer_bonus = self.get_player_by_id(1).participant.vars['officer_bonus']
         generate_csv(
             self.id,
             self.subsession.round_number,
             self.subsession.session_id,
-            self.session.vars['session_start']
+            self.session.vars['session_start'],
+            officer_bonus
         )
 
 
