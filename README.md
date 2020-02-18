@@ -23,10 +23,10 @@ Login to server `ssh ubuntu@34.215.160.83`
 To initially install
 ```bash
 
-cd $HOME
-git clone https://github.com/yelsew414/delegated_punishment.git
-cd $HOME/delegated_punishment
-pip3 install -r requirements.txt
+    cd $HOME
+    git clone https://github.com/yelsew414/delegated_punishment.git
+    cd $HOME/delegated_punishment
+    pip3 install -r requirements.txt
 
 ```
 
@@ -38,21 +38,23 @@ To update to the latest version
 
 ```
 
+<!-- --- -->
 
----
-# Pre-Session Setup
-
-
+<!-- 
+## Pre-Session Setup
 ## Create Players and Passwords (including admin) ? 
-
 ## Setup Game Parameters (Treatments)?
+-->
 
 ---
 # Run Session
 
-Session Types
+
+#### Session Types
 
 <!-- ------------------------------------------------ -->
+
+
 
 | **Inequality:** |**High->Low**|**Low->High**|
 |-----------------|-------------|-------------|
@@ -65,43 +67,91 @@ Session Types
 <!-- ------------------------------------------------ -->
 
 
-Launch New Session *Still need to specify game parameters*
+#### Setup Session
+
+Create new database for the session by running `otree resetdb` on server.
+
+*this will break all existing session urls in lab.*
+
+
+Launch New Session *need to specify game parameters?*
 
 ```bash
 
-cd $HOME/delegated_punishment
-echo 'y' | otree resetdb
-sudo -E env "PATH=$PATH" otree runprodserver 80
+    cd $HOME/delegated_punishment
+    echo 'y' | otree resetdb
+    sudo -E env "PATH=$PATH" otree runprodserver 80
 
 ```
 
 
 Logout and exit the ssh connection to the server
 
-## Connect Subjects (using launcher)
-Launch google chrome and sign in students (JA1 ... JAN) 
- * **Be Careful** to Start Server Before Launcher
+## Connect Clients (Subjects)
+
+ * **Be Careful** to Start Server Before Clients
  * If accidentaly launch chrome before server started then restart server and relaunch windows
 </br>
 
 
-Launch Homepage:
- * http://34.215.160.83
+Manually Create Session on Local Admin PC
+ * go to http://34.221.168.234/
+ * create session with a `SESSION_ID`
 
+Launch Homepage on Client PC:
+ * C:/ ... /chrome.exe --kiosk
+ * http://34.215.160.83/join/ `SESSION_ID`
+
+<!--
+Launch google chrome and sign in students (JA1 ... JAN) 
 Launch Individual Pages:
  * http://34.221.168.234/DelegatedPunishment?username=[+]&password=PoDjangos
 AutoInc[x] tag 1
 
-<!--
+
 Admins: username=admin & password=PoDjangos
  * http://34.221.168.234
 -->
 
 
 
-## Stop Server Export Data
+## End of Session
 
-## Session Restart
-Run 'otree resetdb' on server. This will break all existing session urls in lab. 
+From Local Admin PC
+ * Enter Payoffs from Admin PC
+ * Close Client Connections
 
+From Server
+ * Download/Export Data
+
+```bash
+
+    mkdir /tmp/SessionData/
+    scp ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
+
+```
+
+ * Stop/Shutdown Server
+
+
+## Server Statistics (Primarily for Debugging)
+
+
+To start recording statistics, run
+```bash
+
+    SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S")".log
+    top -b -d 1  > SERVERLOG
+
+```
+   
+To stop recording statistics, `ctrl+C` 
+   
+To analyze statistics
+```bash
+
+    cat $(echo SERVERLOG) | grep '%Cpu(s):' --line-buffered
+    cat $(echo SERVERLOG) | sed -n '8,$p' | sort -r -n -k 10,10
+
+```
 
