@@ -3,7 +3,7 @@ import csv
 
 
 def generate_payouts(group):
-    f = open("session_{}_results.csv".format(group.subsession.session_id), 'w', newline='')
+    f = open("data/session_{}_results.csv".format(group.subsession.session_id), 'w', newline='')
     with f:
         writer = csv.writer(f)
 

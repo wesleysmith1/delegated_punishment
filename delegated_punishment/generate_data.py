@@ -15,9 +15,9 @@ class TimeFormatter:
 
 
 # def generate_csv(session, group, round):
-def generate_csv(group_id, round_number, session_id, session_start):
+def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constants.epoch):
 
-    print("HERE IS THE ROUND NUMBER {}".format(round_number))
+    # print("HERE IS THE ROUND NUMBER {}".format(round_number))
 
     tf = TimeFormatter(session_start)
 
@@ -280,6 +280,10 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
             # get officer
             officer = players[1]
+            officer_reprimand_total = 0
+            officer_data = {
+                'intersection_events': 'NA'
+            }
 
             # update token data
             token_number = data['token_number']
@@ -292,10 +296,6 @@ def generate_csv(group_id, round_number, session_id, session_start):
             defend_tokens[token_number] = format_defend_token(token_number, token_x1, token_y1, token_x2, token_y2, defend_map)
             event_defend_tokens = formatted_defend_tokens(defend_tokens)
 
-            culprit_data = {
-                'intersection_events': 'NA'
-            }
-
             # check for intersections
             if data.get('intersections'):
                 intersection_data = []
@@ -304,24 +304,39 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 victim_id = defend_map
                 victim = players[victim_id]
 
+                updated_players = [victim_id]
+                punished_players = []
+
                 # update intersection event data
                 for intersection in data['intersections']:
 
                     culprit_id = steal_token_id = intersection['culprit']
                     culprit = players[culprit_id]
 
+                    # add culprit to updated_players list
+                    if culprit_id not in updated_players:
+                        updated_players.append(culprit_id)
+
                     decrease_roi(culprit, event_time)
                     increase_roi(victim, event_time)
 
                     investigation = True if intersection.get('guilty') else False
 
-                    culprit_punished = 0
-
                     if investigation:
                         guilty_id = intersection['guilty']
                         guilty = players[guilty_id]
+
+                        # add guilty
+                        punished_players.append(guilty_id)
+
+                        # add guilty to updated_players list
+                        if guilty_id not in updated_players:
+                            updated_players.append(guilty_id)
+
                         audit = intersection['audit']
                         reprimanded = 1 if intersection['officer_reprimand'] > 0 else 0
+                        if reprimanded:
+                            officer_reprimand_total += 1
                         wrongful_conviction = 1 if intersection['wrongful_conviction'] else 0
 
                         # officer bonus
@@ -337,24 +352,8 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
                             guilty['balance'] -= Constants.civilian_conviction_amount
 
-                            guilty_data = {
-                                'event_type': event_type,
-                                'last_updated': guilty['last_updated'],
-                                'event_time': tf.format(event_time),
-                                'balance': update_balance(guilty, event_time),
-                                'roi': guilty['roi'],
-                                'screen': guilty['screen'],
-                                'steal_token': steal_tokens[guilty_id].format(),
-                                'production_inputs': guilty['production_inputs'],
-                                'punished': 1,
-                                'defend_tokens': 'NA',
-                                'intersection_events': i,
-                            }
-                            event_rows[guilty_id].append(guilty_data)
-
                         else:
                             # guilty culprit punishment
-                            culprit_punished = 1
                             culprit['balance'] -= Constants.civilian_conviction_amount
 
                     else:
@@ -362,20 +361,8 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
                     # culprit location is implicitly reset here
                     steal_tokens[culprit_id].defend_token = token_number
-                    culprit_data = {
-                        'event_type': event_type,
-                        'last_updated': culprit['last_updated'],
-                        'event_time': tf.format(event_time),
-                        'balance': culprit['balance'],
-                        'roi': culprit['roi'],
-                        'screen': 0,
-                        'steal_token': steal_tokens[culprit_id].format(),  # todo: update steal token here
-                        'production_inputs': culprit['production_inputs'],
-                        'punished': culprit_punished,
-                        'defend_tokens': 'NA',
-                        'intersection_events': i,  # only add the culprit's intersection
-                    }
-                    event_rows[culprit_id].append(culprit_data)
+
+                    # print("CULPRIT_ID: {}".format(culprit_id))
 
                     # end of intersection code
                     intersection_data.append(i)
@@ -383,25 +370,26 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 # add formatted intersection data
                 formatted_intersections = format_intersections(intersection_data)
 
-                # update victim data
-                victim_data = {
-                    'event_type': event_type,
-                    'last_updated': victim['last_updated'],
-                    'event_time': tf.format(event_time),
-                    'balance': victim['balance'],
-                    'roi': victim['roi'],
-                    'screen': victim['screen'],
-                    'steal_token': steal_tokens[victim_id].format(),
-                    'production_inputs': victim['production_inputs'],
-                    'punished': 0,
-                    'defend_tokens': 'NA',
-                    'intersection_events': formatted_intersections,
-                }
-                event_rows[victim_id].append(victim_data)
+                for pid in updated_players:
+                    u_player = players[pid]
+                    data = {
+                        'event_type': event_type,
+                        'last_updated': u_player['last_updated'],
+                        'event_time': tf.format(event_time),
+                        'balance': update_balance(u_player, event_time),
+                        'roi': u_player['roi'],
+                        'screen': 0,
+                        'steal_token': steal_tokens[pid].format(),
+                        'production_inputs': u_player['production_inputs'],
+                        'punished': punished_players.count(pid),
+                        'defend_tokens': 'NA',
+                        'intersection_events': 'NA',
+                    }
+                    event_rows[pid].append(data)
 
-                culprit_data['intersection_events'] = formatted_intersections
+                officer_data['intersection_events'] = formatted_intersections
 
-            culprit_data.update({
+            officer_data.update({
                 'event_type': event_type,
                 'last_updated': officer['last_updated'],
                 'event_time': tf.format(event_time),
@@ -410,12 +398,12 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': 0,
                 'steal_token': 'NA',
                 'production_inputs': 'NA',
-                'punished': 'NA',
-                'defend_tokens': 'NA',
+                'punished': officer_reprimand_total,
+                'defend_tokens': event_defend_tokens,
             })
 
             # update officer data
-            event_rows[1].append(culprit_data)
+            event_rows[1].append(officer_data)
 
         elif event_type == 'steal_token_update':
             culprit_id = data['culprit']
@@ -424,7 +412,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
             token_x = data['token_x']
             token_y = data['token_y']
             steal_map = data['map']
-            punished = 0
+            culprit_punished = 'NA'
 
             victim_id = data['map']
             victim = players[victim_id]
@@ -436,12 +424,15 @@ def generate_csv(group_id, round_number, session_id, session_start):
             formatted_intersection = 'NA'
 
             officer = players[1]
+            officer_reprimand = 'NA'
 
             if data.get('intersections'):
 
+                officer_reprimand = 0
+
                 event_defend_tokens = formatted_defend_tokens(defend_tokens)
-                intersection = data['intersections'][0] # only one intersection possible
-                defend_token_number = intersection['token_number'] #todo consider adding this to root of game data JSON
+                intersection = data['intersections'][0]  # only one intersection possible
+                defend_token_number = intersection['token_number']  # todo consider adding this to root of game data JSON
                 steal_token_id = culprit_id  # same for first delegated_punishment experiment
 
                 # check if there were investigation tokens
@@ -452,6 +443,8 @@ def generate_csv(group_id, round_number, session_id, session_start):
 
                     audit = intersection['audit']
                     reprimanded = 1 if intersection['officer_reprimand'] > 0 else 0
+                    if reprimanded:
+                        officer_reprimand = 1
 
                     wrongful_conviction = 1 if intersection['wrongful_conviction'] else 0
 
@@ -489,12 +482,12 @@ def generate_csv(group_id, round_number, session_id, session_start):
                             'production_inputs': guilty['production_inputs'],
                             'punished': 1,
                             'defend_tokens': 'NA',
-                            'intersection_events': "[{}]".format(i)
+                            'intersection_events': 'NA'
                         }
-
+                        culprit_punished = 0
                         event_rows[guilty_id].append(guilty_data)
                     else:
-                        punished = 1
+                        culprit_punished = 1
                         culprit['balance'] -= Constants.civilian_conviction_amount
 
                 else:
@@ -519,7 +512,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 "production_inputs": victim['production_inputs'],
                 "punished": 0,
                 "defend_tokens": 'NA',
-                "intersection_events": formatted_intersection
+                "intersection_events": 'NA'
             }
             event_rows[victim_id].append(victim_data)
 
@@ -532,7 +525,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': 0,
                 'steal_token': 'NA',
                 'production_inputs': 'NA',
-                'punished': 0,
+                'punished': officer_reprimand,
                 'defend_tokens': formatted_defend_tokens(defend_tokens),  # todo this is not elegant
                 'intersection_events': formatted_intersection
             }
@@ -549,7 +542,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
                 'screen': 0,
                 'steal_token': steal_tokens[culprit_id].format(),
                 'production_inputs': culprit['production_inputs'],
-                'punished': punished,
+                'punished': culprit_punished,
                 'defend_tokens': 'NA',
                 'intersection_events': formatted_intersection
             }
@@ -609,8 +602,7 @@ def generate_csv(group_id, round_number, session_id, session_start):
     # print out csv files
     for i in range(1, 6):
         start = math.floor(session_start)
-        file_name = "data/Session_{}_Group{}_Player_{}_{}_{}.csv".format(session_id, 1, i, session_date, start)
-        print(file_name)
+        file_name = "data/Session_{}_Group_{}_Player_{}_{}_{}.csv".format(session_id, 1, i, session_date, start)
         generate(i, event_rows[i], file_name, period_start, round_number, session_id, group_id)
 
 
@@ -666,7 +658,7 @@ def format_row(pid, r, period_start, period, session_id, group_id):
             Constants.officer_review_probability,
         ],  # session global params?
         group_id,
-        Constants.officer_incomes[0],
+        Constants.officer_incomes[0][period],
         Constants.civilian_incomes_one[0] if period < 5 else Constants.civilian_incomes_two[0],  # group_income_distribution
         pid,
         1 if pid > 1 else 0,
@@ -715,6 +707,7 @@ def init_defend_tokens():
         x[i] = "[{}, {}, {}, {}, {}, {}, {}, {}]".format(i, 0, 0, 0, 0, 'NA', 1, 0)
     return x
 
+
 def init_players(start):
     x = {}
     for i in range(1, 6):
@@ -723,7 +716,7 @@ def init_players(start):
             "player_id": i,
             "player_role": 0 if i == 1 else 1,
             "balance": 200,  # todo make this refer to constants
-            "screen": 1,
+            "screen": 0 if i == 1 else 1,
             "roi": 0,
             'production_inputs': 'NA' if i == 1 else 0
         }

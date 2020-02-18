@@ -45,6 +45,7 @@ class Constants(BaseConstants):
 class Subsession(BaseSubsession):
 
     def creating_session(self):
+        """This is called once for each round"""
 
         # set session start time
         from delegated_punishment.helpers import date_now_milli
@@ -69,7 +70,9 @@ class Subsession(BaseSubsession):
                         p.income = i
                     else:
                         officer = g.get_player_by_id(1)
-                        i = Constants.officer_incomes[0][g.id-1]
+                        officer_income_index = self.round_number%4 - 1
+                        i = Constants.officer_incomes[0][officer_income_index]
+
                         officer.income = i
 
                 else:
@@ -78,8 +81,8 @@ class Subsession(BaseSubsession):
                     officer.income = 10
 
             for i in range(Constants.defend_token_total):
-                print('DEFEND TOKEN CREATED')
-                DefendToken.objects.create(number=i + 1, group=g,)
+                d = DefendToken.objects.create(number=i+1, group=g,)
+                print('DEFEND TOKEN CREATED FOR GROUP {} | ID: {}'.format(g.id, d.id))
 
 
 class Group(BaseGroup):
