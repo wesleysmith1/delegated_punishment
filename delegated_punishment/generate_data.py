@@ -658,7 +658,7 @@ def format_row(pid, r, period_start, period, session_id, group_id):
             Constants.officer_review_probability,
         ],  # session global params?
         group_id,
-        Constants.officer_incomes[0][period],
+        Constants.officer_incomes[0][period % 4 - 1],
         Constants.civilian_incomes_one[0] if period < 5 else Constants.civilian_incomes_two[0],  # group_income_distribution
         pid,
         1 if pid > 1 else 0,
