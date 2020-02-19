@@ -51,6 +51,7 @@ class Subsession(BaseSubsession):
         from delegated_punishment.helpers import date_now_milli
         session_start = date_now_milli()
         self.session.vars['session_start'] = session_start
+        self.session.vars['session_date'] = datetime.datetime.today().strftime('%Y%m%d')
 
         groups = self.get_groups()
 
@@ -106,6 +107,7 @@ class Group(BaseGroup):
             self.subsession.round_number,
             self.subsession.session_id,
             self.session.vars['session_start'],
+            self.session.vars['session_date'],
             officer_bonus
         )
 
@@ -125,13 +127,14 @@ class Player(BasePlayer):
         return self.get_others_in_group()
 
     def get_balance(self, time):
+        print("ID {} BALANCE: {} ROI {}".format(self.id_in_group, self.balance, self.roi))
         # return calculated balance
         if self.roi == 0:
-            return self.balance # this is incorrect man!
+            return self.balance
         elif not self.last_updated:
             return -99
         else:
-            return self.balance + self.roi * (time - self.last_updated)
+            return self.balance + (self.roi * (time - self.last_updated))
 
     def increase_roi(self, time):
         # calculate balance

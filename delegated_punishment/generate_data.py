@@ -15,7 +15,7 @@ class TimeFormatter:
 
 
 # def generate_csv(session, group, round):
-def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constants.epoch, officer_bonus=-1):
+def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constants.epoch, session_date="1992_0414", officer_bonus=-1):
 
     # print("HERE IS THE ROUND NUMBER {}".format(round_number))
 
@@ -65,7 +65,7 @@ def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constan
                 'balance': player['balance'],
                 'roi': player['roi'],
                 'screen': player['screen'],
-                'steal_token': format_steal_token(player_id, 0, 0, 0, 'NA'),
+                'steal_token': steal_tokens[player_id].format(),
                 'production_inputs': player['production_inputs'],
                 'punished': 'NA',
                 'defend_tokens': 'NA',
@@ -496,8 +496,6 @@ def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constan
                 increase_roi(culprit, event_time)
                 decrease_roi(victim, event_time)
 
-            steal_tokens[culprit_id].update(player_id, token_x, token_y, steal_map)
-
             victim_data = {
                 'event_type': event_type,
                 'last_updated': victim['last_updated'],
@@ -529,6 +527,8 @@ def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constan
             # add officer data
             event_rows[1].append(officer_data)
 
+            steal_tokens[culprit_id].update(player_id, token_x, token_y, steal_map)
+
             culpit_data = {
                 'event_type': event_type,
                 'last_updated': culprit['last_updated'],
@@ -540,7 +540,7 @@ def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constan
                 'production_inputs': culprit['production_inputs'],
                 'punished': culprit_punished,
                 'defend_tokens': 'NA',
-                'intersection_events': formatted_intersection
+                'intersection_events': 'NA'
             }
 
             event_rows[culprit_id].append(culpit_data)
@@ -594,7 +594,7 @@ def generate_csv(group_id=9, round_number=9, session_id=9, session_start=Constan
     # variables for csv
     import datetime, math
 
-    session_date = datetime.datetime.today().strftime('%Y%m%d')
+
     # print out csv files
     for i in range(1, 6):
         start = math.floor(session_start)

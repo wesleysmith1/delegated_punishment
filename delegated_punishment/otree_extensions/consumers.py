@@ -49,6 +49,7 @@ class GameConsumer(WebsocketConsumer):
         group = Group.objects.get(pk=group_id) # can we delete this object? is it more efficient to search my pk rather than django object # not a good enough query bro
 
         if data_json.get('balance'):
+            # TODO: we don't need to do this if they have an roi of 0
             event_time = date_now_milli()
             current_balance = player.get_balance(event_time)
             current_roi = player.roi #todo-debug: this is here for debugging
@@ -457,7 +458,7 @@ class GameConsumer(WebsocketConsumer):
                     "token_y2": token.y2,
                 })
 
-                players_in_prop = Player.objects.filter(group=group, map=token.map)
+                players_in_prop = Player.objects.filter(group=group, map=token.map, id_in_group__gt=1)  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
 
                 # print("{} --{}-- map: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(print_padding), token_num, token.map, token.x, token.y))
                 # print("THERE ARE {} PLAYERS IN map {}".format(len(players_in_prop), token.map))
@@ -640,7 +641,7 @@ class GameConsumer(WebsocketConsumer):
 
                     # updated convicted player balance
                     # print('CONVICTED PLAYER: ' + str(convicted_pid))
-                    convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid)
+                    convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid) # todo: add round here?
                     convicted_player.balance -= Constants.civilian_conviction_amount
                     convicted_player.save()
 
@@ -657,7 +658,7 @@ class GameConsumer(WebsocketConsumer):
                     if player.id_in_group == 1:
                         officer = player
                     else:
-                        officer = Player.objects.get(group=group, id_in_group=1)
+                        officer = Player.objects.get(group=group, id_in_group=1) # todo: add round here?
                     officer.balance += officer.income
                     # officer_bonus += officer.income
 
@@ -668,9 +669,12 @@ class GameConsumer(WebsocketConsumer):
 
                     if audit:
                         if wrongful_conviction:
-                            officer.balance -= Constants.officer_reprimand_amount  # officer
+                            officer.balance -= Constants.officer_reprimand_amount
                             officer_reprimand = Constants.officer_reprimand_amount
-                            # print('THE OFFICER WILL BE AUDITED $' + str(Constants.officer_reprimand_amount))
+
+                    # todo: test code only
+                    # officer.balance -= Constants.officer_reprimand_amount
+                    # officer_reprimand = Constants.officer_reprimand_amount
 
                     officer.save()
 
