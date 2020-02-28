@@ -58,6 +58,8 @@ class ResultsPage(Page):
     def vars_for_template(self):
         vars_dict = dict()
         vars_dict['period'] = self.player.subsession.round_number
+        vars_dict['steal_total'] = self.player.steal_total
+        vars_dict['victim_total'] = self.player.victim_total
         vars_dict['balance'] = math.floor(self.player.balance)
         return vars_dict
 

@@ -1,6 +1,7 @@
 let harvestItemsComponent = {
     props: {
         harvestStatus: Number,
+        income: Number,
     },
     data: function () {
         return {
@@ -52,6 +53,9 @@ let harvestItemsComponent = {
   
       <div id="harvest-container" class="game">
         <div class="upper-harvest">
+            <div class="title" style="position: absolute; font-weight: bold; width: 100%; text-align: center;">
+                Each harvest earns {{ income }} grain
+            </div>
             <div class='harvest-items'>
               <div v-for='(i, index) in items' :id='i' :index='index' :ref='i' class='harvest-item'>
                 {{i}}

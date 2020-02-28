@@ -30,11 +30,14 @@ SESSION_CONFIGS = [
         display_name="Delegated Punishment Game", 
         num_demo_participants=5,
         app_sequence=['delegated_punishment', 'survey'],
+        session_identifier="default",
+        low_to_high=True,
+        # num_rounds=8
     ),
     dict(
         name='survey',
         display_name='survey',
-        num_demo_participants=1,
+        num_demo_participants=5,
         app_sequence=['survey'],
     ),
 ]

@@ -1,57 +1,3 @@
-let policeLogComponent = {
-    props: {
-        messages: Array,
-        groupPlayerId: String
-    },
-    watch: {
-      	messages: function(newVal, oldVal) {
-      	    this.$nextTick(() => {
-                this.scrollToBottom()
-            })
-        }
-    },
-    data: function () {
-        return {}
-    },
-    methods: {
-        scrollToBottom: function() {
-            let scrollHeight = this.$refs.policeLog1.scrollHeight
-
-            this.$refs.policeLog1.scrollTop = scrollHeight;
-            this.$refs.policeLog2.scrollTop = scrollHeight;
-            this.$refs.policeLog3.scrollTop = scrollHeight;
-        }
-    },
-    template:
-        `
-        <div class="police-log-container">
-<!--            <div class="title">Police Log</div>-->
-<!--            <div class="notification-log-container">-->
-<!--                <div class="notification-log-column">-->
-<!--                    <div class="header"><div>Civ Punished</div></div>-->
-<!--                    <div class="content" ref="policeLog1">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.civilianPunished}}</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="notification-log-column">-->
-<!--                    <div class="header"><div>Map Number</div></div>-->
-<!--                    <div class="content" ref="policeLog2">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.mapNumber}}</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="notification-log-column">-->
-<!--                    <div class="header"><div>Time (seconds)</div></div>-->
-<!--                    <div class="content" ref="policeLog3">-->
-<!--                        <div v-for="message in messages" :class="{ selfmessage: message.civilianPunished==groupPlayerId }">{{message.time}}</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-
-            <!--<button @click="addMessage">add message</button>-->
-        </div>
-        `
-}
-
 let probabilityBarComponent = {
     props: {
         label: String,
@@ -75,11 +21,11 @@ let probabilityBarComponent = {
 let officerGameComponent = {
     components: {
         'probability-bar-component': probabilityBarComponent,
-        'police-log-component': policeLogComponent,
     },
     props: {
         maps: Array,
         officerUnits: Array,
+        officerIncome: Number,
         groupPlayerId: String,
         investigationCount: Number,
         probCulprit: Number,
@@ -87,7 +33,6 @@ let officerGameComponent = {
         policeLogMessages: Array,
         mapSize: Number,
         defendTokenSize: Number,
-        // defendTokenSlots: Array todo:
     },
     data: function () {
         return {
@@ -108,7 +53,7 @@ let officerGameComponent = {
             let that = this;
             let drag = Draggable.create("#unit" + i, {
                 minimumMovement: .01,
-                bounds: document.getElementById("officerGame"), //todo add ref stuff
+                bounds: document.getElementById("officerGame"), //todo add ref stuff after vuex is implemented
                 onDragStart: function () {
                     that.tokenDragStart(this, that.officerUnits[i])
                 },
@@ -161,7 +106,7 @@ let officerGameComponent = {
                 this.$emit('defense-token-reset', item.number)
             }
         },
-        calculateLocation: function(map, unitContext, item) { // todo: how is the function even working? make it: calculateLocation: function() {}let map = document.getElementById('map4').getBoundingClientRect()
+        calculateLocation: function(map, unitContext, item) {
             let unit = unitContext.target.getBoundingClientRect()
             this.locationy = unit.y - map.y - 1;
             this.locationx = unit.x - map.x - 1;
@@ -201,26 +146,15 @@ let officerGameComponent = {
                       </div>
                     </div>
                     <div style="margin: 10px">
-                    <div>DEBUG:</div>
-                      last dropped<br>
-                      map: {{map}}<br>
-                      x: {{locationx}}<br>
-                      y: {{locationy}}<br>
+                        <div style="text-align: center">
+                            Each intercept earns {{officerIncome}} grain 
+                        </div>
                     </div>
                 </div>
               </div>
               <div class="lower">
-<!--                <police-log-component -->
-<!--                    class="notifications-container"-->
-<!--                    style="border-right: 1px solid black;"-->
-<!--                    :messages="policeLogMessages"-->
-<!--                    :player-group-id="groupPlayerId"-->
-<!--                ></police-log-component>-->
                 <div class="investigation-data-container">
                   <div class="title">Investigating</div>
-                    <div>
-                        DEBUG: Investigation Token Count {{investigationCount}} <br>
-                    </div>
                     <div>
                         <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
                         <br>

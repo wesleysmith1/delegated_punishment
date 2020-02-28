@@ -45,27 +45,36 @@ class GameConsumer(WebsocketConsumer):
         player_id = data_json['player_id']
         session_id = data_json['session_id']
         round_number = data_json['round_number']
-        player = Player.objects.get(pk=player_id) #todo this needs to be udated to use actual primary key or participany key
-        group = Group.objects.get(pk=group_id) # can we delete this object? is it more efficient to search my pk rather than django object # not a good enough query bro
+        player = Player.objects.get(pk=player_id)
+
+        event_time = date_now_milli()
 
         if data_json.get('balance'):
-            # TODO: we don't need to do this if they have an roi of 0
-            event_time = date_now_milli()
-            current_balance = player.get_balance(event_time)
-            current_roi = player.roi #todo-debug: this is here for debugging
+            # current_balance = player.get_balance(event_time)
+            # current_roi = player.roi #todo-debug: this is here for debugging
 
             # Send message to WebSocket
-            self.send(text_data=json.dumps({
-                'balance': current_balance,
-                'roi': current_roi
-            }))
+            # self.send(text_data=json.dumps({
+            #     'balance': current_balance,
+            #     'roi': current_roi
+            # }))
+
+            group = Group.objects.get(pk=group_id)
+            balance_update = group.balance_update(event_time)
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'balance_update',
+                    'balance_update': balance_update,
+                }
+            )
 
         elif data_json.get('harvest'):
             # format
             # {}
             game_data_dict = {}
             player.harvest_status = harvest_status = data_json['harvest']['status']
-            event_time = date_now_milli()
 
             harvest_income = 0
 
@@ -92,7 +101,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -105,7 +114,6 @@ class GameConsumer(WebsocketConsumer):
             game_data_dict = {}
 
             toggle_status = data_json['toggle']
-            event_time = date_now_milli()
 
             # the player toggled screen losing progress on current harvest cycle
             if not toggle_status['harvest']:
@@ -114,10 +122,13 @@ class GameConsumer(WebsocketConsumer):
                 player.harvest_screen = False
             else:
                 player.harvest_screen = True
+                game_data_dict.update({
+                    "steal_reset": toggle_status["steal_reset"]
+                })
                 if player.map != 0:
-                    victim = Player.objects.get(group=group, id_in_group=player.map)
+                    victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
 
-                    victim.increase_roi(event_time)
+                    victim.increase_roi(event_time, False)
                     victim.save()
 
                     game_data_dict.update({
@@ -127,7 +138,7 @@ class GameConsumer(WebsocketConsumer):
                     })
                     # print("victim" + str(victim.id_in_group))
 
-                    player.decrease_roi(event_time)
+                    player.decrease_roi(event_time, True)
                 else:
                     pass
                 player.map = 0
@@ -148,7 +159,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -168,10 +179,9 @@ class GameConsumer(WebsocketConsumer):
             #save player location as 0 and send back confirmation
             dtoken = data_json['defend_token_drag']
             token_num = dtoken['number']
-            event_time = date_now_milli()
 
             try:
-                token = DefendToken.objects.get(group=group, number=token_num)
+                token = DefendToken.objects.get(group_id=group_id, number=token_num)
             except DefendToken.DoesNotExist:
                 token = None
                 # print('ERROR: NO TOKEN WAS FOUND')
@@ -196,7 +206,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 jdata=game_data_dict
             )
@@ -205,7 +215,7 @@ class GameConsumer(WebsocketConsumer):
 
             # update users with investigation token count
             if investigation_change:
-                token_count = len(DefendToken.objects.filter(group=group, map=11))  # make this null
+                token_count = len(DefendToken.objects.filter(group_id=group_id, map=11))  # make this null
                 # print('TOTAL TOKEN COUNT ' + str(token_count))
 
                 # send token count to group
@@ -227,7 +237,6 @@ class GameConsumer(WebsocketConsumer):
 
             # print('LOCATION TOKEN WAS DRAGGED')
             #get token and save it's location as 0
-            event_time = date_now_milli()
 
             game_data_dict = {
                 "event_type": "steal_token_drag",
@@ -239,10 +248,10 @@ class GameConsumer(WebsocketConsumer):
             # update roi for stealing player and victim of the theft.
             if player.map > 0:
                 # update victim roi
-                victim = Player.objects.get(group=group, id_in_group=player.map)
+                victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
 
                 # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
-                victim.increase_roi(event_time)
+                victim.increase_roi(event_time, False)
                 victim.save()
 
                 game_data_dict.update({
@@ -252,7 +261,7 @@ class GameConsumer(WebsocketConsumer):
                 })
 
                 # update player roi
-                player.decrease_roi(event_time)
+                player.decrease_roi(event_time, True)
 
                 game_data_dict.update({
                     "player_roi": player.roi,
@@ -269,7 +278,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -279,7 +288,6 @@ class GameConsumer(WebsocketConsumer):
 
         elif data_json.get('defend_token_reset'):
             token_number = data_json['defend_token_reset']
-            event_time = date_now_milli()
 
             game_data_dict = {
                 "event_type": "defend_token_reset",
@@ -290,24 +298,24 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
             )
 
         elif data_json.get('steal_token_reset'):
-            event_time = date_now_milli()
 
             game_data_dict = {
                 "event_type": "steal_token_reset",
                 "event_time": event_time,
-                "player": player.id_in_group
+                "player": player.id_in_group,
+                "steal_token_reset": data_json["steal_token_reset"]["steal_location"]
             }
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -325,10 +333,9 @@ class GameConsumer(WebsocketConsumer):
             # set location to prop to 11 for investigation
             i_token = data_json['investigation_update']
             token_num = i_token['number']
-            event_time = date_now_milli()
 
             try:
-                token = DefendToken.objects.get(group=group, number=token_num)
+                token = DefendToken.objects.get(group_id=group_id, number=token_num)
             except DefendToken.DoesNotExist:
                 print('ERROR INVESTIGATION=: token not found')
                 token = None
@@ -338,7 +345,7 @@ class GameConsumer(WebsocketConsumer):
             token.last_updated = event_time
             token.save()
             # get investigation token count
-            token_count = len(DefendToken.objects.filter(group=group, map=11))  # make this null
+            token_count = len(DefendToken.objects.filter(group_id=group_id, map=11))  # make this null
             # print('TOTAL TOKEN COUNT ' + str(token_count))
 
             game_data_dict = {
@@ -351,7 +358,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -374,17 +381,15 @@ class GameConsumer(WebsocketConsumer):
             }
 
             if pu.get('period_start'):
-                start_time = date_now_milli()
-
                 game_data_dict.update({
-                    'event_time': start_time,
+                    'event_time': event_time,
                     'event_type': 'period_start'
-                })  # todo move event time to top of page after balance or something
+                })
 
                 GameData.objects.create(
-                    event_time=start_time,
+                    event_time=event_time,
                     p=player.id_in_group,
-                    g=group.id,
+                    g=group_id,
                     s=session_id,
                     round_number=round_number,
                     jdata=game_data_dict
@@ -399,6 +404,7 @@ class GameConsumer(WebsocketConsumer):
                 })
 
                 # final calculation of player balances for results page
+                group = Group.objects.get(pk=group_id)
                 players = group.get_players()
                 for p in players:
                     p.balance = p.get_balance(end_time)
@@ -407,7 +413,7 @@ class GameConsumer(WebsocketConsumer):
                 GameData.objects.create(
                     event_time=end_time,
                     p=player.id_in_group,
-                    g=group.id,
+                    g=group_id,
                     s=session_id,
                     round_number=round_number,
                     jdata=game_data_dict
@@ -419,7 +425,6 @@ class GameConsumer(WebsocketConsumer):
             game_data_dict = {}
 
             # root level variables
-            event_time = date_now_milli()
             map = -1
             x = -1
             y = -1
@@ -434,7 +439,7 @@ class GameConsumer(WebsocketConsumer):
                 map = token_update['map']
 
                 try:
-                    token = DefendToken.objects.get(group=group, number=token_num)
+                    token = DefendToken.objects.get(group_id=group_id, number=token_num)
                 except DefendToken.DoesNotExist:
                     token = None
                     # print('ERROR: NO TOKEN WAS FOUND')
@@ -458,7 +463,7 @@ class GameConsumer(WebsocketConsumer):
                     "token_y2": token.y2,
                 })
 
-                players_in_prop = Player.objects.filter(group=group, map=token.map, id_in_group__gt=1)  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
+                players_in_prop = Player.objects.filter(group_id=group_id, map=token.map, id_in_group__gt=1)  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
 
                 # print("{} --{}-- map: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(print_padding), token_num, token.map, token.x, token.y))
                 # print("THERE ARE {} PLAYERS IN map {}".format(len(players_in_prop), token.map))
@@ -474,11 +479,11 @@ class GameConsumer(WebsocketConsumer):
                             # print('{} {} AND PLAYER {}'.format('INTERSECTION BETWEEN TOKEN'.ljust(print_padding), token.number, p.pk))
 
                             # update culprit
-                            p.decrease_roi(event_time)
+                            p.decrease_roi(event_time, True)
 
                             # update victim
-                            victim = Player.objects.get(group=group, id_in_group=p.map) # map here represents the player id in group since they line up in every group/game
-                            victim.increase_roi(event_time)
+                            victim = Player.objects.get(group_id=group_id, id_in_group=p.map) # map here represents the player id in group since they line up in every group/game
+                            victim.increase_roi(event_time, False)
                             victim.save()
 
                             # we do this here so we don't reset player data to -1 in which case the ui can't display intersection dots.
@@ -500,8 +505,7 @@ class GameConsumer(WebsocketConsumer):
                                 'token_y': token.y,
                                 'token_x2': token.x2,
                                 'token_y2': token.y2,
-                                'reset_location': randrange(9)+1
-
+                                'steal_reset': randrange(Constants.defend_token_total)+1
                             }
 
                             # update player info
@@ -538,7 +542,7 @@ class GameConsumer(WebsocketConsumer):
                 # print("{} -- {} -- map: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(print_padding), player.pk, player.map, player.x, player.y))
 
                 # check for intersections
-                tokens = DefendToken.objects.filter(group=group, map=player.map).order_by('last_updated')
+                tokens = DefendToken.objects.filter(group_id=group_id, map=player.map).order_by('last_updated')
                 # print('THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS map')
                 # print("THERE ARE {} TOKENS IN map {}".format(len(tokens), player.map))
 
@@ -565,7 +569,7 @@ class GameConsumer(WebsocketConsumer):
                                 'token_y': token.y,
                                 'token_x2': token.x2,
                                 'token_y2': token.y2,
-                                'reset_location': randrange(9) + 1
+                                'steal_reset': randrange(Constants.defend_token_total)+1
                             }
                             intersections.append(data)
 
@@ -579,7 +583,7 @@ class GameConsumer(WebsocketConsumer):
                 # if there was no intersection -> update the roi of player and victim
                 if player.map != 0:
                     # update player roi
-                    player.increase_roi(event_time)
+                    player.increase_roi(event_time, True)
 
                     game_data_dict.update({
                         "culprit_roi": player.roi,
@@ -587,8 +591,8 @@ class GameConsumer(WebsocketConsumer):
                     })
 
                     # get victim object and update roi
-                    victim = Player.objects.get(group=group, id_in_group=player.map)
-                    victim.decrease_roi(event_time)
+                    victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
+                    victim.decrease_roi(event_time, False)
                     victim.save()
 
                     game_data_dict.update({
@@ -602,7 +606,7 @@ class GameConsumer(WebsocketConsumer):
                 # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
 
-            num_investigators = len(DefendToken.objects.filter(group=group, map=11))
+            num_investigators = len(DefendToken.objects.filter(group_id=group_id, map=11))
             # print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
 
             # intersection objects for Game Data
@@ -641,7 +645,7 @@ class GameConsumer(WebsocketConsumer):
 
                     # updated convicted player balance
                     # print('CONVICTED PLAYER: ' + str(convicted_pid))
-                    convicted_player = Player.objects.get(group=group, id_in_group=convicted_pid) # todo: add round here?
+                    convicted_player = Player.objects.get(group_id=group_id, id_in_group=convicted_pid)
                     convicted_player.balance -= Constants.civilian_conviction_amount
                     convicted_player.save()
 
@@ -658,7 +662,7 @@ class GameConsumer(WebsocketConsumer):
                     if player.id_in_group == 1:
                         officer = player
                     else:
-                        officer = Player.objects.get(group=group, id_in_group=1) # todo: add round here?
+                        officer = Player.objects.get(group_id=group_id, id_in_group=1)
                     officer.balance += officer.income
                     # officer_bonus += officer.income
 
@@ -671,10 +675,6 @@ class GameConsumer(WebsocketConsumer):
                         if wrongful_conviction:
                             officer.balance -= Constants.officer_reprimand_amount
                             officer_reprimand = Constants.officer_reprimand_amount
-
-                    # todo: test code only
-                    # officer.balance -= Constants.officer_reprimand_amount
-                    # officer_reprimand = Constants.officer_reprimand_amount
 
                     officer.save()
 
@@ -714,7 +714,7 @@ class GameConsumer(WebsocketConsumer):
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
-                g=group.id,
+                g=group_id,
                 s=session_id,
                 round_number=round_number,
                 jdata=game_data_dict
@@ -736,5 +736,12 @@ class GameConsumer(WebsocketConsumer):
         # Send message to WebSocket
         self.send(text_data=json.dumps({
             'investigation_update': investigation_count
+        }))
+
+    def balance_update(self, event):
+        balance_update = event['balance_update']
+
+        self.send(text_data=json.dumps({
+            'balance': balance_update
         }))
 

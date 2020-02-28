@@ -1,6 +1,5 @@
 let stealGameComponent = {
     components: {
-        'police-log-component': policeLogComponent,
         'probability-bar-component': probabilityBarComponent,
     },
     props: {
@@ -12,7 +11,9 @@ let stealGameComponent = {
         probInnocent: Number,
         policeLogMessages: Array,
         mapSize: Number,
-        locationLocation: Number,
+        stealLocation: Number,
+        activeSteal: Number,
+        activeStealMaps: Object,
     },
     data: function () {
         return {
@@ -22,15 +23,12 @@ let stealGameComponent = {
         }
     },
     mounted: function () {
-        // this.location = this.$refs.location todo: implement ref for location and all maps retreived by id
+        console.log('active steal maps', this.activeStealMaps)
         let that = this;
         let selector = '#location'
         Draggable.create(selector, {
             minimumMovement: .01,
             bounds: that.$refs.stealcontainer,
-            // bounds: document.getElementById("steal-container"), //todo add ref stuff
-            snap: function (val) {
-            },
             onDragStart: function () {
                 that.locationDragStart(this)
             },
@@ -39,38 +37,18 @@ let stealGameComponent = {
             },
         });
 
-        // this.$nextTick(() => {
-        //     this.setLocationLocation();
-		// });
-        // setTimeout(() => {
-        //     this.setLocationLocation();
-        // }, 1000)
-
-        // animate to start
-        //   if (this.playerLocation && this.playerLocation.map !== null) {
-        //     this.calculateLocation(map, 2);
-        //
-        //       let mapSelector = 'prop' + this.playerLocation.map
-        //       let map = document.getElementById(mapSelector).getBoundingClientRect() //todo use refs
-        //       let location = this.$refs.location.getBoundingClientRect()
-        //       this.locationx = location.x - map.x
-        //       this.locationy = location.y - map.y
-        //
-        //       gsap.to(selector, {left: this.playerLocation.x-15, top: this.playerLocation.y-10})
-        //   }
     },
     methods: {
-        setLocationLocation: function() {
-            debugger;
-            console.log(this.locationLocation)
-            // animate to the random location:
-            if (this.locationLocation === 1) return; // already starts in first steal location
+        setStealLocation: function () {
+            if (this.stealLocation === 1) {
+                gsap.to('#location', 0, {x: 0, y: 0});
+                return; // already starts in first steal location
+            }
 
             let start = this.$refs['steallocation1'].getBoundingClientRect();
-            let start2 = document.getElementById('steallocation1').getBoundingClientRect();
-            let dest = this.$refs['steallocation'+this.locationLocation][0].getBoundingClientRect();
+            let dest = this.$refs['steallocation' + this.stealLocation][0].getBoundingClientRect();
 
-            gsap.to('#location', .5, {x: dest.x-start.x, y: dest.y-start.y});
+            gsap.to('#location', 0, {x: dest.x - start.x, y: dest.y - start.y});
         },
         locationDragStart: function (that) {
             // check the current location to see if we need to update api
@@ -92,12 +70,12 @@ let stealGameComponent = {
                     let map = document.getElementById('prop5').getBoundingClientRect()
                     this.calculateLocation(map, 5);
                 } else {
-                    gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
-                    this.$emit('location-token-reset') // todo reset location
+                    this.setStealLocation()
+                    this.$emit('location-token-reset', this.randomLocation())
                 }
             } else {
-                gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
-                this.$emit('location-token-reset') //todo set location
+                this.setStealLocation()
+                this.$emit('location-token-reset', this.randomLocation())
             }
         },
         calculateLocation(map, map_id) {  // prop_id is more like the player_id
@@ -118,15 +96,17 @@ let stealGameComponent = {
         indicatorColor(map) {
             if (this.groupPlayerId == map) {
                 return 'red'
-            }
-            else {
+            } else {
                 return 'black'
             }
+        },
+        randomLocation: function () {
+            return Math.floor(Math.random() * 9) + 1
         }
     },
     watch: {
-        locationLocation: function() {
-            this.setLocationLocation();
+        stealLocation: function () {
+            this.setStealLocation();
         }
     },
     template:
@@ -137,7 +117,12 @@ let stealGameComponent = {
                 <div class='title'>Maps</div> 
                     <div ref='htarget' class="maps-container">
                       <div v-for="map in maps" class="map-container">
-                            <div v-bind:class="['map', groupPlayerId==(map+1) ? 'self' : 'other']" v-bind:player-id="(map+1)" :id='"prop" + (map+1)' :ref='"prop" + (map+1)'>
+                            <div 
+                                class="map" 
+                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] ? 'red' : 'darkgrey') : (map+1 == activeSteal ? 'green' : 'white'))}" 
+                                v-bind:player-id="(map+1)" 
+                                :id='"prop" + (map+1)' 
+                                :ref='"prop" + (map+1)'>
                                 <!-- svg indicator id format: map-player-->
                                 <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
                                   <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
@@ -165,31 +150,21 @@ let stealGameComponent = {
                         </div>
                       <br>
                       <div>
-                        <div>DEBUG:</div>
-                        player id: {{groupPlayerId}} <br>
-                        x: {{locationx}}<br> 
-                        y: {{locationy}}<br>
-                      </div>
                     </div>
               </div>
             <div class="lower" style="display:flex;">
-<!--                <police-log-component-->
-<!--                    class="notifications-container"-->
-<!--                    style="border-right: 1px solid black;"-->
-<!--                    :messages="policeLogMessages"-->
-<!--                    :player-group-id="groupPlayerId"-->
-<!--                ></police-log-component>-->
                 <div class="investigation-data-container">
                     <div class="title">Investigating</div>
                     <div>
-                        <div class="title-small">Defense Tokens: {{investigationCount}}/9</div>
+                        <div class="title-small">Defense tokens: {{investigationCount}}/9</div>
                         <br>
-                        <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
-                        <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>  
+                        <probability-bar-component label="Probability fined if innocent" :percent=probInnocent></probability-bar-component>
+                        <probability-bar-component label="Probability fined if culprit" :percent=probCulprit></probability-bar-component>  
                     </div>                  
                 </div>
             </div>
         </div>
+      </div>
       </div>
       `
 }

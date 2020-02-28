@@ -12,7 +12,7 @@
     position: absolute;
     display: flex;
     height: 70%;
-    width: 100%;
+    width: 80%;
 }
 .notification-log-container .notification-log-column {
     border-right: 1px solid black;
@@ -54,4 +54,12 @@
 
 .selfmessage {
     background: darkgrey;
+}
+
+.officerPositive {
+    background: green;
+}
+
+.officerNegative {
+    background: red;
 }

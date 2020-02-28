@@ -83,23 +83,12 @@ body {
     color: red;
     font-size: 30px;
 }
-
 .bar {
     height: 36px;
     width: 480px;
     border: 1px solid black;
     background: white;
 }
-
-
-
-
-
-
-
-
-
-
 .upper {
     flex: 1;
     border-bottom: 1px solid black;
@@ -162,9 +151,9 @@ body {
 }
 
 .indicator {
-    position: relative;
-    left: 100px;
-    top: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
     visibility: hidden;
     z-index: 900;
 }
@@ -182,11 +171,13 @@ body {
 .map {
     position: relative;
     width: 240px;
-     min-width: 240px;
+    min-width: 240px;
     max-width: 240px;
     height: 240px;
-     max-height: 240px;
+    max-height: 240px;
     min-height: 240px;
+
+    border: 1px solid black;
 }
 
 .maps-container {
@@ -203,12 +194,7 @@ body {
     text-align: center;
 }
 
-.map.self {
-    background: darkgrey;
-    border: 1px solid black;
-}
 .map.other {
-    border: 1px solid black;
     background: white;
 }
 
