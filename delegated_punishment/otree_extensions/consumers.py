@@ -310,7 +310,7 @@ class GameConsumer(WebsocketConsumer):
                 "event_type": "steal_token_reset",
                 "event_time": event_time,
                 "player": player.id_in_group,
-                "steal_token_reset": data_json["steal_token_reset"]["steal_location"]
+                "steal_reset": data_json["steal_token_reset"]["steal_location"]
             }
             GameData.objects.create(
                 event_time=event_time,

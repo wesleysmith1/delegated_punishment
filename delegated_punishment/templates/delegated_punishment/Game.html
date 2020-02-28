@@ -97,10 +97,11 @@
         </div>
         <div class="panel game-status-container">
             <div class="balance-container">
-                <div v-if=""></div>
-                <div>DEBUG: ROI: {{ roi }}</div>
-                <div>INCOME: {{ income }}</div>
-                <div>STEAL START: {{ stealLocation }}</div>
+                <div>
+                    <div>DEBUG: ROI: {{ roi }}</div>
+                    <div>INCOME: {{ income }}</div>
+                    <div>STEAL START: {{ stealLocation }}</div>
+                </div>
                 <div class="balance-label">Balance</div>
                 <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
             </div>
@@ -111,25 +112,25 @@
                 </div>
                 <div class="notification-log-container">
                     <div class="notification-log-column">
-                        <div class="header"><div>Civilian map</div></div>
+                        <div class="header"><div>Civilian<br>map</div></div>
                         <div class="content" ref="notificationLog1">
                             <div v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;">{{message.map}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
-                        <div class="header"><div>Civilian punished</div></div>
+                        <div class="header"><div>Civilian<br>punished</div></div>
                         <div class="content" ref="notificationLog2">
                             <div v-for="message in messages" :class="{ selfmessage: message.punished==groupPlayerId }">{{message.punished}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
-                        <div class="header"><div>Officer reprimand</div></div>
+                        <div class="header"><div>Officer<br>reprimand</div></div>
                         <div class="content" ref="notificationLog3">
                             <div v-for="message in messages" :class="{ officerNegative: isOfficer && message.reprimand > 0}">{{message.reprimand}}</div>
                         </div>
                     </div>
                     <div class="notification-log-column">
-                        <div class="header"><div>Officer bonus</div></div>
+                        <div class="header"><div>Officer<br>bonus</div></div>
                         <div class="content" ref="notificationLog4">
                             <div v-for="message in messages" :class="{ officerPositive: isOfficer && message.bonus > 0 }">{{message.bonus}}</div>
                         </div>

@@ -404,8 +404,8 @@ def generate_csv(period_data=None):
                     event_rows[pid].append(data)
 
                 # reset culprit steal tokens for csv rows after intersection
-                for cid, reset in steal_reset_data:
-                    steal_tokens[cid].update(cid, reset, 0, 0)
+                for cid in steal_reset_data:  # hey
+                    steal_tokens[cid].update(cid, steal_reset_data[cid], 0, 0)
 
                 officer_data['intersection_events'] = formatted_intersections
 

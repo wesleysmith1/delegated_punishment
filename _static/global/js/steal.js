@@ -114,12 +114,12 @@ let stealGameComponent = {
       <div class="steal" style="display:flex; flex-wrap: wrap">
         <div class="game">
             <div id="steal-container" class="upper" ref="stealcontainer">
-                <div class='title'>Maps</div> 
+                <div class='title'>Civilian Maps</div> 
                     <div ref='htarget' class="maps-container">
                       <div v-for="map in maps" class="map-container">
                             <div 
                                 class="map" 
-                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] ? 'red' : 'darkgrey') : (map+1 == activeSteal ? 'green' : 'white'))}" 
+                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] ? 'rgba(224,53,49, .5)' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
                                 v-bind:player-id="(map+1)" 
                                 :id='"prop" + (map+1)' 
                                 :ref='"prop" + (map+1)'>
@@ -132,9 +132,6 @@ let stealGameComponent = {
                       </div>
                     </div>
                     <div class="token-container">
-                      <div class="title-small">
-                        Location Token:
-                      </div>
                         <div class="steal-locations-container">
                             <div class="steal-token" ref="steallocation1" id="steallocation1">
                                 <svg id="location" height="21" width="21">
@@ -156,7 +153,7 @@ let stealGameComponent = {
                 <div class="investigation-data-container">
                     <div class="title">Investigating</div>
                     <div>
-                        <div class="title-small">Defense tokens: {{investigationCount}}/9</div>
+                        <div class="title-small">Defense tokens: <strong>{{investigationCount}}/9</strong></div>
                         <br>
                         <probability-bar-component label="Probability fined if innocent" :percent=probInnocent></probability-bar-component>
                         <probability-bar-component label="Probability fined if culprit" :percent=probCulprit></probability-bar-component>  

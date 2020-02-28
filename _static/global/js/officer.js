@@ -9,7 +9,7 @@ let probabilityBarComponent = {
     template:
         `
         <div>
-            <div class="title-small">{{ label }} {{percent}}%</div>
+            <div class="title-small">{{ label }} <strong>{{percent}}%</strong></div>
             <div class='bar'>
                 <div class="innocent" :style="{'width':(percent+'%')}">
                 </div>
@@ -139,15 +139,14 @@ let officerGameComponent = {
                     </div>
                 </div>
                 <div class="token-container">
-                    <div class="title-small">Defend Tokens:</div>
-                    <div class="officer-units" style="display:flex;">
-                      <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
-                        {{unit.number}}
-                      </div>
-                    </div>
                     <div style="margin: 10px">
-                        <div style="text-align: center">
-                            Each intercept earns {{officerIncome}} grain 
+                        <div class="title-small">
+                            Each intercept earns <strong>{{officerIncome}}</strong> grain 
+                        </div>
+                    </div>
+                    <div class="officer-units" style="display:flex;">
+                        <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
+                            {{unit.number}}
                         </div>
                     </div>
                 </div>

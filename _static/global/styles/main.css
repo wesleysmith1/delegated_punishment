@@ -64,14 +64,14 @@ body {
     cursor: pointer;
 
     min-width: 100px;
-    background: #f2ff2d;
+    background: darkgrey;
     border: 2px solid black;
     padding: 10px;
     text-align: center;
     border-radius: 25px;
 }
 .balance-label {
-    font-size: 25px;
+    font-size: 30px;
     text-align: center;
 }
 .balance {
@@ -91,7 +91,6 @@ body {
 }
 .upper {
     flex: 1;
-    border-bottom: 1px solid black;
 }
 .lower {
     flex: 1;
@@ -164,6 +163,7 @@ body {
 }
 
 .title-small {
+    text-align: center;
     font-size: 20px;
 }
 
