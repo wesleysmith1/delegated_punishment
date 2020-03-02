@@ -89,28 +89,31 @@ Logout and exit the ssh connection to the server
 
 ## Connect Clients (Subjects)
 
- * **Be Careful** to Start Server Before Clients
+ * **Start Server, Launch Chrome Clients**
  * If accidentaly launch chrome before server started then restart server and relaunch windows
+ * *Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
 </br>
 
 
 Manually Create Session on Local Admin PC
- * go to http://34.221.168.234/
+ * go to http://34.215.160.83/join/
  * create session with a `SESSION_ID`
 
-Launch Homepage on Client PC:
- * C:/ ... /chrome.exe --kiosk
- * http://34.215.160.83/join/ `SESSION_ID`
+Launch Homepage on Client PC via `Launcher`: 
+ * *Location* C:/ ... /chrome.exe --kiosk
+ * *Arguments* http://34.215.160.83/join/ `SESSION_ID`
+
+
+
 
 <!--
 Launch google chrome and sign in students (JA1 ... JAN) 
 Launch Individual Pages:
- * http://34.221.168.234/DelegatedPunishment?username=[+]&password=PoDjangos
+ * http://34.215.160.83/DelegatedPunishment?username=[+]&password=PoDjangos
 AutoInc[x] tag 1
 
-
 Admins: username=admin & password=PoDjangos
- * http://34.221.168.234
+ * http://34.215.160.83/
 -->
 
 
@@ -127,7 +130,7 @@ From Server
 ```bash
 
     mkdir /tmp/SessionData/
-    scp ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
+    scp -i LightsailDefaultKey.pem ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
 
 ```
 
@@ -136,8 +139,16 @@ From Server
 
 ## Server Statistics (Primarily for Debugging)
 
+If CloudWatch (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html) is is setup, then edit the crontab file `crontab -e` with
+```
+## Post Server Metrics Every 5 Minutes
+ */5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron 
+```
+and open the CloudWatch console at https://console.aws.amazon.com/cloudwatch/
 
-To start recording statistics, run
+
+
+Otherwise, to start recording statistics, run
 ```bash
 
     SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S")".log
