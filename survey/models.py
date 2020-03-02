@@ -23,7 +23,7 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
 
-    name = models.StringField(label="Please enter your name:")
+    name = models.StringField(label="Please enter your name.")
 
     race_ethnicity = models.StringField(
         choices=['White', 'Black or African American', 'Asian', 'Indian or Pacific Islander', 'Hispanic', 'Multiracial', 'Other, Prefer not to say'],

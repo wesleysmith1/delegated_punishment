@@ -69,7 +69,26 @@ class Intermission(Page):
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
-        if self.round_number == 5:
+        if self.round_number == 5 or self.round_number == 1:
+            return True
+        else:
+            return False
+
+    def vars_for_template(self):
+        vars_dict = dict(
+            steal_rate=Constants.civilian_steal_rate,
+            fine=Constants.civilian_fine_amount,
+            officer_bonus=self.group.officer_bonus,
+            officer_reprimand=Constants.officer_reprimand_amount
+        )
+        return vars_dict
+
+
+class AutoAdvancePage(Page):
+    """This page is for after the tutorial and the practice period so that
+    the next periods are not started automatically"""
+    def is_displayed(self):
+        if self.round_number < 3:
             return True
         else:
             return False

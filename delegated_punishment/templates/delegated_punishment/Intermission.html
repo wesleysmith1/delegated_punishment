@@ -12,6 +12,23 @@
             display: none;
         }
     </style>
+    <p style="width: 75%">
+        We are about to perform 4 periods sequentially
+        <br>
+        <br>
+
+        {% if player.id_in_group > 1 %}
+                You will earn {{ player.income }} grain for each harvest and {{ steal_rate }} grain for each second of successful stealing.
+            <br>
+            <br>
+        {% endif %}
+
+        The officer earns {{ officer_bonus }} grain per crime cleared and {{ officer_reprimand }} grain if they are reprimanded (which sometimes happens when an innocent person is arrested)
+        <br>
+        <br>
+
+        These periods will be used to calculate your payoffs at the end of the game.
+    </p>
     <p>{% next_button %}</p>
 
 {% endblock %}

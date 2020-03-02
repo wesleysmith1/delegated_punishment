@@ -1,5 +1,6 @@
 import random
 import csv
+import math
 
 
 def generate_payouts(group):
@@ -14,8 +15,10 @@ def generate_payouts(group):
         for player in group.get_players():
             # create row for participant and display the participant name
             if 'balances' in player.participant.vars.keys() and len(player.participant.vars['balances']) > 0:
-                payout = random.choice(player.participant.vars['balances'])
-                player.payout = payout
+                payout = random.choice(player.participant.vars['balances']) * \
+                         float(group.subsession.session.config['grain_conversion']) + \
+                         float(group.subsession.session.config['showup_payment'])
+                player.payout = math.ceil(payout)
                 player.save()
             else:
                 payout = 0

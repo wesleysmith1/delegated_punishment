@@ -646,7 +646,7 @@ class GameConsumer(WebsocketConsumer):
                     # updated convicted player balance
                     # print('CONVICTED PLAYER: ' + str(convicted_pid))
                     convicted_player = Player.objects.get(group_id=group_id, id_in_group=convicted_pid)
-                    convicted_player.balance -= Constants.civilian_conviction_amount
+                    convicted_player.balance -= Constants.civilian_fine_amount
                     convicted_player.save()
 
                     # check if guilty player was convicted

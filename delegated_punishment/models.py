@@ -23,7 +23,7 @@ class Constants(BaseConstants):
     num_rounds = 8
 
     civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
-    civilian_conviction_amount = 540
+    civilian_fine_amount = 540
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     officer_review_probability = .1  # THETA: chance that an intersection result will be reviewed
@@ -65,6 +65,11 @@ class Subsession(BaseSubsession):
                 officer.income = officer_bonus
                 officer_participant = officer.participant
                 officer_participant.vars['officer_bonus'] = officer_bonus
+
+                # do we need to save officer bonus here?
+                gr.officer_bonus = officer_bonus
+                gr.save()
+
                 # officer_participant.save()
                 index += 1
 
@@ -93,11 +98,11 @@ class Subsession(BaseSubsession):
                     officer.income = 10
 
             for i in range(Constants.defend_token_total):
-                d = DefendToken.objects.create(number=i+1, group=g,)
-                # print('DEFEND TOKEN CREATED FOR GROUP {} | ID: {}'.format(g.id, d.id))
+                DefendToken.objects.create(number=i+1, group=g,)
 
 
 class Group(BaseGroup):
+    officer_bonus = models.IntegerField(initial=0)
 
     def balance_update(self, time):
         players = self.get_players()
@@ -148,7 +153,7 @@ class Group(BaseGroup):
                 income_distribution = Constants.civilian_incomes_low
 
 
-        period_info = dict(
+        meta_data = dict(
             round_number=self.subsession.round_number,
             session_id=self.subsession.session_id,
             steal_starts=steal_starts,
@@ -156,12 +161,12 @@ class Group(BaseGroup):
             session_date=self.session.vars['session_date'],
             group_id=self.pk,
             officer_bonus=officer_bonus,
-            income_distribution=income_distribution,
+            income_distribution=income_distribution[0],
         )
 
         # todo: this is here to prevent import error because Constants cannot be loaded.
         from delegated_punishment.generate_data import generate_csv
-        generate_csv(period_info)
+        generate_csv(self.session, self.subsession, meta_data)
 
         # try:
         #     generate_csv(period_info)
