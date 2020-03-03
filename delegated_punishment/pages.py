@@ -7,8 +7,6 @@ from json import JSONEncoder
 
 
 class Game(Page):
-    timeout_seconds = 240 #todo look into this and consider adding script on front end to get it working dynamically
-    #https://stackoverflow.com/questions/3768895/how-to-make-a-class-json-serializable
     def vars_for_template(self):
 
         #  todo: we need to query player here since a blank model is being created instead
@@ -31,6 +29,12 @@ class Game(Page):
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
+        if Constants.num_rounds > 1 and self.round_number < 3:
+            no_timeout = True
+        else:
+            no_timeout = False
+
+        vars_dict['no_timeout'] = no_timeout
         return vars_dict
 
 
@@ -41,10 +45,14 @@ class Wait(WaitPage):
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
         # todo make sure that we are not doing this 5 times!
-        self.group.generate_results()
+        if Constants.num_rounds > 1 and self.round_number > 2:
+            # dont generate results for the tutorial and trial period
+            pass
+        else:
+            self.group.generate_results()
 
-        for player in self.group.get_players():
-            player.participant.vars['balances'].append(math.floor(player.balance))
+            for player in self.group.get_players():
+                player.participant.vars['balances'].append(math.floor(player.balance))
 
 
 class ResultsPage(Page):
@@ -59,13 +67,21 @@ class ResultsPage(Page):
         vars_dict['balance'] = math.floor(self.player.balance)
         return vars_dict
 
+    def is_displayed(self):
+        if Constants.num_rounds == 1:
+            return True
+        elif self.round_number > 1:
+            return True
+        else:
+            return False
+
 
 class Intermission(Page):
     timeout_seconds = 120
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
-        if self.round_number == 5 or self.round_number == 1:
+        if Constants.num_rounds > 1 and self.round_number == 3 or self.round_number == 7:
             return True
         else:
             return False
@@ -77,6 +93,11 @@ class Intermission(Page):
             officer_bonus=self.group.officer_bonus,
             officer_reprimand=Constants.officer_reprimand_amount
         )
+        if self.round_number == 2:
+            info = 'We are about to perform 4 periods sequentially'
+        else:
+            info = 'We are about to perform 4 periods sequentially.'
+        vars_dict['info'] = info
         return vars_dict
 
 

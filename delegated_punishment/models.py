@@ -20,7 +20,8 @@ amount, both players get demanded portions. Otherwise, both get nothing.
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 5
-    num_rounds = 8
+    num_rounds = 10
+    #num_rounds = 1  # testing purposes
 
     civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
     civilian_fine_amount = 540
@@ -36,9 +37,12 @@ class Constants(BaseConstants):
     defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 240
 
-    civilian_incomes_low = [3, 5, 8, 10],
-    civilian_incomes_high = [2, 3, 4, 15],
-    officer_incomes = [0, 5, 10, 15],
+    civilian_incomes_low = [3, 5, 8, 10]
+    civilian_incomes_high = [2, 3, 4, 15]
+    officer_incomes = [0, 5, 10, 15]
+
+    default_civilian_income = 99
+    default_officer_bonus = 99
 
     start_balance = 200
 
@@ -60,7 +64,7 @@ class Subsession(BaseSubsession):
         if self.round_number == 1:
             index = 0
             for gr in groups:
-                officer_bonus = Constants.officer_incomes[0][index]
+                officer_bonus = Constants.officer_incomes[index]
                 officer = gr.get_player_by_id(1)
                 officer.income = officer_bonus
                 officer_participant = officer.participant
@@ -85,20 +89,27 @@ class Subsession(BaseSubsession):
                 # demo session does not need further configuration
                 if Constants.num_rounds != 1:
 
-                    # set harvest amount for civilians
-                    if p.id_in_group > 1:
-                        incomes = Constants.civilian_incomes_low if self.round_number < 5 \
-                            else Constants.civilian_incomes_high
-                        i = incomes[0][p.id_in_group-2]
-                        p.income = i
+                    # check if round is tutorial or trial period
+                    if self.round_number < 3:
+                        if p.id_in_group > 1:
+                            p.income = Constants.default_civilian_income
+                        else:
+                            p.income = Constants.default_officer_bonus
                     else:
-                        # is officer
-                        p.income = p.participant.vars['officer_bonus']
+                        # set harvest amount for civilians
+                        if p.id_in_group > 1:
+                            incomes = Constants.civilian_incomes_low if self.round_number < 7 \
+                                else Constants.civilian_incomes_high
+                            i = incomes[p.id_in_group-2]
+                            p.income = i
+                        else:
+                            # is officer
+                            p.income = p.participant.vars['officer_bonus']
 
                 else:
-                    # todo remove this
+                    # only one round being played
                     officer = g.get_player_by_id(1)
-                    officer.income = 10
+                    officer.income = Constants.default_officer_bonus
 
             for i in range(Constants.defend_token_total):
                 DefendToken.objects.create(number=i+1, group=g,)
@@ -166,7 +177,7 @@ class Group(BaseGroup):
             group_pk=self.pk,
             group_id=group_id,
             officer_bonus=officer_bonus,
-            income_distribution=income_distribution[0],
+            income_distribution=income_distribution,
         )
 
         # todo: this is here to prevent import error because Constants cannot be loaded.

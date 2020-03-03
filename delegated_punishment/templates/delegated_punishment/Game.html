@@ -42,6 +42,7 @@
                 <span id="stealStart">{{ player.steal_start }}</span>
                 <span id="roundNumber">{{subsession.round_number }}</span>
                 <span id="sessionId">{{ subsession.session_id }}</span>
+                <span id="noTimeout">{{ no_timeout }}</span>
             </h2>
         </div>
     </div>
@@ -263,6 +264,11 @@
                 this.roundNumber = document.getElementById('roundNumber').textContent;
                 this.sessionId = document.getElementById('sessionId').textContent;
                 this.stealLocation = parseInt(document.getElementById('stealStart').textContent);
+
+                let noTimeout = document.getElementById('noTimeout').textContent;
+                if (noTimeout) {
+                    this.gameDuration = 1200000
+                }
 
                 // debug
                 this.income = parseInt(document.getElementById('income').textContent);
