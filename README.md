@@ -135,19 +135,28 @@ From Server
 ## Server Statistics (Primarily for Debugging)
 
 
-To start recording statistics (every 10 seconds, for 90 times)
+To start recording statistics for 90 mins (every 10 seconds, for 540 times)
 ```bash
 
     SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S".log)"
-    sar -o $SERVERLOG 10 90 >/dev/null 2>&1 &
+    sar -o $SERVERLOG 10 540 >/dev/null 2>&1 &
  
 ```
 
 To analyze statistics
 ```bash
 
-    sar -r -f $SERVERLOG
+    sar -r -f SERVERLOG_03032020_093004.log | sed \$d > mem_summary.log
     ## Note %memused includes cached memory
+    
+    R -e '
+        DF <- read.table("mem_summary.log", skip=2, header=T)
+        DF$Time <- as.POSIXct( paste0( format(Sys.time(), "%d-%m-%y"), DF[,1] ) )
+        DF$MemTot <- DF$kbmemused / (DF$X.memused/100)
+        DF$MemUsed <- (DF$kbavail / DF$MemTot)*100
+        plot(MemUsed ~Time , DF, type="l", ylab="% Mem Used")
+        '
+    ## Creates Rplots.pdf in current directory    
 
 ```
 
@@ -157,6 +166,7 @@ To analyze statistics
     ## top -bd 1  | grep 'MiB Mem' 
     ## `cat /proc/meminfo | grep Active: | sed 's/Active: //g'` 
     ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem: | sed 's/Mem://g')"
+    ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem | awk '{print (1-$7/$2) * 100.0}')"
 ```
 To stop recording statistics, `ctrl+C` 
 -->
