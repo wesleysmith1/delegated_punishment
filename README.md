@@ -14,11 +14,10 @@ https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#amazon-setup
 To setup Otree, see
 https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#o-tree-server-setup
 
-
 ---
 # Install latest release
 
-Login to server `ssh ubuntu@34.215.160.83`
+Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`
 
 To initially install
 ```bash
@@ -104,8 +103,6 @@ Launch Homepage on Client PC via `Launcher`:
  * *Arguments* http://34.215.160.83/join/ `SESSION_ID`
 
 
-
-
 <!--
 Launch google chrome and sign in students (JA1 ... JAN) 
 Launch Individual Pages:
@@ -134,35 +131,43 @@ From Server
 
 ```
 
- * Stop/Shutdown Server
-
 
 ## Server Statistics (Primarily for Debugging)
 
-If CloudWatch (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html) is is setup, then edit the crontab file `crontab -e` with
-```
-## Post Server Metrics Every 5 Minutes
- */5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron 
-```
-and open the CloudWatch console at https://console.aws.amazon.com/cloudwatch/
 
-
-
-Otherwise, to start recording statistics, run
+To start recording statistics (every 10 seconds, for 90 times)
 ```bash
 
-    SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S")".log
-    top -b -d 1  > SERVERLOG
-
+    SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S".log)"
+    sar -o $SERVERLOG 10 90 >/dev/null 2>&1 &
+ 
 ```
-   
-To stop recording statistics, `ctrl+C` 
-   
+
 To analyze statistics
 ```bash
 
-    cat $(echo SERVERLOG) | grep '%Cpu(s):' --line-buffered
-    cat $(echo SERVERLOG) | sed -n '8,$p' | sort -r -n -k 10,10
+    sar -r -f $SERVERLOG
+    ## Note %memused includes cached memory
 
 ```
+
+
+<!-- ## Other Statistics
+```    
+    ## top -bd 1  | grep 'MiB Mem' 
+    ## `cat /proc/meminfo | grep Active: | sed 's/Active: //g'` 
+    ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem: | sed 's/Mem://g')"
+```
+To stop recording statistics, `ctrl+C` 
+-->
+
+
+<!-- ## Other Statistics
+    If CloudWatch (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html) is is setup, then edit the crontab file `crontab -e` with
+    ```
+    ## Post Server Metrics Every 5 Minutes
+     */5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron 
+    ```
+    and open the CloudWatch console at https://console.aws.amazon.com/cloudwatch/
+-->
 
