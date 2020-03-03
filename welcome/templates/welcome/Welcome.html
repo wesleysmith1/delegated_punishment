@@ -1,0 +1,24 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+<div class="instructions well well-lg" style="">
+
+    {#<h3>#}
+    {#  Welcome#}
+    {#</h3>#}
+    {% block content %}
+        <style>
+            .otree-btn-next {
+                display: none;
+            }
+        </style>
+
+        <p>
+            Welcome to the experiment
+        </p>
+        <p>
+            Please wait quietly until further instruction.
+        </p>
+
+    {% endblock %}
+</div>

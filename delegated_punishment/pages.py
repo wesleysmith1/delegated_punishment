@@ -45,7 +45,7 @@ class Wait(WaitPage):
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
         # todo make sure that we are not doing this 5 times!
-        if Constants.num_rounds > 1 and self.round_number > 2:
+        if Constants.num_rounds > 1 and self.round_number < 3:
             # dont generate results for the tutorial and trial period
             pass
         else:
@@ -81,7 +81,7 @@ class Intermission(Page):
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
-        if Constants.num_rounds > 1 and self.round_number == 3 or self.round_number == 7:
+        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
             return True
         else:
             return False
@@ -94,7 +94,7 @@ class Intermission(Page):
             officer_reprimand=Constants.officer_reprimand_amount
         )
         if self.round_number == 2:
-            info = 'We are about to perform 4 periods sequentially'
+            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
         else:
             info = 'We are about to perform 4 periods sequentially.'
         vars_dict['info'] = info

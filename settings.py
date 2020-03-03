@@ -29,7 +29,7 @@ SESSION_CONFIGS = [
         name='delegated_punishment', 
         display_name="Delegated Punishment Game", 
         num_demo_participants=5,
-        app_sequence=['delegated_punishment', 'survey'],
+        app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier="default",
         low_to_high=True,
         tutorial_civilian_income=40,
@@ -43,6 +43,12 @@ SESSION_CONFIGS = [
         display_name='survey',
         num_demo_participants=5,
         app_sequence=['survey'],
+    ),
+    dict(
+        name='welcome',
+        display_name='welcome',
+        num_demo_participants=5,
+        app_sequence=['welcome'],
     ),
 ]
 

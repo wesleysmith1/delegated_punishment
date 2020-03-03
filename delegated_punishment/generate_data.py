@@ -417,7 +417,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         with f:
             writer = csv.writer(f)
             # write header
-            if round_number == 1:
+            if Constants.num_rounds == 1 or round_number == 3:
                 writer.writerow(csv_header())
             for row in players[i].rows:
                 writer.writerow(format_row(i, row, period_start, meta_data))
@@ -468,7 +468,7 @@ def format_row(pid, r, period_start, meta_data):
         meta_data['income_distribution'],  # group_income_distribution
         pid,
         1 if pid > 1 else 0,
-        meta_data['income_distribution'],
+        meta_data['round_number'],
         r['event_time'],
         r['roi'],
         r['balance'],

@@ -11,9 +11,6 @@ from otree.api import (
 from otree.db.models import Model, ForeignKey
 
 doc = """
-This Delegated Punishment game involves 5 players. Each demands for a portion of some
-available amount. If the sum of demands is no larger than the available
-amount, both players get demanded portions. Otherwise, both get nothing.
 """
 
 
@@ -21,7 +18,7 @@ class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 5
     num_rounds = 10
-    #num_rounds = 1  # testing purposes
+    # num_rounds = 1  # testing purposes
 
     civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
     civilian_fine_amount = 540
@@ -32,7 +29,6 @@ class Constants(BaseConstants):
     defend_token_total = 9
 
     epoch = datetime.datetime.utcfromtimestamp(0)
-    instructions_template = 'delegated_punishment/instructions.html'
 
     defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 240
@@ -40,9 +36,6 @@ class Constants(BaseConstants):
     civilian_incomes_low = [3, 5, 8, 10]
     civilian_incomes_high = [2, 3, 4, 15]
     officer_incomes = [0, 5, 10, 15]
-
-    default_civilian_income = 99
-    default_officer_bonus = 99
 
     start_balance = 200
 
@@ -92,9 +85,9 @@ class Subsession(BaseSubsession):
                     # check if round is tutorial or trial period
                     if self.round_number < 3:
                         if p.id_in_group > 1:
-                            p.income = Constants.default_civilian_income
+                            p.income = self.session.config['tutorial_civilian_income']
                         else:
-                            p.income = Constants.default_officer_bonus
+                            p.income = self.session.config['tutorial_officer_bonus']
                     else:
                         # set harvest amount for civilians
                         if p.id_in_group > 1:
@@ -109,7 +102,7 @@ class Subsession(BaseSubsession):
                 else:
                     # only one round being played
                     officer = g.get_player_by_id(1)
-                    officer.income = Constants.default_officer_bonus
+                    officer.income = self.session.config['tutorial_officer_bonus']
 
             for i in range(Constants.defend_token_total):
                 DefendToken.objects.create(number=i+1, group=g,)
@@ -158,12 +151,12 @@ class Group(BaseGroup):
         group_id = officer_participant.vars['group_id']
 
         if self.session.config['low_to_high']:
-            if self.subsession.round_number < 5:
+            if self.subsession.round_number < 7:
                 income_distribution = Constants.civilian_incomes_low
             else:
                 income_distribution = Constants.civilian_incomes_high
         else:
-            if self.subsession.round_number < 5:
+            if self.subsession.round_number < 7:
                 income_distribution = Constants.civilian_incomes_high
             else:
                 income_distribution = Constants.civilian_incomes_low
