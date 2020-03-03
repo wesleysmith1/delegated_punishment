@@ -66,6 +66,9 @@ class Subsession(BaseSubsession):
                 officer_participant = officer.participant
                 officer_participant.vars['officer_bonus'] = officer_bonus
 
+                # save group id
+                officer_participant.vars['group_id'] = index+1
+
                 # do we need to save officer bonus here?
                 gr.officer_bonus = officer_bonus
                 gr.save()
@@ -139,7 +142,9 @@ class Group(BaseGroup):
         for p in players:
             steal_starts[p.id_in_group-1] = p.participant.vars['steal_start']
 
-        officer_bonus = self.get_player_by_id(1).participant.vars['officer_bonus']
+        officer_participant = self.get_player_by_id(1).participant
+        officer_bonus = officer_participant.vars['officer_bonus']
+        group_id = officer_participant.vars['group_id']
 
         if self.session.config['low_to_high']:
             if self.subsession.round_number < 5:
@@ -152,14 +157,14 @@ class Group(BaseGroup):
             else:
                 income_distribution = Constants.civilian_incomes_low
 
-
         meta_data = dict(
             round_number=self.subsession.round_number,
             session_id=self.subsession.session_id,
             steal_starts=steal_starts,
             session_start=self.session.vars['session_start'],
             session_date=self.session.vars['session_date'],
-            group_id=self.pk,
+            group_pk=self.pk,
+            group_id=group_id,
             officer_bonus=officer_bonus,
             income_distribution=income_distribution[0],
         )

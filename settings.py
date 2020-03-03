@@ -36,7 +36,7 @@ SESSION_CONFIGS = [
         tutorial_officer_bonus=10,
         grain_conversion=".1",
         showup_payment="7",
-        # num_rounds=8
+        include_tutorial=True,
     ),
     dict(
         name='survey',

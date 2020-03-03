@@ -11,10 +11,6 @@ class Game(Page):
     #https://stackoverflow.com/questions/3768895/how-to-make-a-class-json-serializable
     def vars_for_template(self):
 
-        # pp = Player.objects.get(pk=1)
-        # import pdb;
-        # pdb.set_trace()
-
         #  todo: we need to query player here since a blank model is being created instead
         #   of pulling from db. This is required to load data from the database.
 

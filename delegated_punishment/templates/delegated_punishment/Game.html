@@ -293,7 +293,7 @@
                 this.maps = [1, 2, 3, 4];
 
                 // todo look into routing questions
-                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/' + this.roundNumber + '/'),
+                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/'),
                     this.gameSocket.onopen = (e) => {
                         this.startTimer()
                     };

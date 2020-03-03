@@ -1,10 +1,16 @@
 import random
 import csv
 import math
+from delegated_punishment.helpers import write_session_dir
 
 
 def generate_payouts(group):
-    f = open("data/session_{}_results.csv".format(group.subsession.session_id), 'w', newline='')
+    if 'session_identifier' in group.subsession.session.config:
+        path = write_session_dir(group.subsession.session.config['session_identifier'])
+    else:
+        path = 'data/'
+    f = open("{}session_{}_results.csv".format(path, group.subsession.session_id), 'w', newline='')
+
     with f:
         writer = csv.writer(f)
 
@@ -18,7 +24,8 @@ def generate_payouts(group):
                 payout = random.choice(player.participant.vars['balances']) * \
                          float(group.subsession.session.config['grain_conversion']) + \
                          float(group.subsession.session.config['showup_payment'])
-                player.payout = math.ceil(payout)
+                payout = math.ceil(payout)
+                player.payout = payout
                 player.save()
             else:
                 payout = 0

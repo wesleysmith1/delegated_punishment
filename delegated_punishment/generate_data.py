@@ -20,6 +20,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
     else:
         steal_starts = meta_data['steal_starts']
         group_id = meta_data['group_id']
+        group_pk = meta_data['group_pk']
         round_number = subsession.round_number
         session_id = subsession.session_id
         session_start = meta_data['session_start']
@@ -35,7 +36,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
     defend_tokens = init_defend_tokens()
 
     # get data
-    game_data = GameData.objects.filter(s=session_id, g=group_id, round_number=round_number,).order_by('event_time')
+    game_data = GameData.objects.filter(s=session_id, g=group_pk, round_number=round_number,).order_by('event_time')
 
     try:
         tf = TimeFormatter(game_data.first().event_time)
@@ -404,7 +405,6 @@ def generate_csv(session=None, subsession=None, meta_data=None):
     if 'session_identifier' in session.config:
         file_path = write_session_dir(session.config['session_identifier'])
     else:
-
         file_path = 'data/'
 
         # print out csv files

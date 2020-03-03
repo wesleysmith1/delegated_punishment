@@ -7,13 +7,12 @@ from delegated_punishment.helpers import date_now_milli
 
 from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData
 
+
 class GameConsumer(WebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.room_group_name = 'group'
-        self.room_name = 'room'
 
     def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['group_pk']
+        self.room_group_name = self.room_name
 
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
