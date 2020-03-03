@@ -56,10 +56,10 @@
     background: darkgrey;
 }
 
-.officerPositive {
-    background: green;
+.positive {
+    background: rgba(81,179,100,.5);
 }
 
-.officerNegative {
-    background: red;
+.negative {
+    background: rgba(224,53,49, .5);
 }

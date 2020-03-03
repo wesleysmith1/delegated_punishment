@@ -125,7 +125,7 @@ let officerGameComponent = {
         `
           <div ref="officerGame">
               <div class="upper">      
-                <div class='title'>Maps</div> 
+                <div class='title'>Civilian Maps</div> 
                 <div class="maps-container">
                     <div v-for="map in maps" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)' class="map-container">
                       <div class="map other" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)'>
