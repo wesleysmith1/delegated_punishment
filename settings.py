@@ -62,6 +62,8 @@ REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
 DEBUG = True
 
+AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL')
+
 ROOMS = [
     dict(
         name='econ101',
