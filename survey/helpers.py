@@ -4,30 +4,79 @@ import math
 from delegated_punishment.helpers import write_session_dir
 
 
-def generate_payouts(group):
+def get_path(group):
     if 'session_identifier' in group.subsession.session.config:
         path = write_session_dir(group.subsession.session.config['session_identifier'])
     else:
         path = 'data/'
-    f = open("{}session_{}_results.csv".format(path, group.subsession.session_id), 'w', newline='')
+    return path
 
+
+def split_list(a_list):
+    half = len(a_list)//2
+    return a_list[:half], a_list[half:]
+
+
+def calculate_payout(balance, showup_payment, endowment):
+    payout = balance + endowment
+    if balance < 0:
+        payout = showup_payment
+    else:
+        balance += showup_payment
+
+    return math.ceil(payout)
+
+def grain_to_dollars(group, grain):
+    return grain * group.subsession.session.config['grain_conversion']
+
+
+
+def generate_payouts(group):
+    path = get_path(group)
+
+    endowment = group.subsession.session.config['participant_endowment']
+    showup_payment = group.subsession.session.config['showup_payment']
+
+    for player in group.get_players():
+        # create row for participant and display the participant name
+        participant_balances_recorded = len(player.participant.vars['balances'])
+        if 'balances' in player.participant.vars.keys() and participant_balances_recorded == 8:
+
+            participant_balances = player.participant.vars['balances']
+            first_half, second_half = split_list(participant_balances)
+
+            random_1 = grain_to_dollars(group, random.choice(first_half))
+            random_2 = grain_to_dollars(group, random.choice(second_half))
+
+            balance = random_1 + random_2
+
+            payout = calculate_payout(balance, showup_payment, endowment)
+
+        elif participant_balances_recorded == 1:
+            balance = player.participant.vars['balances'][0]
+            payout = calculate_payout(balance, showup_payment, endowment)
+        else:
+            payout = -1
+
+        player.payout = payout
+        player.save()
+
+
+def generate_survey_csv(group):
+    print('GENERATING SURVEY CSV')
+    path = get_path(group)
+    session_id = group.subsession.session_id
+    session_start = math.floor(group.session.vars['session_start'])
+    session_date = group.session.vars['session_date']
+    file_name = "{}results{}__{}_{}.csv".format(path, session_id, session_date, session_start)
+
+    f = open(file_name, 'w', newline='')
     with f:
         writer = csv.writer(f)
-
-        # header
-        header = ['Name', 'Payment']
+        header = ['participant', 'payout', 'race_ethnicity', 'gender', 'strategy', 'feedback']
         writer.writerow(header)
 
-        for player in group.get_players():
-            # create row for participant and display the participant name
-            if 'balances' in player.participant.vars.keys() and len(player.participant.vars['balances']) > 0:
-                payout = random.choice(player.participant.vars['balances']) * \
-                         float(group.subsession.session.config['grain_conversion']) + \
-                         float(group.subsession.session.config['showup_payment'])
-                payout = math.ceil(payout)
-                player.payout = payout
-                player.save()
-            else:
-                payout = 0
-            participant_data = [player.name, payout]
-            writer.writerow(participant_data)
+        for p in group.get_players():
+            survey_row = [p.participant.id_in_session, p.payout, p.race_ethnicity, p.gender, p.strategy, p.feedback]
+            writer.writerow(survey_row)
+

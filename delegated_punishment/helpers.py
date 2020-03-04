@@ -9,7 +9,7 @@ def date_now_milli():
 
 
 def write_session_dir(session_identifier):
-    path = 'data/session_' + session_identifier + '/'
+    path = f'data/session_{session_identifier}/'
 
     if not os.path.exists(path):
         try:
@@ -30,6 +30,6 @@ class TimeFormatter:
 
     def format(self, time):
         t = time - self.start
-        minutes = math.floor(t / 60)
+        minutes = math.floor(t // 60)
         seconds = t % 60
         return "{}:{}".format(minutes, seconds)

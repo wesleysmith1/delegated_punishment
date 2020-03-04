@@ -510,7 +510,6 @@ class GameConsumer(WebsocketConsumer):
                             # update player info
                             p.map = 0
                             p.x = p.y = -1
-                            p.last_updated = event_time
                             p.save()
                             # print("PLAYER {} UPDATED AT {:6.2f}".format(p.pk, p.last_updated))
 
@@ -599,8 +598,8 @@ class GameConsumer(WebsocketConsumer):
                         "victim_roi": victim.roi,
                         "victim_balance": victim.balance,
                     })
-                else:
-                    player.last_updated = event_time
+                # else:
+                    # player.last_updated = event_time
 
                 # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()

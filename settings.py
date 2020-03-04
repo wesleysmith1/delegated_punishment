@@ -30,12 +30,13 @@ SESSION_CONFIGS = [
         display_name="Delegated Punishment Game", 
         num_demo_participants=5,
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
-        session_identifier="default",
+        session_identifier=0,
         low_to_high=True,
         tutorial_civilian_income=40,
         tutorial_officer_bonus=10,
-        grain_conversion=".1",
-        showup_payment="7",
+        grain_conversion=.1,
+        showup_payment=7,
+        participant_endowment=10
         # include_tutorial=True,
     ),
     dict(

@@ -31,22 +31,15 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
-    # confused = models.StringField(
-    #     choices=['Yes', 'No', 'Prefer not to say'],
-    #     label="Were you confused by anything in the experiment?",
-    #     widget=widgets.RadioSelect,
-    # )
-
     gender = models.StringField(
         choices=[['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']],
         label='What is your gender?',
         widget=widgets.RadioSelect,
     )
 
-    # confused_explanation = models.StringField(blank=True, label="If yes, what confused you?")
     strategy = models.StringField(label="How did you make your decisions during the experiment?")
     feedback = models.StringField(label="Is there anything else you would like to tell the experimenters about this experiment?")
 
-    payout = models.IntegerField(initial=0)
+    payout = models.IntegerField(initial=-2)
 
 

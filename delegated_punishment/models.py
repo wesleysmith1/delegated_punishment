@@ -66,10 +66,6 @@ class Subsession(BaseSubsession):
                 # save group id
                 officer_participant.vars['group_id'] = index+1
 
-                # do we need to save officer bonus here?
-                gr.officer_bonus = officer_bonus
-                gr.save()
-
                 # officer_participant.save()
                 index += 1
 
@@ -142,9 +138,10 @@ class Group(BaseGroup):
         players = self.get_players()
 
         # Initial civilian steal locations for csv
-        steal_starts = [-1, -1, -1, -1, -1]
+        player_ids_in_session = steal_starts = [-1, -1, -1, -1, -1]
         for p in players:
             steal_starts[p.id_in_group-1] = p.participant.vars['steal_start']
+            player_ids_in_session[p.id_in_group-1] = p.participant.id_in_session
 
         officer_participant = self.get_player_by_id(1).participant
         officer_bonus = officer_participant.vars['officer_bonus']
@@ -171,6 +168,7 @@ class Group(BaseGroup):
             group_id=group_id,
             officer_bonus=officer_bonus,
             income_distribution=income_distribution,
+            player_ids_in_session=player_ids_in_session
         )
 
         # todo: this is here to prevent import error because Constants cannot be loaded.

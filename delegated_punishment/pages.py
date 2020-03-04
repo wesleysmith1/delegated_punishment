@@ -29,7 +29,7 @@ class Game(Page):
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
-        if Constants.num_rounds > 1 and self.round_number < 3:
+        if Constants.num_rounds > 1 and self.round_number == 1:
             no_timeout = True
         else:
             no_timeout = False
@@ -51,12 +51,14 @@ class ResultsWaitPage(WaitPage):
         else:
             self.group.generate_results()
 
-            for player in self.group.get_players():
-                player.participant.vars['balances'].append(math.floor(player.balance))
+            # only for periods 3-10
+            if self.round_number > 2 or Constants.num_rounds == 1:
+                for player in self.group.get_players():
+                    player.participant.vars['balances'].append(math.floor(player.balance))
 
 
 class ResultsPage(Page):
-    timeout_seconds = 10
+    timeout_seconds = 40
     timer_text = 'Time remaining on results page'
 
     def vars_for_template(self):
@@ -77,7 +79,7 @@ class ResultsPage(Page):
 
 
 class Intermission(Page):
-    timeout_seconds = 120
+    timeout_seconds = 80
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
@@ -90,10 +92,11 @@ class Intermission(Page):
         vars_dict = dict(
             steal_rate=Constants.civilian_steal_rate,
             fine=Constants.civilian_fine_amount,
-            officer_bonus=self.group.officer_bonus,
+            officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
             officer_reprimand=Constants.officer_reprimand_amount
         )
         if self.round_number == 2:
+            vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
             info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
         else:
             info = 'We are about to perform 4 periods sequentially.'

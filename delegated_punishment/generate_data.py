@@ -9,8 +9,9 @@ from delegated_punishment.helpers import write_session_dir, TimeFormatter
 def generate_csv(session=None, subsession=None, meta_data=None):
 
     if not meta_data:
-        steal_starts = [1, 1, 1, 1, 1]
+        player_ids_in_session = steal_starts = [1, 1, 1, 1, 1]
         group_id = 9
+        group_pk = None
         round_number = 9
         session_id = 9
         session_start = Constants.epoch
@@ -19,6 +20,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         income_distribution = [-1, -1, -1, -1]
     else:
         steal_starts = meta_data['steal_starts']
+        player_ids_in_session = meta_data['player_ids_in_session']
         group_id = meta_data['group_id']
         group_pk = meta_data['group_pk']
         round_number = subsession.round_number
@@ -40,10 +42,11 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
     try:
         tf = TimeFormatter(game_data.first().event_time)
+        print(f'START TIME FOR TIME FORMATTER:{game_data.first().event_time}')
     except:
         tf = None
 
-    players = init_players(session_start, steal_starts, tf)
+    players = init_players(session_start, steal_starts, player_ids_in_session, tf)
 
     print("THERE ARE {} EVENTS FOR THIS PERIOD".format(len(game_data)))
 
@@ -379,6 +382,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
         elif event_type == 'period_start':
             period_start = event_time
+            print(f'START TIME FOR EXPERIMENT:{period_start}')
             for i in range(1, 6):
 
                 if i > 1:
@@ -410,7 +414,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         # print out csv files
     for i in range(1, 6):
         start = math.floor(session_start)
-        file_name = "{}Session_{}_Group_{}_Player_{}_{}_{}.csv".format(file_path, session_id, 1, i, session_date, start)
+        file_name = "{}Session_{}_Group_{}_Player_{}_{}_{}.csv".format(file_path, session_id, meta_data['group_id'], i, session_date, start)
 
         # csv file output per player
         f = open(file_name, 'a', newline='')
@@ -420,7 +424,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             if Constants.num_rounds == 1 or round_number == 3:
                 writer.writerow(csv_header())
             for row in players[i].rows:
-                writer.writerow(format_row(i, row, period_start, meta_data))
+                writer.writerow(format_row(i, row, period_start, meta_data, players[i].id_in_session))
 
 
 def csv_header():
@@ -432,6 +436,7 @@ def csv_header():
         'Group_BonusAmount',
         'Group_IncomeDistribution',
         'Player_ID',
+        'Participant_ID',  # participant.id_in_session
         'Player_Role',
         'Period_ID',
         'Period_CurrentTime',
@@ -447,7 +452,7 @@ def csv_header():
     return labels
 
 
-def format_row(pid, r, period_start, meta_data):
+def format_row(pid, r, period_start, meta_data, id_in_session):
 
     return [
         r['event_type'],
@@ -467,6 +472,7 @@ def format_row(pid, r, period_start, meta_data):
         meta_data['officer_bonus'],
         meta_data['income_distribution'],  # group_income_distribution
         pid,
+        id_in_session,  # participant_id
         1 if pid > 1 else 0,
         meta_data['round_number'],
         r['event_time'],
@@ -477,7 +483,7 @@ def format_row(pid, r, period_start, meta_data):
         r['production_inputs'],
         r['punished'],
         r['defend_tokens'],
-        r['intersection_events']
+        r['intersection_events'],
     ]
 
 
@@ -499,7 +505,8 @@ class StealToken:
 
 
 class CPlayer:
-    def __init__(self, start, id, steal_start, time_formatter):
+    def __init__(self, start, id, steal_start, id_in_session, time_formatter):
+        self.id_in_session = id_in_session
         self.last_updated = start
         self.player_id = id
         self.balance = 200  # todo this is not letting us assign to constants
@@ -581,10 +588,10 @@ def init_defend_tokens():
     return x
 
 
-def init_players(start, steal_starts, tf):
+def init_players(start, steal_starts, player_ids_in_session, tf):
     x = {}
     for i in range(1, 6):
-        x[i] = CPlayer(start, i, steal_starts[i-1], tf)
+        x[i] = CPlayer(start, i, steal_starts[i-1], player_ids_in_session[i-1], tf)
 
     return x
 
