@@ -95,31 +95,38 @@ Logout and exit the ssh connection to the server
 
 
 Manually Create Session on Local Admin PC
- * go to http://34.215.160.83/join/
- * create session with a `SESSION_ID`
-
-Launch Homepage on Client PC via `Launcher`: 
+ * go to http://34.215.160.83/create_session/?
+  * choose config: `delegated_punishment`
+  * choose number of participants: `20`
+ * Click the tab for `Config Session` and specify game parameters
+  * `SESSION_ID` (should be one integer greater than the inger used last time, defaults to 0)
+  * `low_to_high` (check if incomes inequality are first low then high)
+  * `tutorial_civilian_income` (in grain, also used for trial period)
+  * `tutorial_officer_bonus` (in grain, also used for trial period)
+  * `grain_conversion` (?? grain : 1 USD$)
+  * `showup payment` (in USD$)
+ 
+   
+Launch Homepage on Client PCs via `Launcher`: 
  * *Location* C:/ ... /chrome.exe --kiosk
- * *Arguments* http://34.215.160.83/join/ `SESSION_ID`
+ * *Arguments* http://34.215.160.83/join/ `SESSION_ID_RANDOMSTRING`
+ * Launch one row (five participants) at a time so they are automatically grouped
+ * Manually check all screens, e.g., all use chrome's kiosk mode
 
-
-<!--
-Launch google chrome and sign in students (JA1 ... JAN) 
-Launch Individual Pages:
- * http://34.215.160.83/DelegatedPunishment?username=[+]&password=PoDjangos
-AutoInc[x] tag 1
-
-Admins: username=admin & password=PoDjangos
- * http://34.215.160.83/
--->
 
 
 
 ## End of Session
 
 From Local Admin PC
- * Enter Payoffs from Admin PC
- * Close Client Connections
+ * Call up subjects by their participant ID
+  * Verify their participant ID matches payment
+  * If required by admin, record their name and payment
+  
+From Local Admin PC or Manually
+ * Close all client connections / kill software
+ * Collect instructions
+ 
 
 From Server
  * Download/Export Data
@@ -153,9 +160,9 @@ To analyze statistics
         DF <- read.table("mem_summary.log", skip=2, header=T)
         DF$Time <- as.POSIXct( paste0( format(Sys.time(), "%d-%m-%y"), DF[,1] ) )
         DF$MemTot <- DF$kbmemused / (DF$X.memused/100)
-        DF$MemUsed <- (DF$kbavail / DF$MemTot)*100
+        DF$MemUsed <- ((DF$MemTot - DF$kbavail) / DF$MemTot)*100
         plot(MemUsed ~Time , DF, type="l", ylab="% Mem Used")
-        '
+        q(save="no")'
     ## Creates Rplots.pdf in current directory    
 
 ```
