@@ -36,7 +36,8 @@ SESSION_CONFIGS = [
         tutorial_officer_bonus=10,
         grain_conversion=.1,
         showup_payment=7,
-        participant_endowment=10
+        participant_endowment=10,
+        balance_update_rate=500
         # include_tutorial=True,
     ),
     dict(
@@ -60,22 +61,23 @@ LANGUAGE_CODE = 'en'
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
-DEBUG = True
+DEBUG = False
 
-AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL')
 
 ROOMS = [
     dict(
-        name='econ101',
-        display_name='Econ 101 class',
-        participant_label_file='_rooms/econ101.txt',
+        name='delegated_punishment',
+        display_name='Delegated Punishment',
+        participant_label_file=None,
     ),
     dict(name='live_demo', display_name='Room for live demo (no participant labels)'),
 ]
 
+AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL', 'STUDY')
+
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable
-ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
+ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD', 'delegated_punishment')
 
 DEMO_PAGE_INTRO_HTML = """
 Here are some oTree games.

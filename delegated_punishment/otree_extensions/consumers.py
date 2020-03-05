@@ -49,14 +49,6 @@ class GameConsumer(WebsocketConsumer):
         event_time = date_now_milli()
 
         if data_json.get('balance'):
-            # current_balance = player.get_balance(event_time)
-            # current_roi = player.roi #todo-debug: this is here for debugging
-
-            # Send message to WebSocket
-            # self.send(text_data=json.dumps({
-            #     'balance': current_balance,
-            #     'roi': current_roi
-            # }))
 
             group = Group.objects.get(pk=group_id)
             balance_update = group.balance_update(event_time)

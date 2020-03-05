@@ -17,10 +17,18 @@
 
     <script>
         // data is rendered on api here, then later read by vue instance
-        var player =
-        {{ pjson|json }}
-        var dtokens =
-        {{ dtokens|json }}
+        var player = {{ pjson|json }};
+        var dtokens = {{ dtokens|json }};
+        var frameSize = {{ balance_update_rate }};
+        var playerId = {{ player.id }};
+        var groupPlayerId = {{ player.id_in_group }};
+        var groupId = {{ player.group_id }};
+        var harvestScreen = '{{ no_timeout }}' === 'True';
+        var income = {{ player.income }};
+        var stealStart = {{ player.steal_start }};
+        var roundNumber = {{ subsession.round_number }};
+        var sessionId = {{ subsession.session_id }};
+        var noTimeout = '{{ no_timeout }}' === 'True';
     </script>
 </header>
 <body>
@@ -29,23 +37,6 @@
         {% csrf_token %}
         <button class="otree-btn-next btn btn-primary">Next</button>
     </form>
-
-    <!-- this section is where we pull data from rendered template -->
-    <div style="display: none">
-        <div class="card-body">
-            <h2>
-                <span id="playerId">{{ player.id }}</span>
-                <span id="groupPlayerId">{{ player.id_in_group }}</span>
-                <span id="groupId">{{ player.group_id }}</span>
-                <span id="harvestScreen">{{ player.harvest_screen }}</span>
-                <span id="income">{{ player.income }}</span>
-                <span id="stealStart">{{ player.steal_start }}</span>
-                <span id="roundNumber">{{subsession.round_number }}</span>
-                <span id="sessionId">{{ subsession.session_id }}</span>
-                <span id="noTimeout">{{ no_timeout }}</span>
-            </h2>
-        </div>
-    </div>
 
     {% verbatim %}
     <div id="app">
@@ -98,11 +89,6 @@
         </div>
         <div class="panel game-status-container">
             <div class="balance-container">
-                <div>
-                    <div>DEBUG: ROI: {{ roi }}</div>
-                    <div>INCOME: {{ income }}</div>
-                    <div>STEAL START: {{ stealLocation }}</div>
-                </div>
                 <div class="balance-label">Balance</div>
                 <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
             </div>
@@ -173,7 +159,6 @@
         let redirectUrl = "{{ view.redirect_url|safe }}";
         console.log(socketUrl, redirectUrl)
         function initWebSocket() {
-            console.log('heyo')
             socket = makeReconnectingWebSocket(socketUrl);
 
             // <disconnected-alert>
@@ -256,22 +241,24 @@
 
                 this.player = JSON.parse(player);
 
-                this.playerId = document.getElementById('playerId').textContent;
-                this.groupPlayerId = document.getElementById('groupPlayerId').textContent;
-                this.groupId = document.getElementById('groupId').textContent;
-                this.isOfficer = this.groupPlayerId == 1;
-                this.harvestScreen = document.getElementById('harvestScreen').textContent;
-                this.roundNumber = document.getElementById('roundNumber').textContent;
-                this.sessionId = document.getElementById('sessionId').textContent;
-                this.stealLocation = parseInt(document.getElementById('stealStart').textContent);
 
-                let noTimeout = document.getElementById('noTimeout').textContent;
-                if (noTimeout == 'True') {
+                this.playerId = playerId;
+                this.groupPlayerId = groupPlayerId;
+                this.groupId = groupId;
+                this.isOfficer = this.groupPlayerId == 1;
+                // this.harvestScreen = harvestScreen;
+                this.roundNumber = roundNumber;
+                this.sessionId = sessionId;
+                this.stealLocation = parseInt(stealStart);
+                this.balanceFrequency =
+
+                this.noTimeout = noTimeout;
+                if (this.noTimeout) {
                     this.gameDuration = 1200000;
                 }
 
                 // debug
-                this.income = parseInt(document.getElementById('income').textContent);
+                this.income = parseInt(income);
 
                 // this code is for handling page refreshes
                 //if (!this.isOfficer) {
@@ -476,7 +463,7 @@
                     if (i.guilty == this.groupPlayerId) {
                         // reset steal token
 
-                        this.stealNotification = "You were punished!";
+                        this.stealNotification = "You were fined!";
                         setTimeout(() => {
                             this.stealNotification = '';
                         }, 2000);

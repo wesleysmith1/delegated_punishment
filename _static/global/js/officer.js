@@ -141,12 +141,11 @@ let officerGameComponent = {
                 <div class="token-container">
                     <div style="margin: 10px">
                         <div class="title-small">
-                            Each intercept earns <strong>{{officerIncome}}</strong> grain 
+                            Each fine imposed earns <strong>{{officerIncome}}</strong> grain 
                         </div>
                     </div>
                     <div class="officer-units" style="display:flex;">
                         <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
-                            {{unit.number}}
                         </div>
                     </div>
                 </div>
@@ -155,12 +154,12 @@ let officerGameComponent = {
                 <div class="investigation-data-container">
                   <div class="title">Investigating</div>
                     <div>
-                        <probability-bar-component label="Probability Punish Innocent" :percent=probInnocent></probability-bar-component>
+                        <probability-bar-component label="Probability Fine Innocent" :percent=probInnocent></probability-bar-component>
                         <br>
-                        <probability-bar-component label="Probability Punish Culprit" :percent=probCulprit></probability-bar-component>
+                        <probability-bar-component label="Probability Fine Culprit" :percent=probCulprit></probability-bar-component>
                     </div>
                   <br>
-                  <div class="title">Investigation Map</div>
+                  <div class="title-small">Investigation Map</div>
                   <div id="officer-investigation-container" ref='investigationcontainer'></div>
     
                 </div>

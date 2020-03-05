@@ -12,18 +12,18 @@
             display: none;
         }
     </style>
-    <p style="width: 75%">
+    <p style="width: 75%; font-size: 30px;">
         {{ info }}
         <br>
         <br>
 
         {% if player.id_in_group > 1 %}
-                You will earn {{ player.income }} grain for each harvest and {{ steal_rate }} grain for each second of successful stealing.
+            You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.
             <br>
             <br>
         {% endif %}
 
-        The officer earns {{ officer_bonus }} grain per crime cleared and loses {{ officer_reprimand }} grain if they are reprimanded (which sometimes happens when an innocent person is arrested)
+        The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared <br>and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined)
         <br>
         <br>
 

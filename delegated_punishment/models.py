@@ -20,24 +20,26 @@ class Constants(BaseConstants):
     num_rounds = 10
     # num_rounds = 1  # testing purposes
 
-    civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
-    civilian_fine_amount = 540
-
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
-    officer_review_probability = .1  # THETA: chance that an intersection result will be reviewed
-    officer_reprimand_amount = 100  # P punishment for officer if innocent civilian is punished
     defend_token_total = 9
 
     epoch = datetime.datetime.utcfromtimestamp(0)
 
-    defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
-    civilian_map_size = 240
+    start_balance = 0
+
+    # these variables will be subject to change the most
+    civilian_fine_amount = 540
+    civilian_steal_rate = 6  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+
+    officer_review_probability = .1  # THETA: chance that an intersection result will be reviewed
+    officer_reprimand_amount = 100  # P punishment for officer if innocent civilian is punished
 
     civilian_incomes_low = [3, 5, 8, 10]
     civilian_incomes_high = [2, 3, 4, 15]
     officer_incomes = [0, 5, 10, 15]
 
-    start_balance = 200
+    defend_token_size = 36  # this is the size of the tokens that players with role of officer drag around
+    civilian_map_size = 240
 
 
 class Subsession(BaseSubsession):

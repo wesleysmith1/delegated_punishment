@@ -64,7 +64,8 @@ body {
     cursor: pointer;
 
     min-width: 100px;
-    background: darkgrey;
+    background: black;
+    color: white;
     border: 2px solid black;
     padding: 10px;
     text-align: center;

@@ -3,12 +3,16 @@
 
 {% block content %}
 
-    <p style="width: 75%">
-        Participant ID {{ player.participant.id_in_session }}
-        Payout {{ player.payout }}
-
+    <p style="width: 75%;  font-size: 30px;">
+        Participant ID: <strong>{{ player.participant.id_in_session }}</strong>
+        <br>
+        <br>
+        Payout: <strong>{{ player.payout }}</strong>
+        <br>
+        <br>
         The experiment has finished. In a moment you will be called by name to receive your earnings. When your name is called, please bring your personal belongings with you.
-
+        <br>
+        <br>
         Please wait quietly, and refrain from using the mouse and keyboard.
     </p>
 

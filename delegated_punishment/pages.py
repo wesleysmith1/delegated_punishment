@@ -3,7 +3,6 @@ import json, math
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
-from json import JSONEncoder
 
 
 class Game(Page):
@@ -21,7 +20,8 @@ class Game(Page):
 
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
-        vars_dict['rand'] = str(random() * 1000)  # todo: remove
+        vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
+
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
             # for o in officer_tokens:

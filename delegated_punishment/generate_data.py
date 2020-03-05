@@ -509,7 +509,7 @@ class CPlayer:
         self.id_in_session = id_in_session
         self.last_updated = start
         self.player_id = id
-        self.balance = 200  # todo this is not letting us assign to constants
+        self.balance = Constants.start_balance
         self.roi = 0
         self.t_formatter = time_formatter
 
