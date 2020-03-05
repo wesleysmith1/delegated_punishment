@@ -22,7 +22,7 @@
     display: flex;
     justify-content: space-around;
     border: 1px solid black;
-    padding: 20px;
+    padding: 5px;
 }
 .officer-unit {
     opacity: .5;

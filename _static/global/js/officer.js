@@ -155,7 +155,6 @@ let officerGameComponent = {
                   <div class="title">Investigating</div>
                     <div>
                         <probability-bar-component label="Probability Fine Innocent" :percent=probInnocent></probability-bar-component>
-                        <br>
                         <probability-bar-component label="Probability Fine Culprit" :percent=probCulprit></probability-bar-component>
                     </div>
                   <br>
