@@ -66,14 +66,13 @@ To update to the latest version
 <!-- ------------------------------------------------ -->
 
 
-#### Setup Session
+#### Setup Server
 
 Create new database for the session by running `otree resetdb` on server.
 
 *this will break all existing session urls in lab.*
 
-
-Launch New Session *need to specify game parameters?*
+Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, then
 
 ```bash
 
@@ -82,7 +81,9 @@ Launch New Session *need to specify game parameters?*
     sudo -E env "PATH=$PATH" otree runprodserver 80
 
 ```
-
+<!--##
+RUN SERVER IN BACKGROUND OR TMUX SESSION??
+-->
 
 Logout and exit the ssh connection to the server
 
@@ -95,7 +96,8 @@ Logout and exit the ssh connection to the server
 
 
 Manually Create Session on Local Admin PC
- * go to http://34.215.160.83/create_session/?
+ * go to http://34.215.160.83/room_without_session/delegated_punishment/
+  * LOGIN username: `admin`, password: `delegated_punishment`
   * choose config: `delegated_punishment`
   * choose number of participants: `20`
  * Click the tab for `Config Session` and specify game parameters
@@ -108,13 +110,14 @@ Manually Create Session on Local Admin PC
  
    
 Launch Homepage on Client PCs via `Launcher`: 
- * *Location* C:/ ... /chrome.exe --kiosk
- * *Arguments* http://34.215.160.83/join/ `SESSION_ID_RANDOMSTRING`
+ * *Location* C:/ ... /chrome.exe --kiosk --force-device-scale-factor=1.00
+ * *Arguments* http://34.215.160.83/room/delegated_punishment/
  * Launch one row (five participants) at a time so they are automatically grouped
- * Manually check all screens, e.g., all use chrome's kiosk mode
+ * Manually check all screens, e.g., all chrome browsers have kiosk mode, fullscreen, zoom 100%
 
 
-
+Control Session on Local Admin PC
+ * Be on `monitor` tab to `advance slowest used`
 
 ## End of Session
 
