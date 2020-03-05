@@ -97,6 +97,7 @@ Logout and exit the ssh connection to the server
 
 Manually Create Session on Local Admin PC
  * go to http://34.215.160.83/room_without_session/delegated_punishment/
+  * LOGIN username: `admin`, password: `delegated_punishment`
   * choose config: `delegated_punishment`
   * choose number of participants: `20`
  * Click the tab for `Config Session` and specify game parameters
