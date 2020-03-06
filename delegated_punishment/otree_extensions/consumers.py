@@ -605,36 +605,43 @@ class GameConsumer(WebsocketConsumer):
             # increased for each investigated intersection
             # officer_bonus = 0
 
-            if num_investigators > 0:
+            for inter in intersections:
+                # print(inter)
 
-                for inter in intersections:
-                    # print(inter)
+                # print('\t\tSTARTING NUMPY CALCULATIONS')
+                culprit = inter["culprit"]
+                innocent = inter["map"]  # also victim
 
-                    # print('\t\tSTARTING NUMPY CALCULATIONS')
-                    culprit = inter["culprit"]
-                    innocent = inter["map"] # also victim
+                if num_investigators > Constants.a_max:
+                    innocent_prob = 0
+                    guilty_prob = Constants.beta
+                else:
+                    innocent_prob = round((1 / 3 - num_investigators / (3 * Constants.a_max)) * Constants.beta, 4)
+                    guilty_prob = round((1 / 3 + 2 * num_investigators / (3 * Constants.a_max)) * Constants.beta, 4)
 
-                    innocent_prob = 1 / 3 - num_investigators / 30
-                    guilty_prob = 1 / 3 + 2 * num_investigators / 30
-                    multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob]
+                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
 
-                    # subtract 1 for 0 based index
-                    multi[culprit - 1] = guilty_prob
-                    multi[innocent - 1] = 0
-                    # print('\t\tMULTI' + str(multi))
+                # subtract 1 for 0 based index
+                multi[culprit - 1] = guilty_prob
+                multi[innocent - 1] = 0
+                # print('\t\tMULTI' + str(multi))
 
-                    result = np.random.multinomial(1, multi, 1)[0]
+                result = np.random.multinomial(1, multi, 1)[0]
 
-                    # which player was convicted from result
-                    for i in range(len(result)):  # search array for result ex; [0,1,0,0,0]
-                        if result[i] == 1:
+                # which player was convicted from result
+                for index, i in enumerate(result):  # search array for result ex; [0,1,0,0,0,0]
+                    if i == 1:
+
+                        if index == 5:
+                            # nobody punished, no officer bonus
+                            convicted_pid = None
+                        else:
                             # no need to add calculable value to game data
-                            convicted_pid = int(i + 1)
-                            break
-                    # print('\t\tHERE IS THE NUMPY RESULT ' + str(result))
+                            convicted_pid = int(index + 1)
+                        break
 
-                    # updated convicted player balance
-                    # print('CONVICTED PLAYER: ' + str(convicted_pid))
+                # print('CONVICTED PLAYER: ' + str(convicted_pid))
+                if convicted_pid:
                     convicted_player = Player.objects.get(group_id=group_id, id_in_group=convicted_pid)
                     convicted_player.balance -= Constants.civilian_fine_amount
                     convicted_player.save()
@@ -684,10 +691,8 @@ class GameConsumer(WebsocketConsumer):
 
                     game_data_intersections.append(inter)
 
-            else:
-                # intersections without investigation defend tokens
-                game_data_intersections = intersections
-                # print('THERE ARE NO TOKENS IN INVESTIGATIONS THEREFORE THERE WILL BE NO CONVICTIONS')
+                else:
+                    game_data_intersections.append(inter)
 
             # send down intersections
             if len(game_data_intersections) > 0:

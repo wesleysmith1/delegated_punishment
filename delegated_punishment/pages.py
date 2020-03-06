@@ -27,6 +27,8 @@ class Game(Page):
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
+        vars_dict['a_max'] = Constants.a_max
+        vars_dict['beta'] = Constants.beta
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)

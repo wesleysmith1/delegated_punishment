@@ -28,19 +28,22 @@ class Constants(BaseConstants):
     start_balance = 0
 
     # these variables will be subject to change the most
-    civilian_fine_amount = 288
-    civilian_steal_rate = 19  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+    civilian_fine_amount = 82
+    civilian_steal_rate = 15  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
 
     officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 50  # P punishment for officer if innocent civilian is punished
 
-    civilian_incomes_low = [32, 35, 30, 50]
-    civilian_incomes_high = [18, 23, 32, 84]
+    civilian_incomes_low = [24, 28, 32, 40]
+    civilian_incomes_high = [20, 24, 32, 48]
     officer_incomes = [0, 5, 10, 15]
 
     # also change in officer.css
-    defend_token_size = 56  # this is the size of the tokens that players with role of officer drag around
+    defend_token_size = 64.8  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 240
+
+    beta = .75
+    a_max = 5
 
 
 class Subsession(BaseSubsession):
