@@ -4,7 +4,7 @@ let stealGameComponent = {
     },
     props: {
         maps: Array,
-        groupPlayerId: String,
+        groupPlayerId: Number,
         playerLocation: Object,
         investigationCount: Number,
         probCulprit: Number,

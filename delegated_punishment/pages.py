@@ -3,9 +3,15 @@ import json, math
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
+from delegated_punishment.helpers import skip_period
 
 
 class Game(Page):
+    def is_displayed(self):
+        if skip_period(self.session, self.round_number):
+            return False
+        return True
+
     def vars_for_template(self):
 
         #  todo: we need to query player here since a blank model is being created instead
@@ -70,6 +76,9 @@ class ResultsPage(Page):
         return vars_dict
 
     def is_displayed(self):
+        if skip_period(self.session, self.round_number):
+            return False
+
         if Constants.num_rounds == 1:
             return True
         elif self.round_number > 1:
@@ -83,6 +92,9 @@ class Intermission(Page):
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
+        if skip_period(self.session, self.round_number):
+            return False
+
         if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
             return True
         else:
@@ -102,16 +114,6 @@ class Intermission(Page):
             info = 'We are about to perform 4 periods sequentially.'
         vars_dict['info'] = info
         return vars_dict
-
-
-class AutoAdvancePage(Page):
-    """This page is for after the tutorial and the practice period so that
-    the next periods are not started automatically"""
-    def is_displayed(self):
-        if self.round_number < 3:
-            return True
-        else:
-            return False
 
 
 page_sequence = [Wait, Intermission, Game, ResultsWaitPage, ResultsPage]

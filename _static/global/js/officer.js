@@ -26,7 +26,7 @@ let officerGameComponent = {
         maps: Array,
         officerUnits: Array,
         officerIncome: Number,
-        groupPlayerId: String,
+        groupPlayerId: Number,
         investigationCount: Number,
         probCulprit: Number,
         probInnocent: Number,

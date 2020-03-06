@@ -37,8 +37,8 @@ SESSION_CONFIGS = [
         grain_conversion=.1,
         showup_payment=7,
         participant_endowment=10,
-        balance_update_rate=500
-        # include_tutorial=True,
+        balance_update_rate=500,
+        skip_to_period=1,
     ),
     dict(
         name='survey',
