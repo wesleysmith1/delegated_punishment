@@ -612,12 +612,12 @@ class GameConsumer(WebsocketConsumer):
                 culprit = inter["culprit"]
                 innocent = inter["map"]  # also victim
 
-                if num_investigators > Constants.a_max:
+                if num_investigators >= Constants.a_max:
                     innocent_prob = 0
                     guilty_prob = Constants.beta
                 else:
-                    innocent_prob = round((1 / 3 - num_investigators / (3 * Constants.a_max)) * Constants.beta, 4)
-                    guilty_prob = round((1 / 3 + 2 * num_investigators / (3 * Constants.a_max)) * Constants.beta, 4)
+                    innocent_prob = 1 / 4 - num_investigators / 20
+                    guilty_prob = 1 / 4 + num_investigators / 10
 
                 multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
 

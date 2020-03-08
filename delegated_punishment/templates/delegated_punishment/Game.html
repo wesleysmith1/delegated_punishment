@@ -28,6 +28,7 @@
         var stealStart = {{ player.steal_start }};
         var roundNumber = {{ subsession.round_number }};
         var sessionId = {{ subsession.session_id }};
+        var defendTokenTotal = {{ defend_token_total }};
         var noTimeout = '{{ no_timeout }}' === 'True';
         var aMax = {{ a_max }};
         var beta = {{ beta }};
@@ -50,12 +51,12 @@
                 :maps="maps"
                 :officer-units="officerTokens"
                 :officer-income="income"
-                :investigation-count=investigationCount
+                :investigation-count="investigationCount"
+                :defend-token-total="defendTokenTotal"
                 :prob-culprit="probabilityCulprit"
                 :prob-innocent="probabilityInnocent"
                 :police-log-messages="policeLogMessages"
                 :map-size="mapSize"
-                :defend-token-size="defendTokenSize"
                 @token-drag="tokenDrag"
                 @token-update="tokenUpdate"
                 @investigation-update="investigationUpdate"
@@ -77,6 +78,7 @@
                     :group-player-id="groupPlayerId"
                     :player-location="playerLocation"
                     :investigation-count="investigationCount"
+                    :defend-token-total="defendTokenTotal"
                     :prob-culprit="probabilityCulprit"
                     :prob-innocent="probabilityInnocent"
                     :police-log-messages="policeLogMessages"
@@ -232,6 +234,7 @@
                 harvestScreen: true,
                 officerTokens: [],
                 investigationCount: 0,
+                defendTokenTotal: 0,
                 stealNotification: "",
                 defendTokenSize: 64.8, // todo load from api?
                 mapSize: 240,  // todo load from api?
@@ -256,6 +259,7 @@
                 // this.harvestScreen = harvestScreen;
                 this.roundNumber = roundNumber;
                 this.sessionId = sessionId;
+                this.defendTokenTotal = defendTokenTotal;
                 this.stealLocation = parseInt(stealStart);
                 this.balanceFrequency = frameSize;
                 this.aMax = aMax;
@@ -319,7 +323,7 @@
                             this.balance = latestBalance;
                             this.roi = data.roi
                         } else if (data.intersections) {
-                            // console.log(data.intersections);
+                            console.log(data.intersections);
                             data.intersections.forEach((i) => {
                                 this.addMessage(i);
 
@@ -395,7 +399,6 @@
                     }
                 },
                 subscribeToBalance: function () {
-                    debugger;
                     setInterval(() => {
                         if (this.gameSocket.readyState == WebSocket.OPEN) {
                             this.gameUpdate({
@@ -535,16 +538,16 @@
             computed: {
                 probabilityCulprit() {
                     if (this.investigationCount > this.aMax)
-                        return this.beta;
+                        return this.beta * 100;
                     else {
-                        return Math.round(((1 / 3 + 2 * this.investigationCount / (3 * this.aMax)) * this.beta) * 100)
+                        return (1 / 4 + this.investigationCount / 10) * 100
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount > this.aMax)
                         return 0;
                     else {
-                        return Math.round(((1 / 3 - this.investigationCount / (3 * this.aMax)) * this.beta) * 100)
+                        return (1 / 4 - this.investigationCount / 20) * 100
                     }
                 }
             },

@@ -27,6 +27,7 @@ class Game(Page):
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
+        vars_dict['defend_token_total'] = Constants.defend_token_total
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 
