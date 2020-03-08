@@ -21,26 +21,27 @@ class Constants(BaseConstants):
     # num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
-    defend_token_total = 9
+    defend_token_total = 8
 
     epoch = datetime.datetime.utcfromtimestamp(0)
 
     start_balance = 0
 
     # these variables will be subject to change the most
-    civilian_fine_amount = 82
-    civilian_steal_rate = 15  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+    civilian_fine_amount = 110
+    civilian_steal_rate = 16  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
 
     officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 50  # P punishment for officer if innocent civilian is punished
 
-    civilian_incomes_low = [24, 28, 32, 40]
-    civilian_incomes_high = [20, 24, 32, 48]
-    officer_incomes = [0, 5, 10, 15]
+    civilian_incomes_low = [24, 28, 32, 37]
+    civilian_incomes_high = [18, 25, 32, 46]
+    # officer_incomes = [0, 10, 20]
+    officer_incomes = [20, 10, 20]
 
     # also change in officer.css
-    defend_token_size = 64.8  # this is the size of the tokens that players with role of officer drag around
-    civilian_map_size = 240
+    defend_token_size = 54  # this is the size of the tokens that players with role of officer drag around
+    civilian_map_size = 200
 
     beta = .75
     a_max = 5

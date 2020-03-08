@@ -66,7 +66,7 @@ class ResultsWaitPage(WaitPage):
 
 
 class ResultsPage(Page):
-    timeout_seconds = 40
+    timeout_seconds = 300
     timer_text = 'Time remaining on results page'
 
     def vars_for_template(self):
