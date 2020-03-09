@@ -75,28 +75,33 @@ let officerGameComponent = {
         checkLocation: function (that, item) {
             if (that.hitTest(this.$refs.officerGame, '100%')) {
                 //location-center
-                if (that.hitTest(this.$refs.map5, '1%')) {
-                    this.map = 5
+                if (that.hitTest(this.$refs.map6, '1%')) {
+                    this.map = 6;
+                    item.map = 6;
+                    let map = document.getElementById('map6').getBoundingClientRect()
+                    this.calculateLocation(map, that, item);
+                } else if (that.hitTest(this.$refs.map5, '1%')) {
+                    this.map = 5;
                     item.map = 5;
                     let map = document.getElementById('map5').getBoundingClientRect()
                     this.calculateLocation(map, that, item);
                 } else if (that.hitTest(this.$refs.map2, '.000001%')) {
-                    this.map = 2
+                    this.map = 2;
                     item.map = 2;
                     let map = document.getElementById('map2').getBoundingClientRect()
                     this.calculateLocation(map, that, item);
                 } else if (that.hitTest(this.$refs.map3, '.000001%')) {
-                    this.map = 3
-                    item.map = 3
+                    this.map = 3;
+                    item.map = 3;
                     let map = document.getElementById('map3').getBoundingClientRect()
                     this.calculateLocation(map, that, item);
                 } else if (that.hitTest(this.$refs.map4, '.000001%')) {
-                    this.map = 4
-                    item.map = 4
+                    this.map = 4;
+                    item.map = 4;
                     let map = document.getElementById('map4').getBoundingClientRect()
                     this.calculateLocation(map, that, item);
                 } else if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
-                    item.map = 11
+                    item.map = 11;
                     this.$emit('investigation-update', item)
                 } else {
                     gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
@@ -129,10 +134,13 @@ let officerGameComponent = {
                 <div class='title'>Civilian Maps</div> 
                 <div class="maps-container">
                     <div v-for="map in maps" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)' class="map-container">
-                      <div class="map other" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)'>
-                          <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
-                            <circle cx="3" cy="3" r="2" fill="black" />
-                          </svg>
+                      <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)'>
+                            <div v-for="player_id in 5" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
+                                10
+                            </div>
+                            <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
+                                <circle cx="3" cy="3" r="2" fill="black" />
+                            </svg>
                       </div>
                       <div class="map-label">
                         Player {{map+1}}

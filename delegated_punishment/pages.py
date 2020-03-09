@@ -31,6 +31,8 @@ class Game(Page):
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 
+        vars_dict['civilian_fine'] = Constants.civilian_fine_amount
+
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
             # for o in officer_tokens:
@@ -53,7 +55,6 @@ class Wait(WaitPage):
 
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
-        # todo make sure that we are not doing this 5 times!
         if Constants.num_rounds > 1 and self.round_number < 3:
             # dont generate results for the tutorial and trial period
             pass
@@ -67,7 +68,7 @@ class ResultsWaitPage(WaitPage):
 
 
 class ResultsPage(Page):
-    timeout_seconds = 300
+    timeout_seconds = 30
     timer_text = 'Time remaining on results page'
 
     def vars_for_template(self):

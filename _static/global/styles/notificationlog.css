@@ -11,13 +11,13 @@
     top: 20%;
     position: absolute;
     display: flex;
-    height: 70%;
+    height: 50%;
     width: 80%;
 }
 .notification-log-container .notification-log-column {
     border-right: 1px solid black;
     width: 25%;
-    background: white;
+    background: #eeeeee;
     position: relative;
 }
 .notification-log-container .notification-log-column:last-child {
@@ -44,7 +44,7 @@
     /* height: 250px; */
     overflow-y: hidden;
     overflow-x: hidden;
-    font-size: 20px;
+    font-size: 30px;
 
     position: absolute;
     height: 80%;

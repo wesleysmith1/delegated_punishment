@@ -25,9 +25,9 @@
     padding: 5px;
 }
 .officer-unit {
-    opacity: .5;
-    width: 54px;
-    height: 54px;
+    opacity: .25;
+    width: 57px;
+    height: 57px;
     background: #001485;
 }
 #officer-investigation-container {
@@ -36,4 +36,20 @@
     background: rgba(240,189,39,.5);
     border: 1px solid black;
     opacity: .5;
+}
+
+
+.intersection-label {
+    width: 31px;
+    height:30px;
+    text-align: center;
+    color: red;
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    font-size: 30px;
+
+    visibility: hidden;
+    z-index: 900;
 }

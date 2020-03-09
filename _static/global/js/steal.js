@@ -15,6 +15,7 @@ let stealGameComponent = {
         stealLocation: Number,
         activeSteal: Number,
         activeStealMaps: Object,
+        fineNotification: String,
     },
     data: function () {
         return {
@@ -24,7 +25,7 @@ let stealGameComponent = {
         }
     },
     mounted: function () {
-        console.log('active steal maps', this.activeStealMaps)
+        console.log('FINE NOTIFICATION', this.fineNotification)
         let that = this;
         let selector = '#location'
         Draggable.create(selector, {
@@ -70,7 +71,11 @@ let stealGameComponent = {
                 } else if (that.hitTest(this.$refs.prop5, '.000001%') && this.groupPlayerId != 5) {
                     let map = document.getElementById('prop5').getBoundingClientRect()
                     this.calculateLocation(map, 5);
-                } else {
+                } else if (that.hitTest(this.$refs.prop6, '.000001%') && this.groupPlayerId != 6) {
+                    let map = document.getElementById('prop6').getBoundingClientRect()
+                    this.calculateLocation(map, 6);
+                }
+                else {
                     this.setStealLocation()
                     this.$emit('location-token-reset', this.randomLocation())
                 }
@@ -91,7 +96,7 @@ let stealGameComponent = {
             ) {
                 this.$emit('location-update', {x: this.locationx, y: this.locationy, map: map_id});
             } else {
-                gsap.to('#location', 0.5, {x: 0, y: 0, ease: Back.easeOut});
+                gsap.to('#location', 0, {x: 0, y: 0, ease: Back.easeOut});
             }
         },
         indicatorColor(map) {
@@ -118,14 +123,17 @@ let stealGameComponent = {
                 <div class='title'>Civilian Maps</div> 
                     <div ref='htarget' class="maps-container">
                       <div v-for="map in maps" class="map-container">
-                            <div 
-                                class="map" 
-                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] ? 'rgba(224,53,49, .5)' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
+                            <div
+                                class="map"
+                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] > 0 ? 'rgba(224,53,49,' + activeStealMaps[groupPlayerId] * .25 + ')' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
                                 v-bind:player-id="(map+1)" 
                                 :id='"prop" + (map+1)' 
                                 :ref='"prop" + (map+1)'>
+                                <div id="fine-notification" v-if="groupPlayerId==map+1" style="text-align: center; font-size: 50px; padding-top: 40px;">
+                                    {{fineNotification}}
+                                </div>
                                 <!-- svg indicator id format: map-player-->
-                                <svg v-for="player_id in 4" :key="player_id" :id="'indicator' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
+                                <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
                                   <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
                                 </svg>
                             </div>
@@ -143,6 +151,7 @@ let stealGameComponent = {
                                     Sorry, your browser does not support inline SVG.  
                                 </svg> 
                             </div>
+<!--                            todo: make right number of locations here-->
                             <div v-for="i in 8" class="steal-location" :ref='"steallocation" + (i+1)' :id='"steallocation" + (i+1)'>
                             </div>
                         </div>

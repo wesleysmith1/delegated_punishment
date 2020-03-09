@@ -36,6 +36,7 @@ class GameSyncConsumer(WebsocketConsumer):
         player_id = data_json['player_id']
         player = Player.objects.get(pk=player_id)
         group = Group.objects.get(pk=group_id)
+        round_number = data_json['round_number']
 
         if data_json.get('join'):
             # player is now ready
@@ -47,7 +48,7 @@ class GameSyncConsumer(WebsocketConsumer):
                 group.save()
                 print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
 
-            if group.players_ready == Constants.players_per_group:
+            if group.check_game_status(date_now_milli()):
                 print(f"GROUP HAS ALL ARRIVED")
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
@@ -58,8 +59,8 @@ class GameSyncConsumer(WebsocketConsumer):
                 )
 
 
+
         elif data_json.get('period_end'):
-            round_number = data_json('round_number')
             event_time = date_now_milli()
             game_data_dict = {
                 'event_time': event_time,

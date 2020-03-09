@@ -28,12 +28,12 @@ SESSION_CONFIGS = [
     dict(
         name='delegated_punishment', 
         display_name="Delegated Punishment Game", 
-        num_demo_participants=5,
+        num_demo_participants=6,
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,
         low_to_high=True,
-        tutorial_civilian_income=30,
-        tutorial_officer_bonus=20,
+        tutorial_civilian_income=32,
+        tutorial_officer_bonus=9,
         grain_conversion=.1,
         showup_payment=7,
         participant_endowment=10,
@@ -61,7 +61,7 @@ LANGUAGE_CODE = 'en'
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
-DEBUG = False
+DEBUG = True
 
 
 ROOMS = [

@@ -16,9 +16,9 @@ doc = """
 
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
-    players_per_group = 5
-    num_rounds = 10
-    # num_rounds = 1  # testing purposes
+    players_per_group = 6
+    # num_rounds = 10
+    num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     defend_token_total = 8
@@ -28,23 +28,24 @@ class Constants(BaseConstants):
     start_balance = 0
 
     # these variables will be subject to change the most
-    civilian_fine_amount = 110
-    civilian_steal_rate = 16  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+    civilian_fine_amount = 120
+    civilian_steal_rate = 13  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
 
     officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 50  # P punishment for officer if innocent civilian is punished
 
-    civilian_incomes_low = [24, 28, 32, 37]
-    civilian_incomes_high = [18, 25, 32, 46]
+    civilian_incomes_low = [24, 28, 32, 37, 100]
+    civilian_incomes_high = [18, 25, 32, 46, 100]
+    # test_civilian_incomes = [32, 34, 36, 38] # todo delete this text array
     # officer_incomes = [0, 10, 20]
-    officer_incomes = [20, 10, 20]
+    officer_incomes = [0, 9, 30]
 
     # also change in officer.css
-    defend_token_size = 54  # this is the size of the tokens that players with role of officer drag around
+    defend_token_size = 47  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 200
 
-    beta = .75
-    a_max = 5
+    beta = .9
+    a_max = 6
 
 
 class Subsession(BaseSubsession):
@@ -75,6 +76,11 @@ class Subsession(BaseSubsession):
 
                 # officer_participant.save()
                 index += 1
+
+                for p in gr.get_players():
+                    if p.id_in_group > 1:
+                        p.income = self.session.config['tutorial_civilian_income']
+                        p.save()
 
         for g in groups:
             for p in g.get_players():
@@ -113,6 +119,33 @@ class Subsession(BaseSubsession):
 
 class Group(BaseGroup):
     officer_bonus = models.IntegerField(initial=0)
+    players_ready = models.IntegerField(initial=0)
+
+    def check_game_status(self, time):
+        if self.group_ready():
+            event_time = time
+            game_data_dict = {
+                'event_time': event_time,
+                'event_type': 'period_end'
+            }
+            """Officer sends up period end"""
+            GameData.objects.create(
+                event_time=event_time,
+                p=self.get_players()[0].pk,
+                g=self.id,
+                s=self.session.id,
+                round_number=self.round_number,
+                jdata=game_data_dict
+            )
+
+            return True
+        return False
+
+    def group_ready(self):
+        """Have all player pages loaded"""
+        if self.players_ready == Constants.players_per_group:
+            return True
+        return False
 
     def balance_update(self, time):
         players = self.get_players()
@@ -124,18 +157,19 @@ class Group(BaseGroup):
             2: 0,
             3: 0,
             4: 0,
-            5: 0
+            5: 0,
+            6: 0,
         }
 
         for player in players:
             if player.map > 0:
-                active_maps[player.map] = 1
+                active_maps[player.map] += 1
 
             balance_update[player.id_in_group] = dict(
                 balance=player.get_balance(time),
                 map=player.map,
-                # victim_count=player.victim_count,
-                # steal_count=player.steal_count,
+                victim_count=player.victim_count,
+                steal_count=player.steal_count,
             )
             balance_update['active_maps'] = active_maps
 
@@ -145,7 +179,7 @@ class Group(BaseGroup):
         players = self.get_players()
 
         # Initial civilian steal locations for csv
-        player_ids_in_session = steal_starts = [-1, -1, -1, -1, -1]
+        player_ids_in_session = steal_starts = [-1, -1, -1, -1, -1, -1]
         for p in players:
             steal_starts[p.id_in_group-1] = p.participant.vars['steal_start']
             player_ids_in_session[p.id_in_group-1] = p.participant.id_in_session
@@ -208,6 +242,7 @@ class Player(BasePlayer):
     victim_count = models.IntegerField(initial=0)  # number of other players stealing from player
     steal_total = models.FloatField(initial=0)
     victim_total = models.FloatField(initial=0)
+    ready = models.BooleanField(initial=False)
 
 
     def other_players(self):
@@ -235,10 +270,10 @@ class Player(BasePlayer):
 
         if direct:
             # victim no longer being stolen from by a player
-            self.victim_count -= 1
+            self.steal_count += 1
         else:
             # culprit stealing from a victim
-            self.steal_count += 1
+            self.victim_count -= 1
 
     def decrease_roi(self, time, direct):
         # calculate balance

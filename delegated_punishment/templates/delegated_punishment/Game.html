@@ -33,6 +33,8 @@
         var aMax = {{ a_max }};
         var beta = {{ beta }};
 
+        var civilianFine = {{ civilian_fine }} ;
+
     </script>
 </header>
 <body>
@@ -43,8 +45,9 @@
     </form>
 
     {% verbatim %}
-    <div id="app">
-        <officer-game-component
+    <div>
+        <div id="app" v-show="gameStarted">
+            <officer-game-component
                 id="officerGame"
                 class="game-container"
                 v-if="isOfficer"
@@ -61,75 +64,89 @@
                 @token-update="tokenUpdate"
                 @investigation-update="investigationUpdate"
                 @defense-token-reset="defenseTokenReset">
-        </officer-game-component>
-        <div id="harvestGame" class="game-container" v-else>
-            <harvest-items-component
-                    v-if="harvestScreen"
-                    class="harvest"
-                    style="display:flex;"
-                    :harvest-status="harvestStatus"
-                    :income="income"
-                    @harvest-update="harvestUpdate">
-            </harvest-items-component>
-            <steal-game-component
-                    v-show="!harvestScreen"
-                    ref="stealcomponent"
-                    :maps="maps"
-                    :group-player-id="groupPlayerId"
-                    :player-location="playerLocation"
-                    :investigation-count="investigationCount"
-                    :defend-token-total="defendTokenTotal"
-                    :prob-culprit="probabilityCulprit"
-                    :prob-innocent="probabilityInnocent"
-                    :police-log-messages="policeLogMessages"
-                    :map-size="mapSize"
-                    :steal-location="stealLocation"
-                    :active-steal="activeSteal"
-                    :active-steal-maps="activeStealMaps"
-                    @location-drag="locationDrag"
-                    @location-update="locationUpdate"
-                    @location-token-reset="locationTokenReset">
-            </steal-game-component>
-            <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
-        </div>
-        <div class="panel game-status-container">
-            <div class="balance-container">
-                <div class="balance-label">Balance</div>
-                <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
+            </officer-game-component>
+            <div id="harvestGame" class="game-container" v-else>
+                <harvest-items-component
+                        v-if="harvestScreen"
+                        class="harvest"
+                        style="display:flex;"
+                        :harvest-status="harvestStatus"
+                        :income="income"
+                        @harvest-update="harvestUpdate">
+                </harvest-items-component>
+                <steal-game-component
+                        v-show="!harvestScreen"
+                        ref="stealcomponent"
+                        :maps="maps"
+                        :group-player-id="groupPlayerId"
+                        :player-location="playerLocation"
+                        :investigation-count="investigationCount"
+                        :defend-token-total="defendTokenTotal"
+                        :prob-culprit="probabilityCulprit"
+                        :prob-innocent="probabilityInnocent"
+                        :police-log-messages="policeLogMessages"
+                        :map-size="mapSize"
+                        :steal-location="stealLocation"
+                        :active-steal="activeSteal"
+                        :active-steal-maps="activeStealMaps"
+                        :fine-notification="fineNotification"
+                        @location-drag="locationDrag"
+                        @location-update="locationUpdate"
+                        @location-token-reset="locationTokenReset">
+                </steal-game-component>
+                <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
             </div>
-            <div class="notifications-container">
-                <div class="notification-label">
-                    News
-                    <div class="steal-notification">{{stealNotification}}</div>
+            <div class="panel game-status-container">
+                <div class="balance-container">
+                    <div class="balance-label">Balance (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</div>
+                    <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
                 </div>
-                <div class="notification-log-container">
-                    <div class="notification-log-column">
-                        <div class="header"><div>Civilian<br>map</div></div>
-                        <div class="content" ref="notificationLog1">
-                            <div v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;">{{message.map}}</div>
+                <div class="notifications-container">
+                    <div class="notification-label">
+                        News
+                        <div class="steal-notification">{{stealNotification}}</div>
+                    </div>
+                    <div class="notification-log-container">
+                        <div class="notification-log-column">
+                            <div class="header"><div>Civilian<br>map</div></div>
+                            <div class="content" ref="notificationLog1">
+                                <div
+                                    v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;"
+                                    v-bind:style="{background: (message.map == groupPlayerId) ? 'darkgrey' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
+                                >{{message.messageIndex}}</div>
+                            </div>
+                        </div>
+                        <div class="notification-log-column">
+                            <div class="header"><div>Civilian<br>punished</div></div>
+                            <div class="content" ref="notificationLog2">
+                                <div
+                                    v-for="message in messages"
+                                    v-bind:style="{background: (message.punished==groupPlayerId) ? 'rgba(224,53,49, .5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
+                                >{{message.punished}}</div>
+                            </div>
+                        </div>
+                        <div class="notification-log-column">
+                            <div class="header"><div>Officer<br>reprimand</div></div>
+                            <div class="content" ref="notificationLog3">
+                                <div
+                                    v-for="message in messages"
+                                    v-bind:style="{background: (isOfficer && message.reprimand < 0) ? 'rgba(224,53,49, .5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
+                                >{{message.reprimand}}</div>
+                            </div>
+                        </div>
+                        <div class="notification-log-column">
+                            <div class="header"><div>Officer<br>bonus</div></div>
+                            <div class="content" ref="notificationLog4">
+                                <div
+                                    v-for="message in messages"
+                                    v-bind:style="{background: (isOfficer && message.bonus > 0) ? 'rgba(81,179,100,.5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
+                                >{{message.bonus}}</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="notification-log-column">
-                        <div class="header"><div>Civilian<br>punished</div></div>
-                        <div class="content" ref="notificationLog2">
-                            <div v-for="message in messages" :class="{ negative: message.punished==groupPlayerId }">{{message.punished}}</div>
-                        </div>
-                    </div>
-                    <div class="notification-log-column">
-                        <div class="header"><div>Officer<br>reprimand</div></div>
-                        <div class="content" ref="notificationLog3">
-                            <div v-for="message in messages" :class="{ negative: isOfficer && message.reprimand > 0}">{{message.reprimand}}</div>
-                        </div>
-                    </div>
-                    <div class="notification-log-column">
-                        <div class="header"><div>Officer<br>bonus</div></div>
-                        <div class="content" ref="notificationLog4">
-                            <div v-for="message in messages" :class="{ positive: isOfficer && message.bonus > 0 }">{{message.bonus}}</div>
-                        </div>
-                    </div>
-                </div>
 
-                <!--<button @click="addMessage">add message</button>-->
+                    <!--<button @click="addMessage">add message</button>-->
+                </div>
             </div>
         </div>
         {% endverbatim %}
@@ -164,14 +181,12 @@
         }
         let socketUrl = "{{ view.socket_url|safe }}";
         let redirectUrl = "{{ view.redirect_url|safe }}";
-        console.log(socketUrl, redirectUrl)
         function initWebSocket() {
             socket = makeReconnectingWebSocket(socketUrl);
 
             // <disconnected-alert>
             // var alertStyle = document.querySelector('#disconnected-alert').style;
             socket.onopen = function (e) {
-                console.log('channel connected')
                 // alertStyle.visibility = 'hidden';
             };
 
@@ -212,6 +227,7 @@
                 'probability-bar-component': probabilityBarComponent,
             },
             data: {
+                gameStarted: true,
                 player: {},
                 isOfficer: true,
                 playerId: null,
@@ -237,13 +253,16 @@
                 defendTokenTotal: 0,
                 stealNotification: "",
                 defendTokenSize: 64.8, // todo load from api?
-                mapSize: 240,  // todo load from api?
+                mapSize: 200,  // todo load from api?
                 gameDuration: 240000,  // milliseconds
-                balanceFrequency: 500,
+                balanceFrequency: 10000,
                 activeSteal: 0,
                 activeStealMaps: {1:0, 2:0, 3:0, 4:0, 5:0},
                 beta: -1,
                 aMax: -1,
+                fineNotification: "",
+                civilianFine: -1,
+                messageIndex: 0,
             },
             created: function () {
 
@@ -264,6 +283,8 @@
                 this.balanceFrequency = frameSize;
                 this.aMax = aMax;
                 this.beta = beta;
+
+                this.civilianFine = civilianFine;
 
                 this.noTimeout = noTimeout;
                 if (this.noTimeout) {
@@ -296,10 +317,31 @@
                 //}
 
                 // player maps
-                this.maps = [1, 2, 3, 4];
+                this.maps = [1, 2, 3, 4, 5];
+
+                //this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
+                //this.gameSyncSocket.onopen = (e) => {
+                //    console.log('game sync connected')
+                //    data = {
+                //        'group_id': this.groupId,
+                //        'player_id': this.playerId,
+                //        'round_number': this.roundNumber,
+                //        'join': true,
+                //    };
+                //    this.gameSyncSocket.send(JSON.stringify(data))
+                //};
+                //
+                //this.gameSyncSocket.onmessage = (e) => {
+                //    let data = JSON.parse(e.data)
+                //    if (data.start_game) {
+                //        this.gameStarted = true;
+                //        this.startTimer();
+                //    }
+                //};
+
 
                 // todo look into routing questions
-                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/'),
+                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/')
                     this.gameSocket.onopen = (e) => {
                         this.startTimer()
                     };
@@ -309,6 +351,7 @@
                         if (data.balance) {
                             this.activeStealMaps = data.balance.active_maps
                             let latestBalance = data.balance[this.groupPlayerId].balance
+                            let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count
                             this.activeSteal = data.balance[this.groupPlayerId].map
 
                             if (latestBalance === this.balance) { // balance has not changed
@@ -323,7 +366,8 @@
                             this.balance = latestBalance;
                             this.roi = data.roi
                         } else if (data.intersections) {
-                            console.log(data.intersections);
+                            // console.log(data.intersections);
+                            this.messageIndex++;
                             data.intersections.forEach((i) => {
                                 this.addMessage(i);
 
@@ -339,9 +383,13 @@
                 };
 
                 if (this.isOfficer)
-                    this.subscribeToBalance()
+                     this.subscribeToBalance()
+
             },
             methods: {
+                gameReady: function() {
+                    console.log('game ready function')
+                },
                 toggle: function() {
                     if (this.harvestScreen) { // toggle to steal
                         // update local harvest status
@@ -464,30 +512,69 @@
                     });
                 },
                 showIntersection: function (i) {
-                    // was player the culprit
-                    if (i.culprit == this.groupPlayerId) {
-                        // this.resetLocation(i.reset_location);
-                        this.stealLocation = i.steal_reset
-                        this.positionStealToken()
+
+                    if (this.isOfficer) {
+                        // intersection-label-' + (map+1) + '-' + (player_id + 1)
+                        if (i.officer_reprimand) {
+                            this.stealNotification = "You were reprimanded!";
+                            setTimeout(() => {
+                                this.stealNotification = '';
+                            }, 2000);
+                        }
+
+                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit);
+                        // determine text for label
+                        let labelText = -1;
+                        let labelColor = 'powderblue';
+                        if (i.officer_reprimand) {
+                            labelText = -1 * (i.officer_reprimand - i.officer_bonus);
+                            labelColor = 'red'
+                        } else {
+                            labelText = '+' + i.officer_bonus;
+                            labelColor = 'green';
+                        }
+                        labelElement.style.color = labelColor;
+                        labelElement.innerText = labelText;
+
+                        let intersectionSelector = '#indicator-' + i.map + '-' + i.culprit;
+                        let labelSelector = '#intersection-label-' + i.map + '-' + i.culprit;
+                        let tl = gsap.timeline();
+                        let x = i.culprit_x - 3;
+                        let y = i.culprit_y - 3;
+
+                        tl.to(intersectionSelector, 0, {left: x+1, top: y+1});
+                        tl.to(labelSelector, 0, {left: x-15, top: y-30});
+                        tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'visible'});
+                        tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'hidden', delay: 2})
+
+
+                    } else {
+                        // was player the culprit
+                        if (i.culprit == this.groupPlayerId) {
+                            // this.resetLocation(i.reset_location);
+                            this.stealLocation = i.steal_reset
+                            this.positionStealToken()
+                        }
+
+                        if (i.guilty == this.groupPlayerId) {
+                            this.fineNotification = "Fined -" + this.civilianFine;
+
+                            this.stealNotification = "You were fined!";
+                            setTimeout(() => {
+                                this.stealNotification = '';
+                                this.fineNotification = '';
+                            }, 2000);
+                        }
+
+                        let selector = '#indicator-' + i.map + '-' + i.culprit;
+                        let tl = gsap.timeline();
+                        let x = i.culprit_x - 3;
+                        let y = i.culprit_y - 3;
+
+                        tl.to(selector, 0, {left: x+1, top: y+1});
+                        tl.to(selector, {visibility: 'visible'});
+                        tl.to(selector, {visibility: 'hidden', delay: 2})
                     }
-
-                    if (i.guilty == this.groupPlayerId) {
-                        // reset steal token
-
-                        this.stealNotification = "You were fined!";
-                        setTimeout(() => {
-                            this.stealNotification = '';
-                        }, 2000);
-                    }
-
-                    let selector = '#indicator' + i.map + '-' + i.culprit;
-                    let tl = gsap.timeline();
-                    let x = i.culprit_x - 3;
-                    let y = i.culprit_y - 3;
-
-                    tl.to(selector, 0, {left: x+1, top: y+1});
-                    tl.to(selector, {visibility: 'visible'});
-                    tl.to(selector, {visibility: 'hidden', delay: 2})
 
                 },
                 addMessage: function(message) {
@@ -495,10 +582,11 @@
                         "map": message.map,
                         "punished": message.guilty ? message.guilty : 'None',
                         "bonus": message.officer_bonus ? message.officer_bonus : 0,
-                        "reprimand": message.officer_reprimand ? message.officer_reprimand : 0,
+                        "reprimand": message.officer_reprimand ? message.officer_reprimand * -1 : 0, // todo: make this better
+                        "messageIndex": this.messageIndex,
                     });
                     this.$nextTick(() => {
-                        this.scrollToBottom()
+                        this.scrollToBottom();
                     })
                 },
                 scrollToBottom: function() {
@@ -513,9 +601,9 @@
                 startTimer: function() {
                     if (this.groupPlayerId == 1) {
                         // set start time
-                        this.gameUpdate({
-                            'period_update': { 'period_start': true },
-                        });
+                        //this.gameUpdate({
+                        //    'period_update': { 'period_start': true },
+                        //});
                     }
                     // start 4 minute timer
                     setTimeout(() => {

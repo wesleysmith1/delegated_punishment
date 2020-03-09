@@ -385,7 +385,6 @@ class GameConsumer(WebsocketConsumer):
                     round_number=round_number,
                     jdata=game_data_dict
                 )
-
             elif pu.get('period_end'):
                 end_time = date_now_milli()
 
@@ -619,7 +618,7 @@ class GameConsumer(WebsocketConsumer):
                     innocent_prob = 1 / 4 - num_investigators / 20
                     guilty_prob = 1 / 4 + num_investigators / 10
 
-                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
+                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
 
                 # subtract 1 for 0 based index
                 multi[culprit - 1] = guilty_prob
@@ -629,10 +628,10 @@ class GameConsumer(WebsocketConsumer):
                 result = np.random.multinomial(1, multi, 1)[0]
 
                 # which player was convicted from result
-                for index, i in enumerate(result):  # search array for result ex; [0,1,0,0,0,0]
+                for index, i in enumerate(result):  # search array for result ex; [0,1,0,0,0,0,0]
                     if i == 1:
 
-                        if index == 5:
+                        if index == result[Constants.players_per_group]:
                             # nobody punished, no officer bonus
                             convicted_pid = None
                         else:
