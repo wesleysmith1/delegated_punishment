@@ -125,7 +125,7 @@ let stealGameComponent = {
                       <div v-for="map in maps" class="map-container">
                             <div
                                 class="map"
-                                v-bind:style="{background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] > 0 ? 'rgba(224,53,49,' + activeStealMaps[groupPlayerId] * .25 + ')' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
+                                v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px', background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] > 0 ? 'rgba(224,53,49,' + activeStealMaps[groupPlayerId] * .25 + ')' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
                                 v-bind:player-id="(map+1)" 
                                 :id='"prop" + (map+1)' 
                                 :ref='"prop" + (map+1)'>
@@ -137,7 +137,7 @@ let stealGameComponent = {
                                   <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
                                 </svg>
                             </div>
-                            <div class="map-label">{{map+1 == groupPlayerId ? 'You' : 'Player ' + (map+1)}}</div>
+                            <div class="map-label">{{map+1 == groupPlayerId ? 'You' : 'Civilian ' + (map+1)}}</div>
                       </div>
                     </div>
                     <div class="token-container">
@@ -156,6 +156,11 @@ let stealGameComponent = {
                             </div>
                         </div>
                       <br>
+<!--                      <div>-->
+<!--                          location: {{location}}-->
+<!--                          x: {{locationx}}-->
+<!--                          y: {{locationy}}-->
+<!--                      </div>-->
                       <div>
                     </div>
               </div>

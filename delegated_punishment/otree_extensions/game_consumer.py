@@ -633,7 +633,7 @@ class GameConsumer(WebsocketConsumer):
                 for index, i in enumerate(result):  # search array for result ex; [0,1,0,0,0,0,0]
                     if i == 1:
 
-                        if index == result[Constants.players_per_group]:
+                        if index == Constants.players_per_group:
                             # nobody punished, no officer bonus
                             convicted_pid = None
                         else:

@@ -26,8 +26,6 @@
 }
 .officer-unit {
     opacity: .25;
-    width: 57px;
-    height: 57px;
     background: #001485;
 }
 #officer-investigation-container {
@@ -43,7 +41,7 @@
     width: 31px;
     height:30px;
     text-align: center;
-    color: red;
+    color: black;
     position: absolute;
     left: 0;
     top: 0;

@@ -134,16 +134,16 @@ let officerGameComponent = {
                 <div class='title'>Civilian Maps</div> 
                 <div class="maps-container">
                     <div v-for="map in maps" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)' class="map-container">
-                      <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)'>
+                      <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)' v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px' }">
                             <div v-for="player_id in 5" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
-                                10
+                                -1
                             </div>
                             <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
                                 <circle cx="3" cy="3" r="2" fill="black" />
                             </svg>
                       </div>
                       <div class="map-label">
-                        Player {{map+1}}
+                        Civilian {{map+1}}
                       </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ let officerGameComponent = {
                         </div>
                     </div>
                     <div class="officer-units" style="display:flex;">
-                        <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" :ref='"unit" + unit'>
+                        <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }" :ref='"unit" + unit'>
                         </div>
                     </div>
                 </div>

@@ -32,6 +32,8 @@ class Game(Page):
         vars_dict['beta'] = Constants.beta
 
         vars_dict['civilian_fine'] = Constants.civilian_fine_amount
+        vars_dict['civilian_map_size'] = Constants.civilian_map_size
+        vars_dict['defend_token_size'] = Constants.defend_token_size
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)

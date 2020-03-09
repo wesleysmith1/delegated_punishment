@@ -33,7 +33,9 @@
         var aMax = {{ a_max }};
         var beta = {{ beta }};
 
-        var civilianFine = {{ civilian_fine }} ;
+        var civilianFine = {{ civilian_fine }};
+        var mapSize = {{ civilian_map_size }};
+        var defendTokenSize = {{ defend_token_size }};
 
     </script>
 </header>
@@ -60,6 +62,7 @@
                 :prob-innocent="probabilityInnocent"
                 :police-log-messages="policeLogMessages"
                 :map-size="mapSize"
+                :defend-token-size="defendTokenSize"
                 @token-drag="tokenDrag"
                 @token-update="tokenUpdate"
                 @investigation-update="investigationUpdate"
@@ -252,8 +255,8 @@
                 investigationCount: 0,
                 defendTokenTotal: 0,
                 stealNotification: "",
-                defendTokenSize: 64.8, // todo load from api?
-                mapSize: 200,  // todo load from api?
+                defendTokenSize: 5,
+                mapSize: 50,
                 gameDuration: 240000,  // milliseconds
                 balanceFrequency: 10000,
                 activeSteal: 0,
@@ -285,6 +288,8 @@
                 this.beta = beta;
 
                 this.civilianFine = civilianFine;
+                this.mapSize = mapSize;
+                this.defendTokenSize = defendTokenSize;
 
                 this.noTimeout = noTimeout;
                 if (this.noTimeout) {
@@ -528,10 +533,13 @@
                         let labelColor = 'powderblue';
                         if (i.officer_reprimand) {
                             labelText = -1 * (i.officer_reprimand - i.officer_bonus);
-                            labelColor = 'red'
-                        } else {
+                            labelColor = 'red';
+                        } else if (i.officer_bonus > 0){
                             labelText = '+' + i.officer_bonus;
                             labelColor = 'green';
+                        } else {
+                            labelText = '0';
+                            labelColor = 'black';
                         }
                         labelElement.style.color = labelColor;
                         labelElement.innerText = labelText;
@@ -628,14 +636,14 @@
                     if (this.investigationCount > this.aMax)
                         return this.beta * 100;
                     else {
-                        return Math.round((2 + this.investigationCount) * (9/80) * 100)
+                        return ((2 + this.investigationCount) * (9/80) * 100)
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount > this.aMax)
                         return 0;
                     else {
-                        return Math.round((6 - this.investigationCount) * (9/240) * 100)
+                        return ((6 - this.investigationCount) * (9/240) * 100)
                     }
                 }
             },
