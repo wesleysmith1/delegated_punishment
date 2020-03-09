@@ -113,7 +113,7 @@
                                 <div
                                     v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;"
                                     v-bind:style="{background: (message.map == groupPlayerId) ? 'darkgrey' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
-                                >{{message.messageIndex}}</div>
+                                >{{message.map}}</div>
                             </div>
                         </div>
                         <div class="notification-log-column">
@@ -628,14 +628,14 @@
                     if (this.investigationCount > this.aMax)
                         return this.beta * 100;
                     else {
-                        return (1 / 4 + this.investigationCount / 10) * 100
+                        return Math.round((2 + this.investigationCount) * (9/80) * 100)
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount > this.aMax)
                         return 0;
                     else {
-                        return (1 / 4 - this.investigationCount / 20) * 100
+                        return Math.round((6 - this.investigationCount) * (9/240) * 100)
                     }
                 }
             },
