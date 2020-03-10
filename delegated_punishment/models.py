@@ -17,8 +17,8 @@ doc = """
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
-    # num_rounds = 10
-    num_rounds = 1  # testing purposes
+    num_rounds = 10
+    # num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     defend_token_total = 8
@@ -34,11 +34,11 @@ class Constants(BaseConstants):
     officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 50  # P punishment for officer if innocent civilian is punished
 
-    civilian_incomes_low = [24, 28, 32, 37, 100]
-    civilian_incomes_high = [18, 25, 32, 46, 100]
-    # test_civilian_incomes = [32, 34, 36, 38] # todo delete this text array
+    civilian_incomes_low = [38, 39, 40, 41, 43]
+    civilian_incomes_high = [57, 41, 38, 34, 31]
     # officer_incomes = [0, 10, 20]
-    officer_incomes = [0, 9, 30]
+    officer_incomes = [9, 9, 9]
+    # officer_incomes = [0, 9, 30]
 
     # also change in officer.css
     defend_token_size = 68  # this is the size of the tokens that players with role of officer drag around

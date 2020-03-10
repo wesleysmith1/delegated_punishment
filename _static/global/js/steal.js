@@ -166,9 +166,9 @@ let stealGameComponent = {
               </div>
             <div class="lower" style="display:flex;">
                 <div class="investigation-data-container">
-                    <div class="title">Officer tokens on investigate</div>
+                    <div class="title">Investigating</div>
                     <div>
-                        <div class="title-small">Defense tokens: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
+                        <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
                         <br>
                         <probability-bar-component label="Probability fined if innocent" :percent=probInnocent></probability-bar-component>
                         <probability-bar-component label="Probability fined if culprit" :percent=probCulprit></probability-bar-component>  

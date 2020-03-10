@@ -383,7 +383,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         elif event_type == 'period_start':
             period_start = event_time
             print(f'START TIME FOR EXPERIMENT:{period_start}')
-            for i in range(1, 6):
+            for i in range(1, Constants.players_per_group+1):
 
                 if i > 1:
                     players[i].civilian_row(event_type, event_time)
@@ -391,7 +391,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
                     players[i].officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens))
 
         elif event_type == 'period_end':
-            for i in range(1, 6):
+            for i in range(1, Constants.players_per_group+1):
 
                 # add end time to csv
                 if i > 1:
@@ -412,7 +412,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         file_path = 'data/'
 
         # print out csv files
-    for i in range(1, 6):
+    for i in range(1, Constants.players_per_group+1):
         start = math.floor(session_start)
         file_name = "{}Session_{}_Group_{}_Player_{}_{}_{}.csv".format(file_path, session_id, meta_data['group_id'], i, session_date, start)
 
