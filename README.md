@@ -1,11 +1,10 @@
-# Policing Game in O-Tree
+# <p align=center> Policing Game in O-Tree </p>
 
 <!--
 <img src="https://github.com/Jadamso/TerritoryR/blob/master/Pictures/TerritoryScreenshot2.png"  align="center" width="1000" height="500">
 -->
 
 
----
 # Setup / Install
 
 ### Setup O-Tree Server on AWS
