@@ -45,9 +45,6 @@ To update to the latest version
 ## Setup Game Parameters (Treatments)?
 -->
 
----
-# Run Session
-
 
 #### Session Types
 
@@ -64,18 +61,28 @@ To update to the latest version
 <!-- ------------------------------------------------ -->
 
 
-#### Setup Server
 
-Create new database for the session by running `otree resetdb` on server.
+---
+# Run Session
+
+
+### Setup Server
+
+Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, 
+
+Can create new database for the session by running `otree resetdb` on server.
 
 *this will break all existing session urls in lab.*
 
-Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, then
+
+Start Server
+ * If accidentaly launch chrome before server started then restart server and relaunch windows
+ * *Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
+</br>
 
 ```bash
 
     cd $HOME/delegated_punishment
-    echo 'y' | otree resetdb
     sudo -E env "PATH=$PATH" otree runprodserver 80
 
 ```
@@ -85,15 +92,8 @@ RUN SERVER IN BACKGROUND OR TMUX SESSION??
 
 Logout and exit the ssh connection to the server
 
-## Connect Clients (Subjects)
 
- * **Start Server, Launch Chrome Clients**
- * If accidentaly launch chrome before server started then restart server and relaunch windows
- * *Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
-</br>
-
-
-#### Manually Create Session on Local Admin PC
+### Manually Create Session on Local Admin PC
 
 Go to http://34.215.160.83/room_without_session/delegated_punishment/
   * LOGIN username: `admin`
@@ -112,7 +112,7 @@ Click the tab for `Config Session` and specify game parameters
   * `showup payment` (in USD$)
 
 
-#### Launch Game on Client PCs
+### Launch Game on Client PCs
 
 On admin PC, open ESI Launcher and specify 
 
@@ -128,7 +128,7 @@ Control Session on Local Admin PC
  * Read Instructions, *do not pace while reading*
 
 
-## End of Session
+### End of Session
 
 From Local Admin PC
  * Call up subjects by their participant ID
@@ -150,8 +150,8 @@ From Server
 
 ```
 
-
-## Server Statistics (Primarily for Debugging)
+---
+# Server Statistics (Primarily for Debugging)
 
 
 To start recording statistics for 90 mins (every 10 seconds, for 540 times)
