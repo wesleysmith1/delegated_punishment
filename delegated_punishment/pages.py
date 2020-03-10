@@ -34,6 +34,7 @@ class Game(Page):
         vars_dict['civilian_fine'] = Constants.civilian_fine_amount
         vars_dict['civilian_map_size'] = Constants.civilian_map_size
         vars_dict['defend_token_size'] = Constants.defend_token_size
+        vars_dict['tutorial_duration'] = Constants.tutorial_duration
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
@@ -43,11 +44,11 @@ class Game(Page):
             vars_dict['dtokens'] = json.dumps(results)
 
         if Constants.num_rounds > 1 and self.round_number == 1:
-            no_timeout = True
+            timeout = True
         else:
-            no_timeout = False
+            timeout = False
 
-        vars_dict['no_timeout'] = no_timeout
+        vars_dict['timeout'] = timeout
         return vars_dict
 
 

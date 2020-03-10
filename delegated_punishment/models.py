@@ -47,6 +47,8 @@ class Constants(BaseConstants):
     beta = .9
     a_max = 6
 
+    tutorial_duration = 1800000
+
 
 class Subsession(BaseSubsession):
 

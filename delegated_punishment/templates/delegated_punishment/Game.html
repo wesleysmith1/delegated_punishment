@@ -23,13 +23,14 @@
         var playerId = {{ player.id }};
         var groupPlayerId = {{ player.id_in_group }};
         var groupId = {{ player.group_id }};
-        var harvestScreen = '{{ no_timeout }}' === 'True';
+        var harvestScreen = '{{ timeout }}' === 'True';
         var income = {{ player.income }};
         var stealStart = {{ player.steal_start }};
         var roundNumber = {{ subsession.round_number }};
         var sessionId = {{ subsession.session_id }};
         var defendTokenTotal = {{ defend_token_total }};
-        var noTimeout = '{{ no_timeout }}' === 'True';
+        var timeout = '{{ timeout }}' === 'True';
+        var tutorialDuration = {{ tutorial_duration }};
         var aMax = {{ a_max }};
         var beta = {{ beta }};
 
@@ -266,6 +267,8 @@
                 fineNotification: "",
                 civilianFine: -1,
                 messageIndex: 0,
+                timeout: null,
+                tutorialDuration: null,
             },
             created: function () {
 
@@ -291,9 +294,9 @@
                 this.mapSize = mapSize;
                 this.defendTokenSize = defendTokenSize;
 
-                this.noTimeout = noTimeout;
-                if (this.noTimeout) {
-                    this.gameDuration = 1200000;
+                this.timeout = timeout;
+                if (this.timeout) {
+                    this.gameDuration = this.tutorialDuration;
                 }
 
                 // debug
@@ -551,7 +554,7 @@
                         let y = i.culprit_y - 3;
 
                         tl.to(intersectionSelector, 0, {left: x+1, top: y+1});
-                        tl.to(labelSelector, 0, {left: x-15, top: y-30});
+                        tl.to(labelSelector, 0, {left: x-13, top: y-30});
                         tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'visible'});
                         tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'hidden', delay: 2})
 
@@ -636,14 +639,14 @@
                     if (this.investigationCount > this.aMax)
                         return this.beta * 100;
                     else {
-                        return ((2 + this.investigationCount) * (9/80) * 100)
+                        return Math.round((2 + this.investigationCount) * (9/80)*10000) / 100
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount > this.aMax)
                         return 0;
                     else {
-                        return ((6 - this.investigationCount) * (9/240) * 100)
+                        return Math.round((6 - this.investigationCount) * (9/240)*10000) / 100
                     }
                 }
             },
