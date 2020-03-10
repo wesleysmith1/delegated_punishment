@@ -6,7 +6,9 @@
 
 
 ---
-# Setup O-Tree Server on AWS
+# Setup / Install
+
+### Setup O-Tree Server on AWS
 
 To setup an AWS server, see
 https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#amazon-setup
@@ -14,8 +16,8 @@ https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#amazon-setup
 To setup Otree, see
 https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#o-tree-server-setup
 
----
-# Install latest release
+
+### Install latest release of delegated_punishment
 
 Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`
 
@@ -46,7 +48,7 @@ To update to the latest version
 -->
 
 
-#### Session Types
+### Session Types
 
 <!-- ------------------------------------------------ -->
 
@@ -71,14 +73,13 @@ To update to the latest version
 Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, 
 
 Can create new database for the session by running `otree resetdb` on server.
-
 *this will break all existing session urls in lab.*
 
 
 Start Server
  * If accidentaly launch chrome before server started then restart server and relaunch windows
- * *Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
-</br>
+
+
 
 ```bash
 
@@ -120,7 +121,10 @@ On admin PC, open ESI Launcher and specify
  * Arguments: http://34.215.160.83/room/delegated_punishment/
 
 *Launch one row (five participants) at a time so they are automatically grouped.*
+
 *Manually check all screens, e.g., all chrome browsers have kiosk mode, fullscreen, zoom 100%.*
+
+*Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
 
 
 Control Session on Local Admin PC
