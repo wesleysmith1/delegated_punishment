@@ -341,7 +341,9 @@
                 //
                 //this.gameSyncSocket.onmessage = (e) => {
                 //    let data = JSON.parse(e.data)
-                //    if (data.start_game) {
+                //    if (data.start_time) {
+                //        let t = data.start_time;
+                //        console.log('start_time', t)
                 //        this.gameStarted = true;
                 //        this.startTimer();
                 //    }
@@ -613,7 +615,7 @@
                     if (this.groupPlayerId == 1) {
                         // set start time
                         this.gameUpdate({
-                            'period_update': { 'period_start': true },
+                            'period_update': {'period_start': true},
                         });
                     }
                     // start 4 minute timer

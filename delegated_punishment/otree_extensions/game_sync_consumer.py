@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 import json
+from datetime import datetime
 from delegated_punishment.helpers import date_now_milli
 
 from delegated_punishment.models import Player, Group, GameData, Constants
@@ -40,6 +41,7 @@ class GameSyncConsumer(WebsocketConsumer):
 
         if data_json.get('join'):
             # player is now ready
+
             if not player.ready:
                 print(f"PLAYER {player_id} IS NOW READY")
                 player.ready = True
@@ -47,18 +49,24 @@ class GameSyncConsumer(WebsocketConsumer):
                 group.players_ready += 1
                 group.save()
                 print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
+                time_remaining = group.check_game_status(datetime.now())
 
-            if group.check_game_status(date_now_milli()):
-                print(f"GROUP HAS ALL ARRIVED")
-                async_to_sync(self.channel_layer.group_send)(
-                    self.room_group_name,
-                    {
-                        'type': 'start_game',
-                        'game_start': True
-                    }
-                )
+                if time_remaining:
+                    print(f"GROUP HAS ALL ARRIVED")
+                    async_to_sync(self.channel_layer.group_send)(
+                        self.room_group_name,
+                        {
+                            'type': 'start_game',
+                            'start_time': time_remaining
+                        }
+                    )
+            else:
+                # game already started
+                time_remaining = group.check_game_status(datetime.now())
 
-
+                self.send(text_data=json.dumps({
+                    'start_time': time_remaining
+                }))
 
         elif data_json.get('period_end'):
             event_time = date_now_milli()
@@ -76,7 +84,9 @@ class GameSyncConsumer(WebsocketConsumer):
 
     # Receive message from room group
     def start_game(self, event):
+        start_time = event['start_time']
         # Start game after all players are synced
         self.send(text_data=json.dumps({
-            'start_game': True
+            'start_game': True,
+            'start_time': start_time
         }))

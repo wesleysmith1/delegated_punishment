@@ -48,6 +48,7 @@ class Constants(BaseConstants):
     a_max = 6
 
     tutorial_duration = 1800000
+    game_duration_seconds = 240
 
 
 class Subsession(BaseSubsession):
@@ -120,27 +121,30 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
+    game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
 
-    def check_game_status(self, time):
+    def check_game_status(self, datetime):
         if self.group_ready():
-            event_time = time
+            event_time = datetime
             game_data_dict = {
                 'event_time': event_time,
                 'event_type': 'period_end'
             }
-            """Officer sends up period end"""
-            GameData.objects.create(
-                event_time=event_time,
-                p=self.get_players()[0].pk,
-                g=self.id,
-                s=self.session.id,
-                round_number=self.round_number,
-                jdata=game_data_dict
-            )
-
-            return True
+            if self.game_start:
+                return Constants.game_duration_seconds - (datetime - self.game_start).total_seconds()
+            else:
+                GameData.objects.create(
+                    event_time=datetime,
+                    p=self.get_players()[0].pk,
+                    g=self.id,
+                    s=self.session.id,
+                    round_number=self.round_number,
+                    jdata=game_data_dict
+                )
+                self.game_start = datetime.datetime.now().total_seconds()
+                return Constants.game_duration_seconds
         return False
 
     def group_ready(self):
