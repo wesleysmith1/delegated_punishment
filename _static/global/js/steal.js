@@ -166,7 +166,7 @@ let stealGameComponent = {
               </div>
             <div class="lower" style="display:flex;">
                 <div class="investigation-data-container">
-                    <div class="title">Investigating</div>
+                    <div class="title">Officer tokens on investigate</div>
                     <div>
                         <div class="title-small">Defense tokens: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
                         <br>

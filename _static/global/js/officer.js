@@ -163,7 +163,7 @@ let officerGameComponent = {
                 <div class="investigation-data-container">
                   <div class="title">Investigating</div>
                     <div>
-                        <div class="title-small">Defense tokens: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
+                        <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
                         <br>
                         <probability-bar-component label="Probability Fine Innocent" :percent=probInnocent></probability-bar-component>
                         <probability-bar-component label="Probability Fine Culprit" :percent=probCulprit></probability-bar-component>

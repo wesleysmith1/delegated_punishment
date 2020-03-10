@@ -41,7 +41,7 @@ class Constants(BaseConstants):
     officer_incomes = [0, 9, 30]
 
     # also change in officer.css
-    defend_token_size = 47  # this is the size of the tokens that players with role of officer drag around
+    defend_token_size = 68  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 200
 
     beta = .9
