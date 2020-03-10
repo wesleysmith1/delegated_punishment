@@ -1,12 +1,13 @@
-# Policing Game in O-Tree
+# <p align=center> Policing Game in O-Tree </p>
 
 <!--
 <img src="https://github.com/Jadamso/TerritoryR/blob/master/Pictures/TerritoryScreenshot2.png"  align="center" width="1000" height="500">
 -->
 
 
----
-# Setup O-Tree Server on AWS
+# Setup / Install
+
+### Setup O-Tree Server on AWS
 
 To setup an AWS server, see
 https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#amazon-setup
@@ -14,8 +15,8 @@ https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#amazon-setup
 To setup Otree, see
 https://github.com/Jadamso/ClusterInstall/blob/master/README_AWS.md#o-tree-server-setup
 
----
-# Install latest release
+
+### Install latest release of delegated_punishment
 
 Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`
 
@@ -45,39 +46,43 @@ To update to the latest version
 ## Setup Game Parameters (Treatments)?
 -->
 
----
-# Run Session
 
-
-#### Session Types
+### Session Types
 
 <!-- ------------------------------------------------ -->
-
 
 
 | **Inequality:** |**High->Low**|**Low->High**|
 |-----------------|-------------|-------------|
-| **B=0**         | Treatment_1 | Treatment_2 |
-| **B=5**         | Treatment_3 | Treatment_4 |
-| **B=10**        | Treatment_5 | Treatment_6 |
-| **B=15**        | Treatment_7 | Treatment_8 |
+| **B=0**         | Treatment_1 | Treatment_4 |
+| **B=10**        | Treatment_2 | Treatment_5 |
+| **B=30**        | Treatment_3 | Treatment_6 |
 
 
 <!-- ------------------------------------------------ -->
 
 
-#### Setup Server
 
-Create new database for the session by running `otree resetdb` on server.
+---
+# Run Session
 
+
+### Setup Server
+
+Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, 
+
+Can create new database for the session by running `otree resetdb` on server.
 *this will break all existing session urls in lab.*
 
-Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, then
+
+Start Server
+ * If accidentaly launch chrome before server started then restart server and relaunch windows
+
+
 
 ```bash
 
     cd $HOME/delegated_punishment
-    echo 'y' | otree resetdb
     sudo -E env "PATH=$PATH" otree runprodserver 80
 
 ```
@@ -87,39 +92,46 @@ RUN SERVER IN BACKGROUND OR TMUX SESSION??
 
 Logout and exit the ssh connection to the server
 
-## Connect Clients (Subjects)
 
- * **Start Server, Launch Chrome Clients**
- * If accidentaly launch chrome before server started then restart server and relaunch windows
- * *Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
-</br>
+### Manually Create Session on Local Admin PC
 
+Go to http://34.215.160.83/room_without_session/delegated_punishment/
+  * LOGIN username: `admin`
+  * password: `delegated_punishment`
 
-Manually Create Session on Local Admin PC
- * go to http://34.215.160.83/room_without_session/delegated_punishment/
-  * LOGIN username: `admin`, password: `delegated_punishment`
+Create the Session
   * choose config: `delegated_punishment`
-  * choose number of participants: `20`
- * Click the tab for `Config Session` and specify game parameters
+  * choose number of participants: `18`
+
+Click the tab for `Config Session` and specify game parameters
   * `SESSION_ID` (should be one integer greater than the inger used last time, defaults to 0)
   * `low_to_high` (check if incomes inequality are first low then high)
   * `tutorial_civilian_income` (in grain, also used for trial period)
   * `tutorial_officer_bonus` (in grain, also used for trial period)
   * `grain_conversion` (?? grain : 1 USD$)
   * `showup payment` (in USD$)
- 
-   
-Launch Homepage on Client PCs via `Launcher`: 
- * *Location* C:/ ... /chrome.exe --kiosk --force-device-scale-factor=1.00
- * *Arguments* http://34.215.160.83/room/delegated_punishment/
- * Launch one row (five participants) at a time so they are automatically grouped
- * Manually check all screens, e.g., all chrome browsers have kiosk mode, fullscreen, zoom 100%
+
+
+### Launch Game on Client PCs
+
+On admin PC, open ESI Launcher and specify 
+
+ * Location: `C:/.../chrome.exe --kiosk --force-device-scale-factor=1.00`
+ * Arguments: http://34.215.160.83/room/delegated_punishment/
+
+*Launch one row (five participants) at a time so they are automatically grouped.*
+
+*Manually check all screens, e.g., all chrome browsers have kiosk mode, fullscreen, zoom 100%.*
+
+*Make Sure Chrome Starts Fresh if there is a `Launcher` issue*
 
 
 Control Session on Local Admin PC
  * Be on `monitor` tab to `advance slowest used`
+ * Read Instructions, *do not pace while reading*
 
-## End of Session
+
+### End of Session
 
 From Local Admin PC
  * Call up subjects by their participant ID
@@ -137,12 +149,12 @@ From Server
 ```bash
 
     mkdir /tmp/SessionData/
-    scp -i LightsailDefaultKey.pem ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
+    scp -r -i LightsailDefaultKey.pem ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
 
 ```
 
-
-## Server Statistics (Primarily for Debugging)
+---
+# Server Statistics (Primarily for Debugging)
 
 
 To start recording statistics for 90 mins (every 10 seconds, for 540 times)
