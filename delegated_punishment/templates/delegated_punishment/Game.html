@@ -95,9 +95,12 @@
                         :active-steal="activeSteal"
                         :active-steal-maps="activeStealMaps"
                         :fine-notification="fineNotification"
+                        :steal-reset-time="stealResetTime"
                         @location-drag="locationDrag"
                         @location-update="locationUpdate"
-                        @location-token-reset="locationTokenReset">
+                        @location-token-reset="locationTokenReset"
+                        @location-token-timeout="locationTokenTimeout"
+                >
                 </steal-game-component>
                 <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
             </div>
@@ -110,10 +113,21 @@
                         <div class="steal-notification">{{stealNotification}}</div>
                     </div>
 
-                    <div style="">
-                        <div class="title-small"># Intercepts: <strong>{{ interceptCount }}</strong></div>
-                        <div class="title-small"># Fines: <strong>{{ arrestsCount }}</strong></div>
-                        <div class="title-small"># Reprimands: <strong>{{ falseArrestCount }}</strong></div>
+                    <div class="count-container">
+                        <div class="title-small data-row">
+                            <div class="left"># Intercepts: </div>
+                            <div class="right"><strong>{{ interceptCount }}</strong></div>
+                        </div>
+                        <div style="clear: both"></div>
+                        <div class="title-small data-row">
+                            <div class="left"># Fines: </div>
+                            <div class="right"><strong>{{ arrestsCount }}</strong></div>
+                        </div>
+                        <div style="clear: both"></div>
+                        <div class="title-small data-row">
+                            <div class="left"># Reprimands: </div>
+                            <div class="right"><strong>{{ falseArrestCount }}</strong></div>
+                        </div>
                     </div>
                     <br>
                 </div>
@@ -254,6 +268,7 @@
                 falseArrestCount: 0,
                 reprimandAmount: 0,
                 reviewProbability: 0,
+                stealResetTime: 5000,
             },
             created: function () {
 
@@ -368,7 +383,7 @@
                             this.balance = latestBalance;
                             this.roi = data.roi
                         } else if (data.intersections) {
-                            // console.log(data.intersections);
+                            console.log(data.intersections);
                             this.messageIndex++;
                             data.intersections.forEach((i) => {
                                 this.showIntersection(i);
@@ -497,6 +512,13 @@
                         'steal_token_reset': {'steal_location': x,},
                     });
                 },
+                locationTokenTimeout: function(x) {
+
+                    this.stealLocation = x;
+                    this.gameUpdate({
+                        'steal_token_timeout': {'steal_location': x,}
+                    })
+                },
                 defenseTokenReset: function(tokenNumber) {
                     this.gameUpdate({
                         'defend_token_reset': tokenNumber,
@@ -506,8 +528,8 @@
 
                     this.interceptCount += 1;
 
-                    if (i.officer_reprimand)
-                        this.reprimandCount++;
+                    if (i.officer_reprimand > 0)
+                        this.falseArrestCount++;
 
                     if (i.guilty)
                         this.arrestsCount++;
@@ -554,6 +576,7 @@
                         // was player the culprit
                         if (i.culprit == this.groupPlayerId) {
                             this.stealLocation = i.steal_reset;
+                            this.$refs.stealcomponent.cancelTimeout()
                             this.positionStealToken()
                         }
 
@@ -619,7 +642,7 @@
                     }
                 },
                 probabilityReprimand() {
-                    return Math.round(this.reviewProbability * 3 * this.probabilityInnocent * 100) / 100;
+                    return Math.round(this.reviewProbability * 3 * this.probabilityInnocent);
                 }
             },
         });

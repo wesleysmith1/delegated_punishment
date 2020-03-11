@@ -129,6 +129,27 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             # add civilian row
             player.civilian_row(event_type, event_time)
 
+        elif event_type == 'steal_token_timeout':
+            # update player info
+            player = players[player_id]
+
+            # update steal token
+            player.steal_token.update(player_id, data['steal_reset'], 0, 'NA')
+
+            if data.get('victim'):
+                victim_id = data['victim']
+                victim = players[victim_id]
+
+                # update roi
+                victim.increase_roi(event_time)
+                player.decrease_roi(event_time)
+
+                # update victim data
+                victim.civilian_row(event_type, event_time, '0')
+
+            # add civilian row
+            player.civilian_row(event_type, event_time)
+
         elif event_type == 'defend_token_reset':
             # get officer
             officer = players[1]

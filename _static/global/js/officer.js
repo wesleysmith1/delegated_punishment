@@ -170,18 +170,23 @@ let officerGameComponent = {
                         <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }" :ref='"unit" + unit'>
                         </div>
                     </div>
-                    <div style="margin: 10px">
-                        <div class="title-small">Probability of reprimand: <span style="color: red; font-weight: bold;">{{probabilityReprimand}}%</span></div>
-                        <div class="title-small">Amount lost per reprimand: <span style="color: red; font-weight: bold;">{{reprimandAmount}}</span></div>                       
+                    
+                    <div style="margin: auto; width: 35%; padding-top: 30px;">
+                        <div class="title-small data-row">
+                            <div class="left">Probability of reprimand: </div>
+                            <div class="right" style="color: red; font-weight: bold;">{{probabilityReprimand}}%</div>
+                        </div>
+                        <div style="clear: both;"></div>
+                        <div class="title-small data-row">
+                            <div class="left">Amount lost per reprimand: </div>
+                            <div class="right" style="color: red; font-weight: bold;">{{reprimandAmount}}</div>
+                        </div>
                     </div>
                 </div>
                 <div class="investigation-data-container">
                     <div class="title">Investigation Map</div>
                     <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
                 </div>
-              </div>
-              <div class="lower">
-                
               </div>
           </div>
       `

@@ -47,14 +47,9 @@ body {
 }
 .notifications-container {
     box-sizing: border-box;
-
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    padding: 0 50px 0 50px;
-
-    position: relative;
 }
 .toggle {
     position: absolute;
@@ -89,6 +84,7 @@ body {
     width: 350px;
     border: 1px solid black;
     background: white;
+    margin: auto;
 }
 .upper {
     flex: 1;
@@ -197,3 +193,14 @@ body {
     margin: 25px;
 }
 
+.count-container {
+    width: 40%;
+}
+
+.data-row .left {
+    float: left;
+}
+
+.data-row .right {
+    float: right;
+}

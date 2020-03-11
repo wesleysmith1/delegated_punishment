@@ -94,7 +94,7 @@ class Subsession(BaseSubsession):
                 p.participant.vars['steal_start'] = p.steal_start
 
                 if p.is_officer():
-                    p.income = Constants.officer_start_balance
+                    p.balance = Constants.officer_start_balance
 
                 # demo session does not need further configuration
                 if Constants.num_rounds != 1:

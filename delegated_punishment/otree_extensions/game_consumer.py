@@ -217,6 +217,57 @@ class GameConsumer(WebsocketConsumer):
                         'investigation_count': token_count,
                     }
                 )
+        elif data_json.get('steal_token_timeout'):
+            # format
+            # {
+            #     x: o,
+            #     y: o,
+            #     map: 0
+            # }
+
+            # get token and save it's location as 0
+            location = data_json['steal_token_timeout']['steal_location']
+
+            game_data_dict = {
+                "event_type": "steal_token_timeout",
+                "player": player.id_in_group,
+                "event_time": event_time,
+                "steal_reset": location,
+            }
+
+            # update roi for stealing player and victim of the theft.
+            # update victim roi
+            victim = Player.objects.get(group_id=group_id, id_in_group=player.map) #todo add try catch here
+
+            # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
+            victim.increase_roi(event_time, False)
+            victim.save()
+
+            game_data_dict.update({
+                "victim": victim.id_in_group,
+                "victim_roi": victim.roi,
+                "victim_balance": victim.balance
+            })
+
+            # update player roi
+            player.decrease_roi(event_time, True)
+
+            game_data_dict.update({
+                "player_roi": player.roi,
+                "player_balance": player.balance,
+            })
+
+            player.x = player.y = player.map = 0
+            player.save()
+
+            GameData.objects.create(
+                event_time=event_time,
+                p=player.id_in_group,
+                g=group_id,
+                s=session_id,
+                round_number=round_number,
+                jdata=game_data_dict
+            )
 
         elif data_json.get('steal_token_drag'):
             # format
