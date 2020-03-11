@@ -1,7 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 import json
-from datetime import datetime
 from delegated_punishment.helpers import date_now_milli
 
 from delegated_punishment.models import Player, Group, GameData, Constants
@@ -49,7 +48,7 @@ class GameSyncConsumer(WebsocketConsumer):
                 group.players_ready += 1
                 group.save()
                 print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
-                time_remaining = group.check_game_status(datetime.now())
+                time_remaining = group.check_game_status(date_now_milli())
 
                 if time_remaining:
                     print(f"GROUP HAS ALL ARRIVED")
@@ -62,7 +61,7 @@ class GameSyncConsumer(WebsocketConsumer):
                     )
             else:
                 # game already started
-                time_remaining = group.check_game_status(datetime.now())
+                time_remaining = group.check_game_status(date_now_milli())
 
                 self.send(text_data=json.dumps({
                     'start_time': time_remaining

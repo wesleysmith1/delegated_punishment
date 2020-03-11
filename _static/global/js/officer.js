@@ -162,24 +162,28 @@ let officerGameComponent = {
                 </div>
                 <div class="token-container">
                     <div style="margin: 10px">
-                        <div class="title-small">
-                            Amount earned per arrest: <span style="color: green; font-weight: bold;">{{officerIncome}}</span> 
+                        <div class="title-small officer-info-container">
+                            <div class="title-small data-row">
+                                <div class="left">Amount earned per arrest: </div>
+                                <div class="right" style="color: green; font-weight: bold;"><div class="number-right-align">{{officerIncome}}</div></div>
+                            </div>
                         </div>
+                        <div style="clear: both;"></div>
                     </div>
                     <div class="officer-units" style="display:flex;">
                         <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }" :ref='"unit" + unit'>
                         </div>
                     </div>
                     
-                    <div style="margin: auto; width: 35%; padding-top: 30px;">
+                    <div class="officer-info-container">
                         <div class="title-small data-row">
-                            <div class="left">Probability of reprimand: </div>
-                            <div class="right" style="color: red; font-weight: bold;">{{probabilityReprimand}}%</div>
+                            <div class="left">Amount lost per reprimand: </div>
+                            <div class="right" style="color: red; font-weight: bold;"><div class="number-right-align">{{reprimandAmount}}</div></div>
                         </div>
                         <div style="clear: both;"></div>
                         <div class="title-small data-row">
-                            <div class="left">Amount lost per reprimand: </div>
-                            <div class="right" style="color: red; font-weight: bold;">{{reprimandAmount}}</div>
+                            <div class="left">Probability of reprimand: </div>
+                            <div class="right" style="color: red; font-weight: bold;"><div class="number-right-align">{{probabilityReprimand}}%</div></div>
                         </div>
                     </div>
                 </div>

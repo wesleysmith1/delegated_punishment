@@ -194,7 +194,13 @@ body {
 }
 
 .count-container {
-    width: 40%;
+    width: 175px;
+}
+
+.officer-info-container {
+    width: 350px;
+    margin: auto;
+    padding-top: 10px;
 }
 
 .data-row .left {
@@ -204,3 +210,8 @@ body {
 .data-row .right {
     float: right;
 }
+.number-right-align {
+    width: 50px;
+    text-align: left;
+}
+

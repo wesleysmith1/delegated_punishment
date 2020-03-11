@@ -130,25 +130,24 @@ class Group(BaseGroup):
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
 
-    def check_game_status(self, datetime):
+    def check_game_status(self, time):
         if self.group_ready():
-            event_time = datetime
-            game_data_dict = {
-                'event_time': event_time,
-                'event_type': 'period_end'
-            }
+            event_time = time
             if self.game_start:
-                return Constants.game_duration_seconds - (datetime - self.game_start).total_seconds()
+                return Constants.game_duration_seconds - (date_now_milli() - self.game_start)
             else:
+                game_data_dict = {
+                    'event_time': event_time,
+                    'event_type': 'period_start'
+                }
                 GameData.objects.create(
-                    event_time=datetime,
+                    event_time=event_time,
                     p=self.get_players()[0].pk,
                     g=self.id,
                     s=self.session.id,
                     round_number=self.round_number,
                     jdata=game_data_dict
                 )
-                self.game_start = datetime.datetime.now().total_seconds()
                 return Constants.game_duration_seconds
         return False
 

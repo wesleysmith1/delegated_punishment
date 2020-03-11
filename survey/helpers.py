@@ -59,7 +59,6 @@ def generate_payouts(group):
 
 
 def generate_survey_csv(group):
-    print('GENERATING SURVEY CSV')
     path = get_path(group)
     session_id = group.subsession.session_id
     session_start = math.floor(group.session.vars['session_start'])
