@@ -4,12 +4,14 @@ let probabilityBarComponent = {
         percent: Number,
     },
     data: function () {
-        return {}
+        return {
+            defenseTokens: []
+        }
     },
     template:
         `
         <div>
-            <div class="title-small">{{ label }} <strong>{{percent}}%</strong></div>
+            <div class="title-small">{{ label }}: <strong>{{percent}}%</strong></div>
             <div class='bar'>
                 <div class="innocent" :style="{'width':(percent+'%')}">
                 </div>
@@ -29,11 +31,11 @@ let officerGameComponent = {
         groupPlayerId: Number,
         investigationCount: Number,
         defendTokenTotal: Number,
-        probCulprit: Number,
-        probInnocent: Number,
         policeLogMessages: Array,
         mapSize: Number,
         defendTokenSize: Number,
+        probabilityReprimand: Number,
+        reprimandAmount: Number,
     },
     data: function () {
         return {
@@ -41,6 +43,7 @@ let officerGameComponent = {
             locationx: String,
             locationy: String,
             map: String,
+            tokenStatuses: []
         }
     },
     created: function () {
@@ -62,10 +65,20 @@ let officerGameComponent = {
                     that.checkLocation(this, that.officerUnits[i])
                 },
             });
-            drag.zIndex = 500;
+            this.tokenStatuses.push(drag);
+            // this.disableToken(drag);
         }
     },
     methods: {
+        disableToken: function(id) {
+            let selector = "#unit" + id
+            let dragToken = Draggable.get(selector)
+            dragToken.disable();
+            // gsap.to(selector, {background: 'red'});
+            setTimeout(() => {
+                dragToken.enable()
+            }, 1000)
+        },
         tokenDragStart: function (that, item) {
             // console.log(item)
             this.$emit('token-drag', item);
@@ -118,7 +131,7 @@ let officerGameComponent = {
             this.locationx = unit.x - map.x - 1;
             item.x = this.locationx;
             item.y = this.locationy;
-
+            this.disableToken(item.number-1)
             // update api with unit location
             this.updateOfficerToken(item);
         },
@@ -150,29 +163,25 @@ let officerGameComponent = {
                 <div class="token-container">
                     <div style="margin: 10px">
                         <div class="title-small">
-                            Each fine imposed earns <strong>{{officerIncome}}</strong> grain 
+                            Amount earned per arrest: <span style="color: green; font-weight: bold;">{{officerIncome}}</span> 
                         </div>
                     </div>
                     <div class="officer-units" style="display:flex;">
                         <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }" :ref='"unit" + unit'>
                         </div>
                     </div>
+                    <div style="margin: 10px">
+                        <div class="title-small">Probability of reprimand: <span style="color: red; font-weight: bold;">{{probabilityReprimand}}%</span></div>
+                        <div class="title-small">Amount lost per reprimand: <span style="color: red; font-weight: bold;">{{reprimandAmount}}</span></div>                       
+                    </div>
+                </div>
+                <div class="investigation-data-container">
+                    <div class="title">Investigation Map</div>
+                    <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
                 </div>
               </div>
               <div class="lower">
-                <div class="investigation-data-container">
-                  <div class="title">Investigating</div>
-                    <div>
-                        <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
-                        <br>
-                        <probability-bar-component label="Probability Fine Innocent" :percent=probInnocent></probability-bar-component>
-                        <probability-bar-component label="Probability Fine Culprit" :percent=probCulprit></probability-bar-component>
-                    </div>
-                  <br>
-                  <div class="title-small">Investigation Map</div>
-                  <div id="officer-investigation-container" ref='investigationcontainer'></div>
-    
-                </div>
+                
               </div>
           </div>
       `

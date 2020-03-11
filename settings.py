@@ -35,9 +35,9 @@ SESSION_CONFIGS = [
         tutorial_civilian_income=40,
         tutorial_officer_bonus=9,
         grain_conversion=.1,
-        showup_payment=7,
+        showup_payment=10,
         participant_endowment=10,
-        balance_update_rate=500,
+        balance_update_rate=250,
         skip_to_period=1,
     ),
     dict(

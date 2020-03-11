@@ -43,12 +43,8 @@ def generate_payouts(group):
         if 'balances' in player.participant.vars.keys() and participant_balances_recorded == 8:
 
             participant_balances = player.participant.vars['balances']
-            first_half, second_half = split_list(participant_balances)
 
-            random_1 = grain_to_dollars(group, random.choice(first_half))
-            random_2 = grain_to_dollars(group, random.choice(second_half))
-
-            balance = random_1 + random_2
+            balance = random.choice(participant_balances)
 
             payout = calculate_payout(balance, showup_payment, endowment)
 

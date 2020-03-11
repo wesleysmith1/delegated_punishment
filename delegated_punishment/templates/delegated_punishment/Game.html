@@ -13,7 +13,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}"></link>
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}"></link>
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/main.css' %}"></link>
-    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/notificationlog.css' %}"></link>
 
     <script>
         // data is rendered on api here, then later read by vue instance
@@ -38,6 +37,10 @@
         var mapSize = {{ civilian_map_size }};
         var defendTokenSize = {{ defend_token_size }};
 
+        var reprimandAmount = {{ officer_reprimand_amount }};
+        var playerBalance = {{ player.balance }};
+        var reviewProbability = {{ officer_review_probability }};
+
     </script>
 </header>
 <body>
@@ -59,11 +62,11 @@
                 :officer-income="income"
                 :investigation-count="investigationCount"
                 :defend-token-total="defendTokenTotal"
-                :prob-culprit="probabilityCulprit"
-                :prob-innocent="probabilityInnocent"
                 :police-log-messages="policeLogMessages"
                 :map-size="mapSize"
                 :defend-token-size="defendTokenSize"
+                :probability-reprimand="probabilityReprimand"
+                :reprimand-amount="reprimandAmount"
                 @token-drag="tokenDrag"
                 @token-update="tokenUpdate"
                 @investigation-update="investigationUpdate"
@@ -86,8 +89,6 @@
                         :player-location="playerLocation"
                         :investigation-count="investigationCount"
                         :defend-token-total="defendTokenTotal"
-                        :prob-culprit="probabilityCulprit"
-                        :prob-innocent="probabilityInnocent"
                         :police-log-messages="policeLogMessages"
                         :map-size="mapSize"
                         :steal-location="stealLocation"
@@ -104,52 +105,31 @@
                 <div class="balance-container">
                     <div class="balance-label">Balance (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</div>
                     <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
-                </div>
-                <div class="notifications-container">
+
                     <div class="notification-label">
-                        News
                         <div class="steal-notification">{{stealNotification}}</div>
                     </div>
-                    <div class="notification-log-container">
-                        <div class="notification-log-column">
-                            <div class="header"><div>Civilian<br>map</div></div>
-                            <div class="content" ref="notificationLog1">
-                                <div
-                                    v-for="message in messages" :class="{ selfmessage: message.map == groupPlayerId }" style="width: 100%;"
-                                    v-bind:style="{background: (message.map == groupPlayerId) ? 'darkgrey' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
-                                >{{message.map}}</div>
-                            </div>
-                        </div>
-                        <div class="notification-log-column">
-                            <div class="header"><div>Civilian<br>punished</div></div>
-                            <div class="content" ref="notificationLog2">
-                                <div
-                                    v-for="message in messages"
-                                    v-bind:style="{background: (message.punished==groupPlayerId) ? 'rgba(224,53,49, .5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
-                                >{{message.punished}}</div>
-                            </div>
-                        </div>
-                        <div class="notification-log-column">
-                            <div class="header"><div>Officer<br>reprimand</div></div>
-                            <div class="content" ref="notificationLog3">
-                                <div
-                                    v-for="message in messages"
-                                    v-bind:style="{background: (isOfficer && message.reprimand < 0) ? 'rgba(224,53,49, .5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
-                                >{{message.reprimand}}</div>
-                            </div>
-                        </div>
-                        <div class="notification-log-column">
-                            <div class="header"><div>Officer<br>bonus</div></div>
-                            <div class="content" ref="notificationLog4">
-                                <div
-                                    v-for="message in messages"
-                                    v-bind:style="{background: (isOfficer && message.bonus > 0) ? 'rgba(81,179,100,.5)' : (messageIndex == message.messageIndex ? 'white' : '#eeeeee')}"
-                                >{{message.bonus}}</div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!--<button @click="addMessage">add message</button>-->
+                    <div style="">
+                        <div class="title-small"># Intercepts: <strong>{{ interceptCount }}</strong></div>
+                        <div class="title-small"># Fines: <strong>{{ arrestsCount }}</strong></div>
+                        <div class="title-small"># Reprimands: <strong>{{ falseArrestCount }}</strong></div>
+                    </div>
+                    <br>
+                </div>
+                <div class="notifications-container">
+                    <br>
+                    <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
+                    <br>
+                    <probability-bar-component
+                            :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
+                            :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
+                    </probability-bar-component>
+                    <br>
+                    <probability-bar-component
+                            :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
+                            :percent=probabilityCulprit
+                    ></probability-bar-component>
                 </div>
             </div>
         </div>
@@ -269,6 +249,11 @@
                 messageIndex: 0,
                 timeout: null,
                 tutorialDuration: null,
+                interceptCount: 0,
+                arrestsCount: 0,
+                falseArrestCount: 0,
+                reprimandAmount: 0,
+                reviewProbability: 0,
             },
             created: function () {
 
@@ -294,6 +279,10 @@
                 this.mapSize = mapSize;
                 this.defendTokenSize = defendTokenSize;
 
+                this.reprimandAmount = reprimandAmount;
+                this.balance = playerBalance;
+
+                this.reviewProbability = reviewProbability;
 
                 this.timeout = timeout;
                 if (this.timeout) {
@@ -315,6 +304,7 @@
                 //} else
                 if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens);
+                    console.log(this.officerTokens);
                 }
                 //    console.log(this.officerTokens);
                     // todo
@@ -381,8 +371,6 @@
                             // console.log(data.intersections);
                             this.messageIndex++;
                             data.intersections.forEach((i) => {
-                                this.addMessage(i);
-
                                 this.showIntersection(i);
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
@@ -415,7 +403,6 @@
 
                     } else { // toggle to harvest
                         // reset steal location
-                        // this.resetLocation(Math.floor(Math.random() * 10)+1);
 
                         // reset harvest status and send toggle event to db
                         this.harvestScreen = !this.harvestScreen;
@@ -476,14 +463,6 @@
                          this.$refs.stealcomponent.setStealLocation();
                     });
                 },
-                resetLocation: function (location) {
-                    if (location == 1) {
-
-                    } else {
-
-                    }
-                    gsap.to('#location', 0, {x: 0, y: 0});
-                },
                 tokenDrag: function(token) {
                     this.gameUpdate({
                         'defend_token_drag': token,
@@ -525,6 +504,14 @@
                 },
                 showIntersection: function (i) {
 
+                    this.interceptCount += 1;
+
+                    if (i.officer_reprimand)
+                        this.reprimandCount++;
+
+                    if (i.guilty)
+                        this.arrestsCount++;
+
                     if (this.isOfficer) {
                         // intersection-label-' + (map+1) + '-' + (player_id + 1)
                         if (i.officer_reprimand) {
@@ -534,7 +521,6 @@
                             }, 2000);
                         }
 
-                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit);
                         // determine text for label
                         let labelText = -1;
                         let labelColor = 'powderblue';
@@ -548,6 +534,7 @@
                             labelText = '0';
                             labelColor = 'black';
                         }
+                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit);
                         labelElement.style.color = labelColor;
                         labelElement.innerText = labelText;
 
@@ -566,8 +553,7 @@
                     } else {
                         // was player the culprit
                         if (i.culprit == this.groupPlayerId) {
-                            // this.resetLocation(i.reset_location);
-                            this.stealLocation = i.steal_reset
+                            this.stealLocation = i.steal_reset;
                             this.positionStealToken()
                         }
 
@@ -590,27 +576,6 @@
                         tl.to(selector, {visibility: 'visible'});
                         tl.to(selector, {visibility: 'hidden', delay: 2})
                     }
-
-                },
-                addMessage: function(message) {
-                    this.messages.push({
-                        "map": message.map,
-                        "punished": message.guilty ? message.guilty : 'None',
-                        "bonus": message.officer_bonus ? message.officer_bonus : 0,
-                        "reprimand": message.officer_reprimand ? message.officer_reprimand * -1 : 0, // todo: make this better
-                        "messageIndex": this.messageIndex,
-                    });
-                    this.$nextTick(() => {
-                        this.scrollToBottom();
-                    })
-                },
-                scrollToBottom: function() {
-                    let nScrollHeight = this.$refs.notificationLog1.scrollHeight;
-
-                    this.$refs.notificationLog1.scrollTop = nScrollHeight;
-                    this.$refs.notificationLog2.scrollTop = nScrollHeight;
-                    this.$refs.notificationLog3.scrollTop = nScrollHeight;
-                    this.$refs.notificationLog4.scrollTop = nScrollHeight;
 
                 },
                 startTimer: function() {
@@ -652,6 +617,9 @@
                     else {
                         return Math.round((6 - this.investigationCount) * (9/240)*10000) / 100
                     }
+                },
+                probabilityReprimand() {
+                    return Math.round(this.reviewProbability * 3 * this.probabilityInnocent * 100) / 100;
                 }
             },
         });

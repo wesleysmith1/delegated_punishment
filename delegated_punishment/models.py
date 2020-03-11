@@ -31,14 +31,14 @@ class Constants(BaseConstants):
     civilian_fine_amount = 120
     civilian_steal_rate = 13  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
 
-    officer_review_probability = .2  # THETA: chance that an intersection result will be reviewed
-    officer_reprimand_amount = 50  # P punishment for officer if innocent civilian is punished
+    officer_review_probability = .33  # THETA: chance that an intersection result will be reviewed
+    officer_reprimand_amount = 600  # P punishment for officer if innocent civilian is punished
 
     civilian_incomes_low = [38, 39, 40, 41, 43]
     civilian_incomes_high = [57, 41, 38, 34, 31]
     # officer_incomes = [0, 10, 20]
-    officer_incomes = [9, 9, 9]
-    # officer_incomes = [0, 9, 30]
+    officer_incomes = [180, 180, 180]
+    # officer_incomes = [0, 180, 600]
 
     # also change in officer.css
     defend_token_size = 68  # this is the size of the tokens that players with role of officer drag around
@@ -48,7 +48,9 @@ class Constants(BaseConstants):
     a_max = 6
 
     tutorial_duration = 1800000
-    game_duration_seconds = 240
+    game_duration_seconds = 198
+
+    officer_start_balance = 1000
 
 
 class Subsession(BaseSubsession):
@@ -90,6 +92,9 @@ class Subsession(BaseSubsession):
                 # initialize balances list
                 p.participant.vars['balances'] = []
                 p.participant.vars['steal_start'] = p.steal_start
+
+                if p.is_officer():
+                    p.income = Constants.officer_start_balance
 
                 # demo session does not need further configuration
                 if Constants.num_rounds != 1:
@@ -249,6 +254,12 @@ class Player(BasePlayer):
     steal_total = models.FloatField(initial=0)
     victim_total = models.FloatField(initial=0)
     ready = models.BooleanField(initial=False)
+
+    def is_officer(self):
+        if self.id_in_group == 1:
+            return True
+        else:
+            return False
 
 
     def other_players(self):
