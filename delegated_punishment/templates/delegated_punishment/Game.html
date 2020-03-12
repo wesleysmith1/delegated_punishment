@@ -40,6 +40,7 @@
         var reprimandAmount = {{ officer_reprimand_amount }};
         var playerBalance = {{ player.balance }};
         var reviewProbability = {{ officer_review_probability }};
+        var stealTimeoutTime = {{ steal_timeout_duration }}
 
     </script>
 </header>
@@ -95,7 +96,7 @@
                         :active-steal="activeSteal"
                         :active-steal-maps="activeStealMaps"
                         :fine-notification="fineNotification"
-                        :steal-reset-time="stealResetTime"
+                        :steal-timeout-time="stealTimeoutTime"
                         @location-drag="locationDrag"
                         @location-update="locationUpdate"
                         @location-token-reset="locationTokenReset"
@@ -268,7 +269,7 @@
                 falseArrestCount: 0,
                 reprimandAmount: 0,
                 reviewProbability: 0,
-                stealResetTime: 5000,
+                stealTimeoutTime: 10000,
             },
             created: function () {
 
@@ -298,6 +299,8 @@
                 this.balance = playerBalance;
 
                 this.reviewProbability = reviewProbability;
+
+                this.stealTimeoutTime = stealTimeoutTime;
 
                 this.timeout = timeout;
                 if (this.timeout) {
@@ -334,28 +337,28 @@
                 // player maps
                 this.maps = [1, 2, 3, 4, 5];
 
-                this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
-                this.gameSyncSocket.onopen = (e) => {
-                    console.log('game sync connected')
-                    data = {
-                        'group_id': this.groupId,
-                        'player_id': this.playerId,
-                        'round_number': this.roundNumber,
-                        'join': true,
-                    };
-                    this.gameSyncSocket.send(JSON.stringify(data))
-                };
-
-                this.gameSyncSocket.onmessage = (e) => {
-                    let data = JSON.parse(e.data)
-                    if (data.start_time) {
-                        let t = data.start_time;
-                        this.gameSyncSocket = data.start_time;
-                        console.log('start_time', t)
-                        this.gameStarted = true;
-                        this.startTimer();
-                    }
-                };
+                //this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
+                //this.gameSyncSocket.onopen = (e) => {
+                //    console.log('game sync connected')
+                //    data = {
+                //        'group_id': this.groupId,
+                //        'player_id': this.playerId,
+                //        'round_number': this.roundNumber,
+                //        'join': true,
+                //    };
+                //    this.gameSyncSocket.send(JSON.stringify(data))
+                //};
+                //
+                //this.gameSyncSocket.onmessage = (e) => {
+                //    let data = JSON.parse(e.data)
+                //    if (data.start_time) {
+                //        let t = data.start_time;
+                //        this.gameSyncSocket = data.start_time;
+                //        console.log('start_time', t)
+                //        this.gameStarted = true;
+                //        this.startTimer();
+                //    }
+                //};
 
 
                 // todo look into routing questions
@@ -603,12 +606,12 @@
 
                 },
                 startTimer: function() {
-                    //if (this.groupPlayerId == 1) {
-                    //    // set start time
-                    //    this.gameUpdate({
-                    //        'period_update': {'period_start': true},
-                    //    });
-                    //}
+                    if (this.groupPlayerId == 1) {
+                        // set start time
+                        this.gameUpdate({
+                            'period_update': {'period_start': true},
+                        });
+                    }
                     // start 4 minute timer
                     setTimeout(() => {
                         // officer records period end

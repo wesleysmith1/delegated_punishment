@@ -43,15 +43,16 @@ class GameSyncConsumer(WebsocketConsumer):
 
             if not player.ready:
                 print(f"PLAYER {player_id} IS NOW READY")
+                print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
                 player.ready = True
                 player.save()
-                group.players_ready += 1
-                group.save()
-                print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
-                time_remaining = group.check_game_status(date_now_milli())
+                group.players_ready = group.players_ready + 1
+                time = date_now_milli()
+                time_remaining = group.check_game_status(time)
 
                 if time_remaining:
-                    print(f"GROUP HAS ALL ARRIVED")
+                    group.game_start = time
+                    print(f"GROUP {group_id} HAS ALL ARRIVED")
                     async_to_sync(self.channel_layer.group_send)(
                         self.room_group_name,
                         {
@@ -59,13 +60,15 @@ class GameSyncConsumer(WebsocketConsumer):
                             'start_time': time_remaining
                         }
                     )
+                group.save()
+
             else:
                 # game already started
                 time_remaining = group.check_game_status(date_now_milli())
-
-                self.send(text_data=json.dumps({
-                    'start_time': time_remaining
-                }))
+                if time_remaining:
+                    self.send(text_data=json.dumps({
+                        'start_time': time_remaining
+                    }))
 
         elif data_json.get('period_end'):
             event_time = date_now_milli()

@@ -37,6 +37,7 @@ class Game(Page):
         vars_dict['tutorial_duration'] = Constants.tutorial_duration
         vars_dict['officer_reprimand_amount'] = Constants.officer_reprimand_amount
         vars_dict['officer_review_probability'] = Constants.officer_review_probability
+        vars_dict['steal_timeout_duration'] = Constants.steal_timeout_duration
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)

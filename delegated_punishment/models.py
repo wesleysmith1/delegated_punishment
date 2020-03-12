@@ -52,6 +52,8 @@ class Constants(BaseConstants):
 
     officer_start_balance = 1000
 
+    steal_timeout_duration = 1000
+
 
 class Subsession(BaseSubsession):
 
@@ -134,7 +136,7 @@ class Group(BaseGroup):
         if self.group_ready():
             event_time = time
             if self.game_start:
-                return Constants.game_duration_seconds - (date_now_milli() - self.game_start)
+                return Constants.game_duration_seconds*1000 - (time - self.game_start)
             else:
                 game_data_dict = {
                     'event_time': event_time,

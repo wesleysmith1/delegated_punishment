@@ -16,7 +16,7 @@ let stealGameComponent = {
         activeSteal: Number,
         activeStealMaps: Object,
         fineNotification: String,
-        stealResetTime: Number,
+        stealTimeoutTime: Number,
     },
     data: function () {
         return {
@@ -27,7 +27,6 @@ let stealGameComponent = {
         }
     },
     mounted: function () {
-        console.log('FINE NOTIFICATION', this.fineNotification)
         let that = this;
         let selector = '#location'
         Draggable.create(selector, {
@@ -48,7 +47,7 @@ let stealGameComponent = {
 
             this.timeout = setTimeout(() => {
                 this.$emit('location-token-timeout', this.randomLocation());
-            }, this.stealResetTime)
+            }, this.stealTimeoutTime)
         },
         cancelTimeout: function() {
             if (this.timeout)
