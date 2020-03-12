@@ -46,7 +46,7 @@ let stealGameComponent = {
             if (this.timeout)
                 clearTimeout(this.timeout);
         },
-        setStealReset: function() {
+        scheduleStealReset: function() {
             this.cancelTimeout();
 
             this.timeout = setTimeout(() => {
@@ -108,7 +108,7 @@ let stealGameComponent = {
                 0 <= this.locationy &&
                 this.locationy <= this.mapSize
             ) {
-                this.setStealReset();
+                this.scheduleStealReset();
                 this.$emit('location-update', {x: this.locationx, y: this.locationy, map: map_id});
             } else {
                 gsap.to('#location', 0, {x: 0, y: 0, ease: Back.easeOut});
@@ -122,7 +122,7 @@ let stealGameComponent = {
             }
         },
         randomLocation: function () {
-            return Math.floor(Math.random() * 9) + 1
+            return Math.floor(Math.random() * 20) + 1
         }
     },
     watch: {
@@ -169,7 +169,7 @@ let stealGameComponent = {
                                 </svg> 
                             </div>
 <!--                            todo: make right number of locations here-->
-                            <div v-for="i in 8" class="steal-location" :ref='"steallocation" + (i+1)' :id='"steallocation" + (i+1)'>
+                            <div v-for="i in 19" class="steal-location" :ref='"steallocation" + (i+1)' :id='"steallocation" + (i+1)'>
                             </div>
                         </div>
                       <br>

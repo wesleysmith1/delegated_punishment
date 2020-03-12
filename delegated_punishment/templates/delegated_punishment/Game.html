@@ -447,7 +447,7 @@
                     });
                 },
                 harvestActive: function() {
-                    this.stealLocation = Math.floor(Math.random() * 9)+1;
+                    this.stealLocation = Math.floor(Math.random() * 20)+1;
                     this.gameUpdate({
                         'toggle': {harvest: true, steal_reset: this.stealLocation},
                     });
