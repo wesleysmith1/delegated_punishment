@@ -42,18 +42,19 @@ let stealGameComponent = {
 
     },
     methods: {
-        setStealReset: function() {
-            this.cancelTimeout()
-
-            this.timeout = setTimeout(() => {
-                this.$emit('location-token-timeout', this.randomLocation());
-            }, this.stealTimeoutTime)
-        },
         cancelTimeout: function() {
             if (this.timeout)
                 clearTimeout(this.timeout);
         },
-        setStealLocation: function () {
+        setStealReset: function() {
+            this.cancelTimeout();
+
+            this.timeout = setTimeout(() => {
+                let num = this.randomLocation();
+                this.$emit('location-token-timeout', num);
+            }, this.stealTimeoutTime)
+        },
+        setStealLocation: function() {
             if (this.stealLocation === 1) {
                 gsap.to('#location', 0, {x: 0, y: 0});
                 return; // already starts in first steal location
@@ -65,13 +66,12 @@ let stealGameComponent = {
             gsap.to('#location', 0, {x: dest.x - start.x, y: dest.y - start.y});
         },
         locationDragStart: function (that) {
-            this.cancelTimeout()
+            this.cancelTimeout();
 
             // check the current location to see if we need to update api
             this.$emit('location-drag', {x: this.locationx, y: this.locationy, map: 0});
         },
         checkLocation: function (that) {
-            this.cancelTimeout()
 
             if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-center
@@ -92,11 +92,9 @@ let stealGameComponent = {
                     this.calculateLocation(map, 6);
                 }
                 else {
-                    this.setStealLocation()
                     this.$emit('location-token-reset', this.randomLocation())
                 }
             } else {
-                this.setStealLocation()
                 this.$emit('location-token-reset', this.randomLocation())
             }
         },
@@ -110,7 +108,7 @@ let stealGameComponent = {
                 0 <= this.locationy &&
                 this.locationy <= this.mapSize
             ) {
-                this.setStealReset()
+                this.setStealReset();
                 this.$emit('location-update', {x: this.locationx, y: this.locationy, map: map_id});
             } else {
                 gsap.to('#location', 0, {x: 0, y: 0, ease: Back.easeOut});
@@ -129,7 +127,9 @@ let stealGameComponent = {
     },
     watch: {
         stealLocation: function () {
-            this.setStealLocation();
+            this.$nextTick(() => {
+                 this.setStealLocation();
+            });
         }
     },
     template:

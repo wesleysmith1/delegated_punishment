@@ -40,7 +40,8 @@
         var reprimandAmount = {{ officer_reprimand_amount }};
         var playerBalance = {{ player.balance }};
         var reviewProbability = {{ officer_review_probability }};
-        var stealTimeoutTime = {{ steal_timeout_duration }}
+        var stealTimeoutTime = {{ steal_timeout_duration }};
+        var gameDurationSeconds = {{ game_duration_seconds}};
 
     </script>
 </header>
@@ -302,6 +303,8 @@
 
                 this.stealTimeoutTime = stealTimeoutTime;
 
+                this.gameDuration = gameDurationSeconds * 1000;
+
                 this.timeout = timeout;
                 if (this.timeout) {
                     this.tutorialDuration = tutorialDuration;
@@ -322,7 +325,6 @@
                 //} else
                 if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens);
-                    console.log(this.officerTokens);
                 }
                 //    console.log(this.officerTokens);
                     // todo
@@ -364,7 +366,7 @@
                 // todo look into routing questions
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/')
                     this.gameSocket.onopen = (e) => {
-                        // this.startTimer()
+                        this.startTimer()
                     };
 
                     this.gameSocket.onmessage = (e) => {
@@ -387,7 +389,7 @@
                             this.balance = latestBalance;
                             this.roi = data.roi
                         } else if (data.intersections) {
-                            console.log(data.intersections);
+                            // console.log(data.intersections);
                             this.messageIndex++;
                             data.intersections.forEach((i) => {
                                 this.showIntersection(i);
@@ -511,14 +513,22 @@
                 },
                 locationTokenReset: function(x) {
                     // this function informs the api that the token has reset
+
+                    if (x === this.stealLocation) {
+                        // watch won't be triggered here so we need to trigger the function manually
+                        this.$refs.stealcomponent.setStealLocation();
+                    }
                     this.stealLocation = x
                     this.gameUpdate({
                         'steal_token_reset': {'steal_location': x,},
                     });
                 },
                 locationTokenTimeout: function(x) {
-
                     this.stealLocation = x;
+                    if (x === this.stealLocation) {
+                        // watch won't be triggered here so we need to trigger the function manually
+                        this.$refs.stealcomponent.setStealLocation();
+                    }
                     this.gameUpdate({
                         'steal_token_timeout': {'steal_location': x,}
                     })
