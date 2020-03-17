@@ -294,6 +294,10 @@ class GameConsumer(WebsocketConsumer):
 
                 # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
                 victim.increase_roi(event_time, False)
+                if victim.map > 0:
+                    victim.roi = -1 * (len(Player.objects.filter(group_id=group_id, map=victim.id_in_group)) * 6) + 6 + 6
+                else:
+                    victim.roi = -1 * (len(Player.objects.filter(group_id=group_id, map=victim.id_in_group)) * 6) + 6
                 victim.save()
 
                 game_data_dict.update({
@@ -304,6 +308,8 @@ class GameConsumer(WebsocketConsumer):
 
                 # update player roi
                 player.decrease_roi(event_time, True)
+                player.roi = -1 * (len(Player.objects.filter(group_id=group_id, map=player.map)) * 6) + 6
+                player.save()
 
                 game_data_dict.update({
                     "player_roi": player.roi,
@@ -624,6 +630,8 @@ class GameConsumer(WebsocketConsumer):
                 if player.map != 0:
                     # update player roi
                     player.increase_roi(event_time, True)
+                    player.roi = -1 * (len(Player.objects.filter(group_id=group_id, map=player.id_in_group)) * 6) + 6
+                    player.save()
 
                     game_data_dict.update({
                         "culprit_roi": player.roi,
@@ -633,6 +641,10 @@ class GameConsumer(WebsocketConsumer):
                     # get victim object and update roi
                     victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
                     victim.decrease_roi(event_time, False)
+                    if victim.map > 0:
+                        victim.roi = -1* (len(Player.objects.filter(group_id=group_id, map=victim.id_in_group)) * 6) + 6
+                    else:
+                        victim.roi = -1 * (len(Player.objects.filter(group_id=group_id, map=victim.id_in_group)) * 6)
                     victim.save()
 
                     game_data_dict.update({

@@ -285,8 +285,8 @@ class Player(BasePlayer):
         self.balance = self.get_balance(time)  # we need to set balance with event time here boi
         self.last_updated = time
         # update roi
-        self.roi += Constants.civilian_steal_rate
-        self.save()
+        # self.roi += Constants.civilian_steal_rate
+        # self.save()
 
         if direct:
             # victim no longer being stolen from by a player
@@ -300,8 +300,8 @@ class Player(BasePlayer):
         self.balance = self.get_balance(time)
         self.last_updated = time
         # update roi
-        self.roi -= Constants.civilian_steal_rate
-        self.save()
+        # self.roi -= Constants.civilian_steal_rate
+        # self.save()
 
         if direct:
             self.steal_count -= 1
