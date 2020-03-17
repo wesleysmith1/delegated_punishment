@@ -574,7 +574,7 @@ class GameConsumer(WebsocketConsumer):
                     "event_time": event_time,
                     "player": player.id_in_group,
                     "culprit": player.id_in_group,
-                    "map": map,  # **
+                    "map": map,
                     "token_x": x,
                     "token_y": y,
                 })

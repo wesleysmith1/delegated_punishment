@@ -1,6 +1,7 @@
 import datetime
 
 from django.contrib.postgres.fields import JSONField
+from django.db import transaction
 from otree.api import (
     models,
     BaseConstants,
@@ -17,8 +18,8 @@ doc = """
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
-    num_rounds = 10
-    # num_rounds = 1  # testing purposes
+    # num_rounds = 10
+    num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     defend_token_total = 8
@@ -52,7 +53,7 @@ class Constants(BaseConstants):
 
     officer_start_balance = 1000
 
-    steal_timeout_duration = 3000
+    steal_timeout_duration = 200000
 
 
 class Subsession(BaseSubsession):
@@ -245,7 +246,7 @@ class Player(BasePlayer):
     map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
     roi = models.IntegerField(initial=0)
-    balance = models.FloatField(initial=Constants.start_balance)
+    balance = models.FloatField(initial=Constants.start_balance) #todo: we can make this a decimal field btw
     harvest_status = models.IntegerField(initial=0)
     harvest_screen = models.BooleanField(initial=True)
     income = models.IntegerField(initial=40)
@@ -271,7 +272,7 @@ class Player(BasePlayer):
         if self.roi == 0:
             return self.balance
         elif not self.last_updated:
-            return -99
+            return -99 #todo fix this shit
         else:
             time_passed = time - self.last_updated
             return self.balance + (self.roi * time_passed)
@@ -285,6 +286,7 @@ class Player(BasePlayer):
         self.last_updated = time
         # update roi
         self.roi += Constants.civilian_steal_rate
+        self.save()
 
         if direct:
             # victim no longer being stolen from by a player
@@ -299,6 +301,7 @@ class Player(BasePlayer):
         self.last_updated = time
         # update roi
         self.roi -= Constants.civilian_steal_rate
+        self.save()
 
         if direct:
             self.steal_count -= 1
