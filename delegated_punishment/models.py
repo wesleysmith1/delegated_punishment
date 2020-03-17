@@ -240,6 +240,48 @@ def rand_location():
     return randrange(Constants.defend_token_total)+1
 
 
+def increase_roi(pk, time, direct):
+    """
+        direct argument determines which status count variable to update
+    """
+    with transaction.atomic():
+        player = Player.objects.select_for_update().get(pk=pk)
+
+        # calculate balance
+        player.balance = player.get_balance(time)  # we need to set balance with event time here boi
+        player.last_updated = time
+        # update roi
+        player.roi += Constants.civilian_steal_rate
+
+        if direct:
+            # victim no longer being stolen from by a player
+            player.steal_count += 1
+        else:
+            # culprit stealing from a victim
+            player.victim_count -= 1
+
+        player.save()
+
+
+def decrease_roi(pk, time, direct):
+
+    with transaction.atomic():
+        player = Player.objects.select_for_update().get(pk=pk)
+
+        # calculate balance
+        player.balance = player.get_balance(time)
+        player.last_updated = time
+        # update roi
+        player.roi -= Constants.civilian_steal_rate
+
+        if direct:
+            player.steal_count -= 1
+        else:
+            player.victim_count += 1
+
+        player.save()
+
+
 class Player(BasePlayer):
     x = models.FloatField(initial=0)
     y = models.FloatField(initial=0)
@@ -277,36 +319,45 @@ class Player(BasePlayer):
             time_passed = time - self.last_updated
             return self.balance + (self.roi * time_passed)
 
-    def increase_roi(self, time, direct):
-        """
-            direct argument determines which status count variable to update
-        """
-        # calculate balance
-        self.balance = self.get_balance(time)  # we need to set balance with event time here boi
-        self.last_updated = time
-        # update roi
-        # self.roi += Constants.civilian_steal_rate
-        # self.save()
-
-        if direct:
-            # victim no longer being stolen from by a player
-            self.steal_count += 1
-        else:
-            # culprit stealing from a victim
-            self.victim_count -= 1
-
-    def decrease_roi(self, time, direct):
-        # calculate balance
-        self.balance = self.get_balance(time)
-        self.last_updated = time
-        # update roi
-        # self.roi -= Constants.civilian_steal_rate
-        # self.save()
-
-        if direct:
-            self.steal_count -= 1
-        else:
-            self.victim_count += 1
+    # def increase_roi(self, time, direct):
+    #     """
+    #         direct argument determines which status count variable to update
+    #     """
+    #     with transaction.atomic():
+    #         player = self.queryset().select_for_update().get()
+    #
+    #         # calculate balance
+    #         player.balance = player.get_balance(time)  # we need to set balance with event time here boi
+    #         player.last_updated = time
+    #         # update roi
+    #         player.roi += Constants.civilian_steal_rate
+    #
+    #         if direct:
+    #             # victim no longer being stolen from by a player
+    #             player.steal_count += 1
+    #         else:
+    #             # culprit stealing from a victim
+    #             player.victim_count -= 1
+    #
+    #         player.save()
+    #
+    # def decrease_roi(self, time, direct):
+    #
+    #     with transaction.atomic():
+    #         player = self.queryset().select_for_update().get()
+    #
+    #         # calculate balance
+    #         player.balance = player.get_balance(time)
+    #         player.last_updated = time
+    #         # update roi
+    #         player.roi -= Constants.civilian_steal_rate
+    #
+    #         if direct:
+    #             player.steal_count -= 1
+    #         else:
+    #             player.victim_count += 1
+    #
+    #         player.save()
 
 
 class DefendToken(Model):
