@@ -114,11 +114,11 @@ ROOMS = [
     dict(name='live_demo', display_name='Room for live demo (no participant labels)'),
 ]
 
-AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL', 'STUDY')
+AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL', 'DEMO')
 
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable
-ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD', 'delegated_punishment')
+ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD', 'password')
 
 DEMO_PAGE_INTRO_HTML = """
 Here are some oTree games.
