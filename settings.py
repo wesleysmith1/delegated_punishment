@@ -15,9 +15,9 @@ SESSION_CONFIG_DEFAULTS = dict(
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'django_db',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
+        'NAME': environ.get('DATABASE', 'django_db'),
+        'USER': environ.get('DB_USER', 'postgres'),
+        'PASSWORD': environ.get('DB_PASSWORD', 'password'),
         'HOST': 'localhost',
         'PORT': '5432'
     }
@@ -36,7 +36,7 @@ LOGGING = {
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': "./logfile",
+            'filename': "./logs/debug/logfile",
             'maxBytes': 50000,
             'backupCount': 2,
             'formatter': 'standard',

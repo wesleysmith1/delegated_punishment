@@ -191,10 +191,7 @@
             };
 
             socket.onclose = function (e) {
-                if (isDebug === 'True') {
-                    console.log('channel closed')
-                    // alertStyle.visibility = 'visible';
-                }
+                console.log('channel closed');
             };
             // </disconnected-alert>
 

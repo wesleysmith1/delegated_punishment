@@ -9,7 +9,7 @@ from django.db import transaction
 import logging
 log = logging.getLogger(__name__)
 
-from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, increase_roi, decrease_roi
+from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData
 
 
 class GameConsumer(WebsocketConsumer):
@@ -42,7 +42,6 @@ class GameConsumer(WebsocketConsumer):
         # print_padding = 25
 
         data_json = json.loads(text_data)
-        print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id']
@@ -280,7 +279,6 @@ class GameConsumer(WebsocketConsumer):
             #     y: o,
             #     map: 0
             # }
-            log.debug('1')
             # print('LOCATION TOKEN WAS DRAGGED')
             #get token and save it's location as 0
 
@@ -295,11 +293,8 @@ class GameConsumer(WebsocketConsumer):
             if player.map > 0:
                 # update victim roi
                 victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
-                log.debug('2')
                 # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
-                # victim.increase_roi(event_time, False)
-                increase_roi(victim.pk, event_time, False)
-                log.debug('3')
+                victim.increase_roi(event_time, False)
                 victim.save()
 
                 game_data_dict.update({
@@ -308,11 +303,8 @@ class GameConsumer(WebsocketConsumer):
                     "victim_balance": victim.balance
                 })
 
-                log.debug('4')
                 # update player roi
-                # player.decrease_roi(event_time, True)
-                decrease_roi(player.pk, event_time, True)
-                log.debug('5')
+                player.decrease_roi(event_time, True)
                 game_data_dict.update({
                     "player_roi": player.roi,
                     "player_balance": player.balance,
@@ -324,7 +316,6 @@ class GameConsumer(WebsocketConsumer):
 
             player.x = player.y = player.map = 0
             player.save()
-            log.debug('6')
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id_in_group,
@@ -567,8 +558,6 @@ class GameConsumer(WebsocketConsumer):
 
             elif data_json.get('steal_token_update'):
 
-                log.debug('1')
-
                 steal_location = data_json['steal_token_update']
 
                 x = steal_location['x']
@@ -579,8 +568,6 @@ class GameConsumer(WebsocketConsumer):
                 player.y = y
                 player.map = map
 
-                log.debug('2')
-
                 game_data_dict.update({
                     "event_type": "steal_token_update",
                     "event_time": event_time,
@@ -590,8 +577,6 @@ class GameConsumer(WebsocketConsumer):
                     "token_x": x,
                     "token_y": y,
                 })
-
-                log.debug('3')
 
                 # print("{} -- {} -- map: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(print_padding), player.pk, player.map, player.x, player.y))
 
@@ -637,10 +622,7 @@ class GameConsumer(WebsocketConsumer):
                 # if there was no intersection -> update the roi of player and victim
                 if player.map != 0:
                     # update player roi
-                    # player.increase_roi(event_time, True)
-                    increase_roi(player.pk, event_time, True)
-
-                    log.debug('4')
+                    player.increase_roi(event_time, True)
 
                     game_data_dict.update({
                         "culprit_roi": player.roi,
@@ -649,11 +631,8 @@ class GameConsumer(WebsocketConsumer):
 
                     # get victim object and update roi
                     victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
-                    # victim.decrease_roi(event_time, False)
-                    decrease_roi(victim.pk, event_time, False)
+                    victim.decrease_roi(event_time, False)
                     victim.save()
-
-                    log.debug('5')
 
                     game_data_dict.update({
                         "victim": victim.id_in_group,
@@ -665,8 +644,6 @@ class GameConsumer(WebsocketConsumer):
 
                 # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
-
-                log.debug('6')
 
             num_investigators = len(DefendToken.objects.filter(group_id=group_id, map=11))
             # print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))

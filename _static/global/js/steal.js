@@ -33,7 +33,7 @@ let stealGameComponent = {
             minimumMovement: .01,
             bounds: that.$refs.stealcontainer,
             onDragStart: function () {
-                that.locationDragStart(this)
+                that.locationDragStart()
             },
             onDragEnd: function () {
                 that.checkLocation(this)
@@ -65,7 +65,7 @@ let stealGameComponent = {
 
             gsap.to('#location', 0, {x: dest.x - start.x, y: dest.y - start.y});
         },
-        locationDragStart: function (that) {
+        locationDragStart: function () {
             this.cancelTimeout();
 
             // check the current location to see if we need to update api
@@ -75,28 +75,17 @@ let stealGameComponent = {
 
             if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-center
-                if (that.hitTest(this.$refs.prop2, '.000001%') && this.groupPlayerId != 2) {
-                    let map = document.getElementById('prop2').getBoundingClientRect()
-                    this.calculateLocation(map, 2);
-                } else if (that.hitTest(this.$refs.prop3, '.000001%') && this.groupPlayerId != 3) {
-                    let map = document.getElementById('prop3').getBoundingClientRect()
-                    this.calculateLocation(map, 3);
-                } else if (that.hitTest(this.$refs.prop4, '.000001%') && this.groupPlayerId != 4) {
-                    let map = document.getElementById('prop4').getBoundingClientRect()
-                    this.calculateLocation(map, 4);
-                } else if (that.hitTest(this.$refs.prop5, '.000001%') && this.groupPlayerId != 5) {
-                    let map = document.getElementById('prop5').getBoundingClientRect()
-                    this.calculateLocation(map, 5);
-                } else if (that.hitTest(this.$refs.prop6, '.000001%') && this.groupPlayerId != 6) {
-                    let map = document.getElementById('prop6').getBoundingClientRect()
-                    this.calculateLocation(map, 6);
+                for (let i in this.maps) {
+                    let id = parseInt(this.maps[i]) + 2;
+                    if (that.hitTest(this.$refs['prop' + id], '.000001')) {
+                        let map = this.$refs['prop' + id][0].getBoundingClientRect();
+                        this.calculateLocation(map, id);
+                        return;
+                    }
                 }
-                else {
-                    this.$emit('location-token-reset', this.randomLocation())
-                }
-            } else {
-                this.$emit('location-token-reset', this.randomLocation())
             }
+
+            this.$emit('location-token-reset', this.randomLocation())
         },
         calculateLocation(map, map_id) {  // prop_id is more like the player_id
             let location = this.$refs.location.getBoundingClientRect()
@@ -104,9 +93,9 @@ let stealGameComponent = {
             this.locationy = location.y - map.y + 2 - 1;
 
             if (0 <= this.locationx &&
-                this.locationx <= this.mapSize &&
+                this.locationx < this.mapSize &&
                 0 <= this.locationy &&
-                this.locationy <= this.mapSize
+                this.locationy < this.mapSize
             ) {
                 this.scheduleStealReset();
                 this.$emit('location-update', {x: this.locationx, y: this.locationy, map: map_id});
@@ -115,7 +104,7 @@ let stealGameComponent = {
             }
         },
         indicatorColor(map) {
-            if (this.groupPlayerId == map) {
+            if (this.groupPlayerId === map) {
                 return 'red'
             } else {
                 return 'black'

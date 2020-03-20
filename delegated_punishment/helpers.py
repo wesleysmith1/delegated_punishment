@@ -1,11 +1,14 @@
-import datetime
+import time
 from delegated_punishment.models import Constants
 import os
 import math
+from decimal import *
+getcontext().prec = 17
 
 
 def date_now_milli():
-    return (datetime.datetime.now() - Constants.epoch).total_seconds()
+    # returns seconds
+    return time.time()
 
 
 def write_session_dir(session_identifier):

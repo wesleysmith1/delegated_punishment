@@ -82,48 +82,30 @@ let officerGameComponent = {
         tokenDragStart: function (that, item) {
             // console.log(item)
             this.$emit('token-drag', item);
-            // // update api with unit location
-            // this.updateOfficerToken(item);
         },
         checkLocation: function (that, item) {
             if (that.hitTest(this.$refs.officerGame, '100%')) {
-                //location-center
-                if (that.hitTest(this.$refs.map6, '1%')) {
-                    this.map = 6;
-                    item.map = 6;
-                    let map = document.getElementById('map6').getBoundingClientRect()
-                    this.calculateLocation(map, that, item);
-                } else if (that.hitTest(this.$refs.map5, '1%')) {
-                    this.map = 5;
-                    item.map = 5;
-                    let map = document.getElementById('map5').getBoundingClientRect()
-                    this.calculateLocation(map, that, item);
-                } else if (that.hitTest(this.$refs.map2, '.000001%')) {
-                    this.map = 2;
-                    item.map = 2;
-                    let map = document.getElementById('map2').getBoundingClientRect()
-                    this.calculateLocation(map, that, item);
-                } else if (that.hitTest(this.$refs.map3, '.000001%')) {
-                    this.map = 3;
-                    item.map = 3;
-                    let map = document.getElementById('map3').getBoundingClientRect()
-                    this.calculateLocation(map, that, item);
-                } else if (that.hitTest(this.$refs.map4, '.000001%')) {
-                    this.map = 4;
-                    item.map = 4;
-                    let map = document.getElementById('map4').getBoundingClientRect()
-                    this.calculateLocation(map, that, item);
-                } else if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
+                for (let i in this.maps) {
+                    let id = parseInt(this.maps[i]) + 1;
+
+                    if (that.hitTest(this.$refs['map' + id], '.000001%')) {
+                        this.map = id;
+                        item.map = id;
+                        let map = this.$refs['map' + id][0].getBoundingClientRect();
+                        this.calculateLocation(map, that, item);
+                        return;
+                    }
+                }
+
+                if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
                     item.map = 11;
                     this.$emit('investigation-update', item)
-                } else {
-                    gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
-                    this.$emit('defense-token-reset', item.number)
+                    return;
                 }
-            } else {
-                gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
-                this.$emit('defense-token-reset', item.number)
             }
+
+            gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
+            this.$emit('defense-token-reset', item.number)
         },
         calculateLocation: function(map, unitContext, item) {
             let unit = unitContext.target.getBoundingClientRect()
@@ -133,9 +115,9 @@ let officerGameComponent = {
             item.y = this.locationy;
             this.disableToken(item.number-1)
             // update api with unit location
-            this.updateOfficerToken(item);
+            this.updateDefendToken(item);
         },
-        updateOfficerToken: function(item) {
+        updateDefendToken: function(item) {
             // console.log('item: ', item);
             this.$emit('token-update', item);
         }
