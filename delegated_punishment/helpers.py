@@ -9,6 +9,8 @@ getcontext().prec = 17
 def date_now_milli():
     # returns seconds
     return time.time()
+    # return double
+    # Decimal(repr(time.time()))
 
 
 def write_session_dir(session_identifier):

@@ -68,7 +68,8 @@ LOGGING = {
 SESSION_CONFIGS = [
     dict(
         name='delegated_punishment', 
-        display_name="Delegated Punishment Game", 
+        display_name="Delegated Punishment Game",
+        use_browser_bots=True,
         num_demo_participants=6,
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,

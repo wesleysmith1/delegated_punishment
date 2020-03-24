@@ -75,7 +75,7 @@ class GameConsumer(WebsocketConsumer):
             if player.harvest_status == 4:
                 # increase balance
                 harvest_income = player.income
-                player.balance = player.balance + harvest_income
+                player.civilian_harvest()
                 player.harvest_status = 0
 
             # print("PLAYER {} UPDATED HARVEST STATUS TO {}".format(player.pk, player.harvest_status))
@@ -694,7 +694,7 @@ class GameConsumer(WebsocketConsumer):
                 # print('CONVICTED PLAYER: ' + str(convicted_pid))
                 if convicted_pid:
                     convicted_player = Player.objects.get(group_id=group_id, id_in_group=convicted_pid)
-                    convicted_player.balance -= Constants.civilian_fine_amount
+                    convicted_player.civilian_fine()
                     convicted_player.save()
 
                     # check if guilty player was convicted
@@ -711,7 +711,7 @@ class GameConsumer(WebsocketConsumer):
                         officer = player
                     else:
                         officer = Player.objects.get(group_id=group_id, id_in_group=1)
-                    officer.balance += officer.income
+                    officer.officer_bonus()
                     # officer_bonus += officer.income
 
                     audit = np.random.binomial(1, Constants.officer_review_probability)
@@ -721,7 +721,7 @@ class GameConsumer(WebsocketConsumer):
 
                     if audit:
                         if wrongful_conviction:
-                            officer.balance -= Constants.officer_reprimand_amount
+                            officer.officer_reprimand()
                             officer_reprimand = Constants.officer_reprimand_amount
 
                     officer.save()

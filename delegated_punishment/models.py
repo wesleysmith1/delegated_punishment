@@ -10,7 +10,6 @@ from otree.api import (
     BasePlayer,
 )
 from otree.db.models import Model, ForeignKey
-from decimal import *
 
 doc = """
 """
@@ -317,6 +316,31 @@ class Player(BasePlayer):
                 player.victim_count += 1
 
             player.save()
+
+    def civilian_fine(self):
+        with transaction.atomic():
+            player = Player.objects.select_for_update().get(pk=self.pk)
+            player.balance -= Constants.civilian_fine_amount
+            player.save()
+
+    def civilian_harvest(self):
+        with transaction.atomic():
+            player = Player.objects.select_for_update().get(pk=self.pk)
+            player.balance += self.income
+            player.save()
+
+    def officer_bonus(self):
+        with transaction.atomic():
+            player = Player.objects.select_for_update().get(pk=self.pk)
+            player.balance += self.income
+            player.save()
+
+    def officer_reprimand(self):
+        with transaction.atomic():
+            player = Player.objects.select_for_update().get(pk=self.pk)
+            player.balance -= Constants.officer_reprimand_amount
+            player.save()
+
 
 
 class DefendToken(Model):

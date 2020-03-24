@@ -74,9 +74,9 @@ let stealGameComponent = {
         checkLocation: function (that) {
 
             if (that.hitTest(this.$refs.htarget, '10%')) {
-                //location-center
+                //location-centerde
                 for (let i in this.maps) {
-                    let id = parseInt(this.maps[i]) + 2;
+                    let id = parseInt(this.maps[i]) + 1;
                     if (that.hitTest(this.$refs['prop' + id], '.000001')) {
                         let map = this.$refs['prop' + id][0].getBoundingClientRect();
                         this.calculateLocation(map, id);
