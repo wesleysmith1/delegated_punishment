@@ -1,4 +1,3 @@
-from otree.api import Currency as c, currency_range
 from . import pages
 from ._builtin import Bot
 from .models import Constants
@@ -19,8 +18,6 @@ class PlayerBot(Bot):
 
         yield (pages.Intermission)
 
-        # log.debug('why the fuck is it not working')
-        #
-        # yield Submission(pages.Game, dict(), timeout_happened=True)
+        yield Submission(pages.Game, dict(), timeout_happened=True)
 
         yield (pages.ResultsPage)

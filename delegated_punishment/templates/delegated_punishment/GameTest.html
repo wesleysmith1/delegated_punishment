@@ -1,0 +1,168 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+<div class="instructions well well-lg" style="">
+
+    {#<h3>#}
+    {#  Welcome#}
+    {#</h3>#}
+    {% block content %}
+        <style>
+            .otree-btn-next {
+                display: none;
+            }
+        </style>
+
+        <p style="font-size: 30px;">
+            Testing Game...
+        </p>
+
+        <script>
+
+            let player = {{ pjson|json }};
+            let dtokens = {{ dtokens|json }};
+            let frameSize = {{ balance_update_rate }};
+            let playerId = {{ player.id }};
+            let groupPlayerId = {{ player.id_in_group }};
+            let groupId = {{ player.group_id }};
+            let harvestScreen = '{{ timeout }}' === 'True';
+            let income = {{ player.income }};
+            let stealStart = {{ player.steal_start }};
+            let roundNumber = {{ subsession.round_number }};
+            let sessionId = {{ subsession.session_id }};
+            let defendTokenTotal = {{ defend_token_total }};
+            let timeout = '{{ timeout }}' === 'True';
+            let tutorialDuration = {{ tutorial_duration }};
+            let aMax = {{ a_max }};
+            let beta = {{ beta }};
+
+            let civilianFine = {{ civilian_fine }};
+            let mapSize = {{ civilian_map_size }};
+            let defendTokenSize = {{ defend_token_size }};
+
+            let reprimandAmount = {{ officer_reprimand_amount }};
+            let playerBalance = {{ player.balance }};
+            let reviewProbability = {{ officer_review_probability }};
+            let stealTimeoutTime = {{ steal_timeout_duration }};
+            let gameDurationSeconds = {{ game_duration_seconds}};
+
+
+            // testing state variables
+            var inputCount = 0;
+            var harvestStatus = 0;
+            var x = 100;
+            var y = 0;
+
+            var gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + groupId + '/');
+            gameSocket.onopen = (e) => {
+                startTimer();
+                if (groupPlayerId === 1) {
+                    roundStart();
+                    subscribeToBalance();
+                    startOfficerTest();
+                } else {
+                    startCivilianTest();
+                }
+            };
+            gameSocket.onmessage = (e) => {
+                let data = JSON.parse(e.data);
+                console.log(data);
+            };
+
+            function roundStart() {
+                send({'period_update': {'period_start': true}});
+            }
+
+            function startCivilianTest() {
+                stealPage();
+                setInterval(() => {
+                    if (inputCount % 2) {
+                        dragSteal();
+                    } else {
+                        updateSteal();
+                    }
+                }, 5000)
+            }
+
+            function startOfficerTest() {
+                setInterval(() => {
+                    if (inputCount % 2 === 0) {
+                        dragDefend()
+                    } else {
+                        updateDefend()
+                    }
+                    inputCount++;
+                }, 5000)
+            }
+
+            function dragSteal() {
+                send({'steal_token_drag': {'map': 0, 'x': 0, 'y': 0}})
+            }
+
+            function updateSteal(map=2, x=10, y=10) {
+                if ( map===groupPlayerId ) {
+                    console.log('CANNOT STEAL FROM OWN MAP');
+                    return;
+                }
+                send({'steal_token_update': {'map': map, 'x': x, 'y': y}})
+            }
+
+            function harvestUpdate() {
+                send({'harvest': {'status': harvestStatus}});
+                if (harvestStatus === 4) {
+                    harvestStatus = 0
+                }
+            }
+
+            function harvestPage() {
+                send({'toggle': { 'harvest': true, 'steal_reset': 18 }})
+            }
+
+            function stealPage() {
+                this.harvestStatus = 0;
+                send({'toggle': { 'harvest': false }})
+            }
+
+            function dragDefend(number=1) {
+                send({'defend_token_drag': {'number': number, 'map': 0, 'x': 0, 'y': 0}});
+                console.log('DRAG DEFEND')
+            }
+
+            function updateDefend(number=1, map=2, x=10, y=10) {
+                send({'defend_token_drag': {'number': 1, 'map': map, 'x': x, 'y': y}});
+                console.log('UPDATE DRAG')
+            }
+
+            function investigation(number=1, map=0, x=0, y=0) {
+                dragDefend(number, map, x, y);
+                send({'investigation_update': {'number': number, 'map': map, 'x':x, 'y':y}})
+            }
+
+            function subscribeToBalance() {
+                setInterval(() => {
+                    if (gameSocket.readyState === WebSocket.OPEN) {
+                        send({'balance': true});
+                    } else {
+                        console.log('the web socket is not connected')
+                    }
+                }, frameSize)
+            }
+
+            function startTimer() {
+                setTimeout(() => {
+                    document.getElementById('form').submit()
+                }, gameDurationSeconds * 1000)
+            }
+
+            function send(data_obj) {
+                data_obj['group_id'] = groupId;
+                data_obj['player_id'] = playerId;
+                data_obj['round_number'] = roundNumber;
+                data_obj['session_id'] = sessionId;
+                gameSocket.send(JSON.stringify(data_obj));
+            }
+
+        </script>
+
+    {% endblock %}
+</div>

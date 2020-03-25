@@ -69,7 +69,7 @@ SESSION_CONFIGS = [
     dict(
         name='delegated_punishment', 
         display_name="Delegated Punishment Game",
-        use_browser_bots=True,
+        use_browser_bots=False,
         num_demo_participants=6,
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,
