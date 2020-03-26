@@ -53,6 +53,8 @@
             var x = 100;
             var y = 0;
 
+            var numberPlayers = 6;
+
             var gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + groupId + '/');
             gameSocket.onopen = (e) => {
                 startTimer();
@@ -81,7 +83,7 @@
                     } else {
                         updateSteal();
                     }
-                }, 5000)
+                }, 1000)
             }
 
             function startOfficerTest() {
@@ -92,7 +94,7 @@
                         updateDefend()
                     }
                     inputCount++;
-                }, 5000)
+                }, 1000)
             }
 
             function dragSteal() {
@@ -100,10 +102,10 @@
             }
 
             function updateSteal(map=2, x=10, y=10) {
-                if ( map===groupPlayerId ) {
-                    console.log('CANNOT STEAL FROM OWN MAP');
-                    return;
-                }
+                map = groupPlayerId+1;
+                if (map > numberPlayers)
+                    map = 2;
+
                 send({'steal_token_update': {'map': map, 'x': x, 'y': y}})
             }
 

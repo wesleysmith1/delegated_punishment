@@ -18,8 +18,8 @@ doc = """
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
-    num_rounds = 10
-    # num_rounds = 1  # testing purposes
+    # num_rounds = 10
+    num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     defend_token_total = 8

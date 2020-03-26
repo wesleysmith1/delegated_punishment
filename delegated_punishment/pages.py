@@ -9,8 +9,8 @@ from delegated_punishment.helpers import skip_period
 class Game(Page):
 
     # the template can be changed to GameTest.html to. Each tab sends up test data at intervals to the backend
-    # template_name = 'delegated_punishment/GameTest.html'
-    template_name = 'delegated_punishment/Game.html'
+    template_name = 'delegated_punishment/GameTest.html'
+    # template_name = 'delegated_punishment/Game.html'
 
     def is_displayed(self):
         if skip_period(self.session, self.round_number):
