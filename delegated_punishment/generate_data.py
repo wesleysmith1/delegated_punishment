@@ -156,11 +156,11 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
             # reset defend token
             token_number = data['token_number']
-            defend_tokens[token_number] = format_defend_token(token_number, 0, 0, 0, 0, 0)
+            token_slot = data['defend_reset']
+            defend_tokens[token_number] = format_defend_token(token_number, token_slot, 0, 0, 0, 0)
 
             # add officer row
-            officer.officer_row(event_type, event_time,
-                                                     formatted_defend_tokens(defend_tokens))
+            officer.officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens))
 
         elif event_type == 'defend_token_drag':
 
@@ -172,8 +172,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             defend_tokens[token_number] = format_defend_token(token_number, 0, 0, 0, 0, 'NA')
 
             # add officer row
-            officer.officer_row(event_type, event_time,
-                                                     formatted_defend_tokens(defend_tokens))
+            officer.officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens))
 
         elif event_type == 'investigation_update':
 
@@ -186,8 +185,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             event_defend_tokens = formatted_defend_tokens(defend_tokens)
 
             # add officer row
-            officer.officer_row(event_type, event_time,
-                                                     formatted_defend_tokens(defend_tokens))
+            officer.officer_row(event_type, event_time, event_defend_tokens)
 
         elif event_type == 'defend_token_update':
 

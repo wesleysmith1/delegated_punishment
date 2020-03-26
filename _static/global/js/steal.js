@@ -148,7 +148,7 @@ let stealGameComponent = {
                     </div>
                     <div class="token-container">
                         <div class="steal-locations-container">
-                            <div class="steal-token" ref="steallocation1" id="steallocation1">
+                            <div class="steal-location" ref="steallocation1" id="steallocation1">
                                 <svg id="location" height="21" width="21">
                                     <line x1="0" y1="0" x2="21" y2="21" style="stroke:red;stroke-width:3;"/>       
                                     <line x1="21" y1="0" x2="0" y2="21" style="stroke:red;stroke-width:3;"/>       
@@ -157,7 +157,6 @@ let stealGameComponent = {
                                     Sorry, your browser does not support inline SVG.  
                                 </svg> 
                             </div>
-<!--                            todo: make right number of locations here-->
                             <div v-for="i in 19" class="steal-location" :ref='"steallocation" + (i+1)' :id='"steallocation" + (i+1)'>
                             </div>
                         </div>

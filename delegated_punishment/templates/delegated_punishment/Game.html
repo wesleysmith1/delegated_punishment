@@ -60,7 +60,7 @@
                 class="game-container"
                 v-if="isOfficer"
                 :maps="maps"
-                :officer-units="officerTokens"
+                :initial-defend-tokens="officerTokens"
                 :officer-income="income"
                 :investigation-count="investigationCount"
                 :defend-token-total="defendTokenTotal"
@@ -154,7 +154,6 @@
 
 </body>
 
-    <!-- timeout script -->
     <script id="websocket-redirect" src="{% static 'global/js/advance_slowest.js' %}"
         data-socket-url="{{ view.socket_url|safe }}"
         data-redirect-url="{{ view.redirect_url|safe }}"
@@ -272,6 +271,9 @@
                 //} else
                 if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens);
+                    this.officerTokens.forEach((t) => {
+                        t.slot = t.number;
+                    });
                 }
                 //    console.log(this.officerTokens);
                     // todo
@@ -311,7 +313,7 @@
 
 
                 // todo look into routing questions
-                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/')
+                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
                         this.startTimer()
                     };
@@ -319,10 +321,10 @@
                     this.gameSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
                         if (data.balance) {
-                            this.activeStealMaps = data.balance.active_maps
-                            let latestBalance = data.balance[this.groupPlayerId].balance
-                            let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count
-                            this.activeSteal = data.balance[this.groupPlayerId].map
+                            this.activeStealMaps = data.balance.active_maps;
+                            let latestBalance = data.balance[this.groupPlayerId].balance;
+                            let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count;
+                            this.activeSteal = data.balance[this.groupPlayerId].map;
 
                             if (latestBalance === this.balance) { // balance has not changed
                                 this.balanceColor = "black"
@@ -385,8 +387,6 @@
                     data.round_number = this.roundNumber
                     data.session_id = this.sessionId
 
-                    console.log(data)
-
                     this.gameSocket.send(JSON.stringify(data));
                 },
                 stealActive: function() {
@@ -445,7 +445,6 @@
                 },
                 investigationUpdate: function(item) {
                     // inform the api that the item is being dragged
-                    item.map = 0;
                     this.gameUpdate({
                         'investigation_update': item,
                     });
@@ -482,9 +481,9 @@
                         'steal_token_timeout': {'steal_location': x,}
                     })
                 },
-                defenseTokenReset: function(tokenNumber) {
+                defenseTokenReset: function(token) {
                     this.gameUpdate({
-                        'defend_token_reset': tokenNumber,
+                        'defend_token_reset': {'number': token.number, 'slot': token.slot},
                     });
                 },
                 showIntersection: function (i) {
@@ -519,7 +518,7 @@
                             labelText = '0';
                             labelColor = 'black';
                         }
-                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit);
+                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit); // todo fix this stuff
                         labelElement.style.color = labelColor;
                         labelElement.innerText = labelText;
 

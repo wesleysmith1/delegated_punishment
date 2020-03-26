@@ -26,7 +26,7 @@ let officerGameComponent = {
     },
     props: {
         maps: Array,
-        officerUnits: Array,
+        initialDefendTokens: Array,
         officerIncome: Number,
         groupPlayerId: Number,
         investigationCount: Number,
@@ -43,83 +43,123 @@ let officerGameComponent = {
             locationx: String,
             locationy: String,
             map: String,
-            tokenStatuses: []
+            activeCount: 0,
+            mutableDefendTokens: Array,
+            defendSlotStatuses: [],
         }
     },
     created: function () {
+        for (let i = 0; i < this.initialDefendTokens.length; i++)
+            this.defendSlotStatuses.push(true);
+
+        this.mutableDefendTokens = this.initialDefendTokens;
         this.locationx = '';
         this.locationy = '';
         this.map = '';
     },
     mounted: function () {
-        for (let i = 0; i < this.officerUnits.length; i++) {
-            let oGame = document.getElementById("officerGame");
+        for (let i = 0; i < this.mutableDefendTokens.length; i++) {
             let that = this;
-            let drag = Draggable.create("#unit" + i, {
+            let drag = Draggable.create("#unit" + (i+1), {
                 minimumMovement: .01,
-                bounds: document.getElementById("officerGame"), //todo add ref stuff after vuex is implemented
+                bounds: this.$refs['officerGame'],
                 onDragStart: function () {
-                    that.tokenDragStart(this, that.officerUnits[i])
+                    that.tokenDragStart(this, that.mutableDefendTokens[i]);
+                    // update map as dragging and adjust which tokens are active
+                    if (that.mutableDefendTokens[i].map === 0) {
+                        that.activeCount++;
+                        that.defendSlotStatuses[that.mutableDefendTokens[i].slot-1] = false; // we should set their last location not based off their number dumdum
+                    }
+                    that.mutableDefendTokens[i].map = -1;
                 },
                 onDragEnd: function () {
-                    that.checkLocation(this, that.officerUnits[i])
+                    that.validateLocation(this, that.mutableDefendTokens[i])
                 },
             });
-            this.tokenStatuses.push(drag);
-            // this.disableToken(drag);
         }
     },
     methods: {
         disableToken: function(id) {
-            let selector = "#unit" + id
-            let dragToken = Draggable.get(selector)
+            let selector = "#unit" + id;
+            let dragToken = Draggable.get(selector);
             dragToken.disable();
             // gsap.to(selector, {background: 'red'});
             setTimeout(() => {
                 dragToken.enable()
             }, 1000)
         },
-        tokenDragStart: function (that, item) {
-            // console.log(item)
-            this.$emit('token-drag', item);
+        tokenDragStart: function (that, token) {
+            this.$emit('token-drag', token);
         },
-        checkLocation: function (that, item) {
+        validateLocation: function (that, token) {
             if (that.hitTest(this.$refs.officerGame, '100%')) {
                 for (let i in this.maps) {
                     let id = parseInt(this.maps[i]) + 1;
 
                     if (that.hitTest(this.$refs['map' + id], '.000001%')) {
                         this.map = id;
-                        item.map = id;
+                        token.map = id;
                         let map = this.$refs['map' + id][0].getBoundingClientRect();
-                        this.calculateLocation(map, that, item);
+                        this.calculateLocation(map, that, token);
                         return;
                     }
                 }
 
                 if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
-                    item.map = 11;
-                    this.$emit('investigation-update', item)
+                    token.map = 11;
+                    this.$emit('investigation-update', token);
                     return;
                 }
             }
 
-            gsap.to(that.target, 0.5, {x: 0, y: 0, ease: Back.easeOut});
-            this.$emit('defense-token-reset', item.number)
+            this.resetDefendToken(that.target, token)
         },
-        calculateLocation: function(map, unitContext, item) {
-            let unit = unitContext.target.getBoundingClientRect()
+        calculateLocation: function(map, unitContext, token) {
+            let unit = unitContext.target.getBoundingClientRect();
             this.locationy = unit.y - map.y - 1;
             this.locationx = unit.x - map.x - 1;
-            item.x = this.locationx;
-            item.y = this.locationy;
-            this.disableToken(item.number-1)
+            token.x = this.locationx;
+            token.y = this.locationy;
+            this.disableToken(token.number-1);
             // update api with unit location
-            this.updateDefendToken(item);
+            this.updateDefendToken(token);
         },
-        updateDefendToken: function(item) {
-            // console.log('item: ', item);
-            this.$emit('token-update', item);
+        updateDefendToken: function(token) {
+            this.$emit('token-update', token);
+        },
+        resetDefendToken: function(tokenElm, token) {
+            // calculate where to send
+            let randSlot = this.randomLocation();
+            let i = 0;
+            let count = 0;
+            for(i; i<this.defendSlotStatuses.length; i++) {
+                if (!this.defendSlotStatuses[i])
+                    count++;
+                else
+                    continue;
+
+                // did we reach the randth element?
+                if (count === randSlot)
+                    break
+            }
+
+            let start = this.$refs['defendlocation' + (token.number)][0].getBoundingClientRect();
+            let dest = this.$refs['defendlocation' + (i+1)][0].getBoundingClientRect();
+            gsap.to(tokenElm, 0, {x: dest.x - start.x, y: dest.y - start.y});
+
+            // reset values slot status to occupied
+            this.activeCount--;
+            this.defendSlotStatuses[token.slot-1] = true;
+            token.map = 0;
+            token.slot = i+1;
+
+            this.$emit('defense-token-reset', token);
+
+        },
+        randomLocation: function() {
+            // returns rand number 1-number of open defense token slots
+            let count = Math.floor(Math.random() * this.activeCount) + 1;
+            return count;
         }
     },
     template:
@@ -153,7 +193,20 @@ let officerGameComponent = {
                         <div style="clear: both;"></div>
                     </div>
                     <div class="officer-units" style="display:flex;">
-                        <div v-for="(unit, index) in officerUnits" :id="'unit'+index" class="officer-unit" v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }" :ref='"unit" + unit'>
+                        <div 
+                            v-for="(unit, index) in mutableDefendTokens" 
+                            :ref="'defendlocation'+(unit.number)"
+                            :id="'defendslot' + (unit.number)" 
+                            class="defend-location" 
+                            v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }"
+                        >
+                            <div 
+                                :id="'unit' + unit.number" 
+                                :ref='"unit" + unit.number'
+                                class="officer-unit" 
+                                v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }"
+                            >
+                            </div>
                         </div>
                     </div>
                     

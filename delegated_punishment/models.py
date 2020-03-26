@@ -352,6 +352,7 @@ class DefendToken(Model):
     x2 = models.FloatField(initial=0)
     y2 = models.FloatField(initial=0)
     last_updated = models.FloatField(blank=True)
+    slot = models.IntegerField(initial=-1)
 
     def __str__(self):
         str(self.x) + "," + str(self.y)

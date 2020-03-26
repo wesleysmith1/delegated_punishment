@@ -51,3 +51,15 @@
     visibility: hidden;
     z-index: 900;
 }
+
+/*.defense-locations-container {*/
+/*    display: flex;*/
+/*    justify-content: space-between;*/
+
+/*    border: 1px solid black;*/
+/*    padding: 20px;*/
+/*}*/
+
+.officer-units .defend-location {
+    background: orange;
+}

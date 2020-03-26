@@ -328,13 +328,18 @@ class GameConsumer(WebsocketConsumer):
             # print('LOCATION DRAG TRANSCATION COMPLETE AND map SET TO ' + str(player.map))
 
         elif data_json.get('defend_token_reset'):
-            token_number = data_json['defend_token_reset']
+            token_number = data_json['defend_token_reset']['number']
+            token_slot = data_json['defend_token_reset']['slot']
+
+            # todo: should we save the defendtoken slot here?
+            # DefendToken.objects.get(group_id=group_id, number=token_number, ).update(slot=token_slot)
 
             game_data_dict = {
                 "event_type": "defend_token_reset",
                 "event_time": event_time,
                 "player": player.id_in_group,
                 "token_number": token_number,
+                "defend_reset": token_slot,
             }
             GameData.objects.create(
                 event_time=event_time,
