@@ -28,7 +28,7 @@ let stealGameComponent = {
     },
     mounted: function () {
         let that = this;
-        let selector = '#location'
+        let selector = '#location';
         Draggable.create(selector, {
             minimumMovement: .01,
             bounds: that.$refs.stealcontainer,
@@ -88,7 +88,7 @@ let stealGameComponent = {
             this.$emit('location-token-reset', this.randomLocation())
         },
         calculateLocation(map, map_id) {  // prop_id is more like the player_id
-            let location = this.$refs.location.getBoundingClientRect()
+            let location = this.$refs.location.getBoundingClientRect();
             this.locationx = location.x - map.x + 2 - 1; // + radius - border
             this.locationy = location.y - map.y + 2 - 1;
 

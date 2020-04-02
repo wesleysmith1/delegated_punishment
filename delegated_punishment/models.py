@@ -18,15 +18,15 @@ doc = """
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
-    # num_rounds = 10
-    num_rounds = 1  # testing purposes
+    num_rounds = 10
+    # num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
     defend_token_total = 8
 
     epoch = datetime.datetime.utcfromtimestamp(0)
 
-    start_balance = 0
+    civilian_start_balance = 0
 
     # these variables will be subject to change the most
     civilian_fine_amount = 120
@@ -246,7 +246,7 @@ class Player(BasePlayer):
     map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
     roi = models.IntegerField(initial=0)
-    balance = models.FloatField(initial=Constants.start_balance) #todo: we can make this a decimal field btw
+    balance = models.FloatField(initial=Constants.civilian_start_balance)
     harvest_status = models.IntegerField(initial=0)
     harvest_screen = models.BooleanField(initial=True)
     income = models.IntegerField(initial=40)

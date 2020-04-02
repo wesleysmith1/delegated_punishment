@@ -14,12 +14,251 @@
         </style>
 
         <p style="font-size: 30px;">
-            Testing Game...
+            Testing Game... Player {{ player.id_in_group }}
         </p>
 
         <script>
+            class Player {
+                constructor(playerId, idInGroup, groupId, roundNumber, sessionId) {
+                    this.playerId = playerId;
+                    this.idInGroup = idInGroup;
+                    this.groupId = groupId;
+                    this.roundNumber = roundNumber;
+                    this.sessionId = sessionId;
+                    this.x = 10;
+                    this.y = 10;
+                    this.harvestStatus = 0;
+                }
 
-            let player = {{ pjson|json }};
+                dragSteal() {
+                    return {'steal_token_drag': {'map': -1, 'x': 0, 'y': 0}};
+                }
+
+                updateSteal(info) {
+                    return {'steal_token_update': {'map': info.map, 'x': info.x, 'y': info.y}}
+                }
+
+                harvestUpdate() {
+                    let data =  {'harvest': {'status': this.harvestStatus}};
+                    if (this.harvestStatus === 4) {
+                        this.harvestStatus = 0
+                    }
+                    return data
+                }
+
+                harvestPage() {
+                    return {'toggle': { 'harvest': true, 'steal_reset': 18 }}
+                }
+
+                stealPage() {
+                    this.harvestStatus = 0;
+                    return {'toggle': { 'harvest': false }}
+                }
+
+                dragDefend(info) {
+                    console.log('DRAG DEFEND');
+                    return {'defend_token_drag': {'number': info.tokenNumber, 'map': 0, 'x': 0, 'y': 0}}
+                }
+
+                updateDefend(info) {
+                    console.log('UPDATE DRAG');
+                    return {'defend_token_update': {'number': info.tokenNumber, 'map': info.map, 'x': info.x, 'y': info.y}}
+                }
+
+                updateInvestigation(info) {
+                    // this.dragDefend(info);
+                    return {'investigation_update': {'number': info.tokenNumber, 'map': 0, 'x':0, 'y':0}}
+                }
+
+                roundStart() {
+                    if (this.idInGroup === 1)
+                        return {'period_update': {'period_start': true}};
+                    else {
+                        console.log('PERIOD START DID NOT WORK')
+                        return null;
+                    }
+                }
+            }
+
+            class Tester {
+                constructor(player, test) {
+
+                    this.player = player;
+                    this.test = test;
+
+                    this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.player.groupId + '/');
+
+                    this.gameSocket.onopen = (e) => {
+                        console.log('socket opened');
+
+                        this.startTimer();
+                        if (this.player.idInGroup === 1) {
+                            debugger;
+                            this.send(this.player.roundStart());
+                            this.subscribeToBalance();
+                        }
+
+                        this.beginTest();
+                    };
+
+                    this.gameSocket.onmessage = (e) => {
+                        let data = JSON.parse(e.data);
+                        console.log('data from server: ', data);
+                    };
+
+                    this.gameSocket.onclose = (e) => {
+                        console.log('channel closed: ', e.reason)
+                    }
+                }
+
+                beginTest() {
+                    if (!this.test) {
+                        if (this.player.idInGroup === 1)
+                            this.startOfficerThrottle();
+                        else
+                            this.startCivilianThrottle();
+                    } else {
+                        let step = 1;
+                        let stepDuration = 5000;
+                        for (let i = 0; i < this.test.length; i++) {
+                            let item = this.test[i];
+                            if (item.idInGroup === this.player.idInGroup) {
+                                setTimeout(()=> {
+                                    this.execute(item)
+                                }, stepDuration * i);
+                            }
+                        }
+                    }
+                }
+
+                execute(item) {
+                    item.actions.forEach((action) => {
+                        let actionData = [];
+                        if (action.type === 'steal_page') {
+                            actionData.push(this.player.stealPage());
+                        } else if (action.type === 'harvest_page') {
+                            actionData.push(this.player.harvestPage());
+                        } else if (action.type === 'harvest') {
+                            actionData.push(this.player.harvestUpdate());
+                        } else if (action.type === 'steal') {
+                            actionData.push(this.player.dragSteal());
+                            actionData.push(this.player.updateSteal(action));
+                        } else if (action.type === 'defend') {
+                            actionData.push(this.player.dragDefend(action));
+                            actionData.push(this.player.updateDefend(action));
+                        } else if (action.type === 'investigate') {
+                            actionData.push(this.player.dragDefend(action));
+                            actionData.push(this.player.updateInvestigation(action));
+                        }
+                        if (actionData)
+                            actionData.forEach((data) => this.send(data));
+                    });
+                }
+
+                startCivilianThrottle() {
+                    let inputCount = 0;
+                    this.send(this.player.stealPage());
+                    let stealMap = this.player.idInGroup === 2 ? 3: 2;
+                    setInterval(() => {
+                        inputCount++;
+                        if (inputCount % 2) {
+                            let data = this.player.dragSteal();
+                            this.send(data);
+                        } else {
+                            let data = this.player.updateSteal({map:stealMap, x:100, y:100});
+                            this.send(data);
+                        }
+                    }, 1000);
+                }
+
+                startOfficerThrottle() {
+                    let inputCount = 0;
+                    setInterval(() => {
+                        if (inputCount % 2 === 0) {
+                            let data = this.player.dragDefend({tokenNumber:1});
+                            this.send(data);
+                        } else {
+                            let data = this.player.updateDefend({tokenNumber:1, map:2, x:10, y:10});
+                            this.send(data);
+                        }
+                        inputCount++;
+                    }, 1000);
+                }
+
+                startTimer() {
+                    setTimeout(() => {
+                        if (this.player.idInGroup === 1) {
+                            this.send({'period_update': {'period_end': true}})
+                        }
+                        document.getElementById('form').submit()
+                    }, gameDurationSeconds * 1000)
+                }
+
+                subscribeToBalance() {
+                    setInterval(() => {
+                        if (this.gameSocket.readyState === WebSocket.OPEN) {
+                            this.send({'balance': true});
+                        } else {
+                            console.log('the web socket is not connected')
+                        }
+                    }, frameSize)
+                }
+
+                send(data_obj) {
+                    if (!data_obj) {
+                        console.log('data_object empty in send')
+                        return;
+                    }
+
+                    console.log('sending data to server', data_obj)
+
+                    data_obj['group_id'] = player.groupId;
+                    data_obj['player_id'] = player.playerId;
+                    data_obj['round_number'] = player.roundNumber;
+                    data_obj['session_id'] = player.sessionId;
+                    this.gameSocket.send(JSON.stringify(data_obj));
+                }
+            }
+
+            class Action {
+                constructor(action) {
+                    this.type = action.type;
+                    this.x = action.x;
+                    this.y = action.y;
+                    this.map = action.map;
+                    this.tokenNumber = action.tokenNumber;
+                }
+            }
+            /*
+                0: steal_page
+                1: harvest_page
+                2: harvest
+                3: steal
+                4: defend
+                5: investigate
+            */
+            let test_01 = [
+                // 2 toggles to steal and steal from 3
+                {"idInGroup": 2, "actions": [new Action({type:'steal_page'}), new Action({type:'steal', x:10, y:10, map:3}), ]},
+                // 1 intersects 3 on map 3
+                {"idInGroup": 1, "actions": [new Action({type:'defend', x:5, y:5, map:3, tokenNumber:1})]},
+                // 3 harvests
+                {"idInGroup": 3, "actions": [new Action({type:'harvest',}), new Action({type:'harvest',}), new Action({type:'harvest',}), new Action({type:'harvest',})]},
+                // 4 toggles to steal, steals from 2
+                {"idInGroup": 4, "actions": [new Action({type:'steal_page'}), new Action({type:'steal', x:10, y:10, map:2})]},
+                // 1 adds investigate and intersects payer 4 on map 2
+                {"idInGroup": 1, "actions": [new Action({type:'investigate', tokenNumber:2,}), new Action({type:'defend', map:2, x:5, y:5, tokenNumber:3})]},
+                // 2 steal from player 5
+                {"idInGroup": 2, "actions": [new Action({type:'steal', map:5, x:10, y:10})]},
+                // 4 steal from player 5
+                {"idInGroup": 4, "actions": [new Action({type:'steal', map:5, x:10, y:10})]},
+                // 1 intersects players 2 and 4
+                {"idInGroup": 1, "actions": [new Action({type:'defend', map:5, x:5, y:5, tokenNumber:3})]},
+                // 2 toggles to harvest page
+                {"idInGroup": 2, "actions": [new Action({type:'harvest_page'})]},
+            ];
+
+            // let player = {{ pjson|json }};
             let dtokens = {{ dtokens|json }};
             let frameSize = {{ balance_update_rate }};
             let playerId = {{ player.id }};
@@ -48,121 +287,13 @@
 
 
             // testing state variables
-            var inputCount = 0;
             var harvestStatus = 0;
             var x = 100;
             var y = 0;
 
-            var numberPlayers = 6;
-
-            var gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + groupId + '/');
-            gameSocket.onopen = (e) => {
-                startTimer();
-                if (groupPlayerId === 1) {
-                    roundStart();
-                    subscribeToBalance();
-                    startOfficerTest();
-                } else {
-                    startCivilianTest();
-                }
-            };
-            gameSocket.onmessage = (e) => {
-                let data = JSON.parse(e.data);
-                console.log(data);
-            };
-
-            function roundStart() {
-                send({'period_update': {'period_start': true}});
-            }
-
-            function startCivilianTest() {
-                stealPage();
-                setInterval(() => {
-                    if (inputCount % 2) {
-                        dragSteal();
-                    } else {
-                        updateSteal();
-                    }
-                }, 1000)
-            }
-
-            function startOfficerTest() {
-                setInterval(() => {
-                    if (inputCount % 2 === 0) {
-                        dragDefend()
-                    } else {
-                        updateDefend()
-                    }
-                    inputCount++;
-                }, 1000)
-            }
-
-            function dragSteal() {
-                send({'steal_token_drag': {'map': 0, 'x': 0, 'y': 0}})
-            }
-
-            function updateSteal(map=2, x=10, y=10) {
-                map = groupPlayerId+1;
-                if (map > numberPlayers)
-                    map = 2;
-
-                send({'steal_token_update': {'map': map, 'x': x, 'y': y}})
-            }
-
-            function harvestUpdate() {
-                send({'harvest': {'status': harvestStatus}});
-                if (harvestStatus === 4) {
-                    harvestStatus = 0
-                }
-            }
-
-            function harvestPage() {
-                send({'toggle': { 'harvest': true, 'steal_reset': 18 }})
-            }
-
-            function stealPage() {
-                this.harvestStatus = 0;
-                send({'toggle': { 'harvest': false }})
-            }
-
-            function dragDefend(number=1) {
-                send({'defend_token_drag': {'number': number, 'map': 0, 'x': 0, 'y': 0}});
-                console.log('DRAG DEFEND')
-            }
-
-            function updateDefend(number=1, map=2, x=10, y=10) {
-                send({'defend_token_drag': {'number': 1, 'map': map, 'x': x, 'y': y}});
-                console.log('UPDATE DRAG')
-            }
-
-            function investigation(number=1, map=0, x=0, y=0) {
-                dragDefend(number, map, x, y);
-                send({'investigation_update': {'number': number, 'map': map, 'x':x, 'y':y}})
-            }
-
-            function subscribeToBalance() {
-                setInterval(() => {
-                    if (gameSocket.readyState === WebSocket.OPEN) {
-                        send({'balance': true});
-                    } else {
-                        console.log('the web socket is not connected')
-                    }
-                }, frameSize)
-            }
-
-            function startTimer() {
-                setTimeout(() => {
-                    document.getElementById('form').submit()
-                }, gameDurationSeconds * 1000)
-            }
-
-            function send(data_obj) {
-                data_obj['group_id'] = groupId;
-                data_obj['player_id'] = playerId;
-                data_obj['round_number'] = roundNumber;
-                data_obj['session_id'] = sessionId;
-                gameSocket.send(JSON.stringify(data_obj));
-            }
+            let player = new Player(playerId, groupPlayerId, groupId, roundNumber, sessionId);
+            let tester = new Tester(player);
+            // let tester = new Tester(player, test_01);
 
         </script>
 

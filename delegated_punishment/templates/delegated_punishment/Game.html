@@ -273,6 +273,7 @@
                     this.officerTokens = JSON.parse(dtokens);
                     this.officerTokens.forEach((t) => {
                         t.slot = t.number;
+                        t.map = 0; // todo: make this loaded from the database
                     });
                 }
                 //    console.log(this.officerTokens);

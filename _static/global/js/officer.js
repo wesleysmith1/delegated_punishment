@@ -49,10 +49,13 @@ let officerGameComponent = {
         }
     },
     created: function () {
+        this.mutableDefendTokens = this.initialDefendTokens;
+        // sort slot data
+        this.mutableDefendTokens.sort((a, b) => { return a.number - b.number });
+
         for (let i = 0; i < this.initialDefendTokens.length; i++)
             this.defendSlotStatuses.push(true);
 
-        this.mutableDefendTokens = this.initialDefendTokens;
         this.locationx = '';
         this.locationy = '';
         this.map = '';
@@ -64,13 +67,15 @@ let officerGameComponent = {
                 minimumMovement: .01,
                 bounds: this.$refs['officerGame'],
                 onDragStart: function () {
-                    that.tokenDragStart(this, that.mutableDefendTokens[i]);
+                    let token = that.mutableDefendTokens[i]
+                    that.tokenDragStart(this, token);
                     // update map as dragging and adjust which tokens are active
-                    if (that.mutableDefendTokens[i].map === 0) {
+                    if (token.map === 0) {
                         that.activeCount++;
-                        that.defendSlotStatuses[that.mutableDefendTokens[i].slot-1] = false; // we should set their last location not based off their number dumdum
+                        that.defendSlotStatuses[token.slot-1] = false;
+                        token.slot = 0;
                     }
-                    that.mutableDefendTokens[i].map = -1;
+                    token.map = -1;
                 },
                 onDragEnd: function () {
                     that.validateLocation(this, that.mutableDefendTokens[i])
@@ -120,16 +125,17 @@ let officerGameComponent = {
             this.locationx = unit.x - map.x - 1;
             token.x = this.locationx;
             token.y = this.locationy;
-            this.disableToken(token.number-1);
+            this.disableToken(token.number);
             // update api with unit location
             this.updateDefendToken(token);
         },
         updateDefendToken: function(token) {
             this.$emit('token-update', token);
         },
-        resetDefendToken: function(tokenElm, token) {
+        getSlot: function() {
             // calculate where to send
             let randSlot = this.randomLocation();
+
             let i = 0;
             let count = 0;
             for(i; i<this.defendSlotStatuses.length; i++) {
@@ -140,18 +146,22 @@ let officerGameComponent = {
 
                 // did we reach the randth element?
                 if (count === randSlot)
-                    break
+                    return i+1;
             }
+            return -1;
+        },
+        resetDefendToken: function(tokenElm, token) {
+            let slot = this.getSlot();
 
             let start = this.$refs['defendlocation' + (token.number)][0].getBoundingClientRect();
-            let dest = this.$refs['defendlocation' + (i+1)][0].getBoundingClientRect();
+            let dest = this.$refs['defendlocation' + (slot)][0].getBoundingClientRect();
             gsap.to(tokenElm, 0, {x: dest.x - start.x, y: dest.y - start.y});
 
             // reset values slot status to occupied
             this.activeCount--;
-            this.defendSlotStatuses[token.slot-1] = true;
+            this.defendSlotStatuses[slot-1] = true;
             token.map = 0;
-            token.slot = i+1;
+            token.slot = slot;
 
             this.$emit('defense-token-reset', token);
 
@@ -178,7 +188,6 @@ let officerGameComponent = {
                             </svg>
                       </div>
                       <div class="map-label">
-                        Civilian {{map+1}}
                       </div>
                     </div>
                 </div>

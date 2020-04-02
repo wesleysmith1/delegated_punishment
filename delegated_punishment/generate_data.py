@@ -385,7 +385,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
             victim.civilian_row(event_type, event_time, punished='0')
 
-            # add officer data
+            # add officer data todo: this appears even when there is not a fucking intersection
             officer.officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens),
                                 intersection_data=formatted_intersection, punished=str(officer_reprimand))
 
@@ -467,6 +467,7 @@ def csv_header():
         'Player_Punished',
         'Player_DefendTokens',
         'Group_PunishmentEvents',
+        'Group_PK',
     ]
     return labels
 
@@ -503,6 +504,7 @@ def format_row(pid, r, period_start, meta_data, id_in_session):
         r['punished'],
         r['defend_tokens'],
         r['intersection_events'],
+        meta_data['group_pk'],
     ]
 
 
@@ -528,7 +530,12 @@ class CPlayer:
         self.id_in_session = id_in_session
         self.last_updated = start
         self.player_id = id
-        self.balance = Constants.start_balance
+
+        if self.player_id == 1:
+            self.balance = Constants.officer_start_balance
+        else:
+            self.balance = Constants.civilian_start_balance
+
         self.roi = 0
         self.t_formatter = time_formatter
 
