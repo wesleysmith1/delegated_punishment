@@ -9,7 +9,7 @@ from django.db import transaction
 import logging
 log = logging.getLogger(__name__)
 
-from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData
+from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, randomize_location
 
 
 class GameConsumer(WebsocketConsumer):
@@ -209,7 +209,7 @@ class GameConsumer(WebsocketConsumer):
 
             # update users with investigation token count
             if investigation_change:
-                token_count = len(DefendToken.objects.filter(group_id=group_id, map=11))  # make this null
+                token_count = DefendToken.objects.filter(group_id=group_id, map=11).count
                 # print('TOTAL TOKEN COUNT ' + str(token_count))
 
                 # send token count to group
@@ -391,7 +391,7 @@ class GameConsumer(WebsocketConsumer):
             token.last_updated = event_time
             token.save()
             # get investigation token count
-            token_count = len(DefendToken.objects.filter(group_id=group_id, map=11))  # make this null
+            token_count = DefendToken.objects.filter(group_id=group_id, map=11).count()
             # print('TOTAL TOKEN COUNT ' + str(token_count))
 
             game_data_dict = {
@@ -550,7 +550,7 @@ class GameConsumer(WebsocketConsumer):
                                 'token_y': token.y,
                                 'token_x2': token.x2,
                                 'token_y2': token.y2,
-                                'steal_reset': randrange(Constants.defend_token_total)+1
+                                'steal_reset': randomize_location()
                             }
 
                             # update player info
@@ -613,7 +613,7 @@ class GameConsumer(WebsocketConsumer):
                                 'token_y': token.y,
                                 'token_x2': token.x2,
                                 'token_y2': token.y2,
-                                'steal_reset': randrange(Constants.defend_token_total)+1
+                                'steal_reset': randomize_location()
                             }
                             intersections.append(data)
 
@@ -650,7 +650,7 @@ class GameConsumer(WebsocketConsumer):
                 # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
 
-            num_investigators = len(DefendToken.objects.filter(group_id=group_id, map=11))
+            num_investigators = DefendToken.objects.filter(group_id=group_id, map=11).count()
             # print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
 
             # intersection objects for Game Data

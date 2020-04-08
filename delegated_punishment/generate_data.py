@@ -9,7 +9,12 @@ from delegated_punishment.helpers import write_session_dir, TimeFormatter
 def generate_csv(session=None, subsession=None, meta_data=None):
 
     if not meta_data:
-        player_ids_in_session = steal_starts = [1, 1, 1, 1, 1, 1]
+        player_ids_in_session = []
+        steal_starts = []
+        for i in Constants.players_per_group:
+            player_ids_in_session.append(1)
+            steal_starts.append(1)
+
         group_id = 9
         group_pk = None
         round_number = 9

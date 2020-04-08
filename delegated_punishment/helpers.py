@@ -1,8 +1,8 @@
 import time
-from delegated_punishment.models import Constants
 import os
 import math
 from decimal import *
+from random import randrange
 getcontext().prec = 17
 
 

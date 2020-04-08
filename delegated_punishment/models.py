@@ -10,6 +10,10 @@ from otree.api import (
     BasePlayer,
 )
 from otree.db.models import Model, ForeignKey
+from random import randrange
+
+import logging
+log = logging.getLogger(__name__)
 
 doc = """
 """
@@ -54,6 +58,8 @@ class Constants(BaseConstants):
     officer_start_balance = 1000
 
     steal_timeout_duration = 200000
+
+    steal_token_positions = 20
 
 
 class Subsession(BaseSubsession):
@@ -162,17 +168,15 @@ class Group(BaseGroup):
 
     def balance_update(self, time):
         players = self.get_players()
+        # players = Player.objects.filter(group_id=self.id).values_list('map', 'last_updated', 'balance', 'roi', 'id_in_group', 'victim_count', 'steal_count')
+
         balance_update = dict()
 
         # maps being stolen from
-        active_maps = {
-            1: 0,
-            2: 0,
-            3: 0,
-            4: 0,
-            5: 0,
-            6: 0,
-        }
+        active_maps = {}
+
+        for i in range(1, Constants.players_per_group+1):
+            active_maps[i] = 0
 
         for player in players:
             if player.map > 0:
@@ -192,10 +196,11 @@ class Group(BaseGroup):
         players = self.get_players()
 
         # Initial civilian steal locations for csv
-        player_ids_in_session = steal_starts = [-1, -1, -1, -1, -1, -1]
+        player_ids_in_session = []
+        steal_starts = []
         for p in players:
-            steal_starts[p.id_in_group-1] = p.participant.vars['steal_start']
-            player_ids_in_session[p.id_in_group-1] = p.participant.id_in_session
+            steal_starts.append(p.participant.vars['steal_start'])
+            player_ids_in_session.append(p.participant.id_in_session)
 
         officer_participant = self.get_player_by_id(1).participant
         officer_bonus = officer_participant.vars['officer_bonus']
@@ -235,9 +240,8 @@ class Group(BaseGroup):
         #     print('THERE WAS AN ERROR WITH CSV GENERATION FOR PERIOD: {}'.format(self.subsession.round_number))
 
 
-def rand_location():
-    from random import randrange
-    return randrange(Constants.defend_token_total)+1
+def randomize_location():
+    return randrange(Constants.steal_token_positions)+1
 
 
 class Player(BasePlayer):
@@ -250,7 +254,7 @@ class Player(BasePlayer):
     harvest_status = models.IntegerField(initial=0)
     harvest_screen = models.BooleanField(initial=True)
     income = models.IntegerField(initial=40)
-    steal_start = models.IntegerField(initial=rand_location)
+    steal_start = models.IntegerField(initial=randomize_location)
     steal_count = models.IntegerField(initial=0)
     victim_count = models.IntegerField(initial=0)  # number of other players stealing from player
     steal_total = models.FloatField(initial=0)
@@ -272,7 +276,8 @@ class Player(BasePlayer):
         if self.roi == 0:
             return self.balance
         elif not self.last_updated:
-            return -99 #todo fix this shit
+            log.info(f'player: {self.pk} does not have last updated field initialized')
+            return -99
         else:
             seconds_passed = time - self.last_updated
             return self.balance + (self.roi * seconds_passed)
@@ -342,7 +347,6 @@ class Player(BasePlayer):
             player.save()
 
 
-
 class DefendToken(Model):
     group = ForeignKey(Group, on_delete='CASCADE')
     number = models.IntegerField()
@@ -353,9 +357,6 @@ class DefendToken(Model):
     y2 = models.FloatField(initial=0)
     last_updated = models.FloatField(blank=True)
     slot = models.IntegerField(initial=-1)
-
-    def __str__(self):
-        str(self.x) + "," + str(self.y)
 
     def to_dict(self):
         return {"number": self.number, "map": self.map, "x": self.x, "y": self.y}

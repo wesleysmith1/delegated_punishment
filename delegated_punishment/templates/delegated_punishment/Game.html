@@ -32,6 +32,8 @@
         var tutorialDuration = {{ tutorial_duration }};
         var aMax = {{ a_max }};
         var beta = {{ beta }};
+        var playersPerGroup = {{ players_per_group }};
+        var stealTokenPositions = {{ steal_token_positions }};
 
         var civilianFine = {{ civilian_fine }};
         var mapSize = {{ civilian_map_size }};
@@ -98,6 +100,7 @@
                         :active-steal-maps="activeStealMaps"
                         :fine-notification="fineNotification"
                         :steal-timeout-time="stealTimeoutTime"
+                        :steal-token-positions="stealTokenPositions"
                         @location-drag="locationDrag"
                         @location-update="locationUpdate"
                         @location-token-reset="locationTokenReset"
@@ -179,6 +182,7 @@
                 playerId: null,
                 groupPlayerId: null,
                 groupId: null,
+                playersPerGroup: null,
                 roundNumber: null,
                 sessionId: null,
                 playerLocation: {},
@@ -217,6 +221,7 @@
                 reprimandAmount: 0,
                 reviewProbability: 0,
                 stealTimeoutTime: 10000,
+                stealTokenPositions: null,
             },
             created: function () {
 
@@ -228,6 +233,8 @@
                 this.playerId = playerId;
                 this.groupPlayerId = groupPlayerId;
                 this.groupId = groupId;
+                this.playersPerGroup = playersPerGroup;
+                this.stealTokenPositions = stealTokenPositions;
                 this.isOfficer = this.groupPlayerId == 1;
                 // this.harvestScreen = harvestScreen;
                 this.roundNumber = roundNumber;
@@ -287,7 +294,9 @@
                 //}
 
                 // player maps
-                this.maps = [1, 2, 3, 4, 5];
+                this.maps = [];
+                for (let i = 1; i < this.playersPerGroup; i++)
+                    this.maps.push(i)
 
                 //this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
                 //this.gameSyncSocket.onopen = (e) => {

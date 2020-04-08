@@ -183,7 +183,7 @@ let officerGameComponent = {
                             <div v-for="player_id in 5" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
                                 -1
                             </div>
-                            <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
+                            <svg v-for="player_id in maps" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
                                 <circle cx="3" cy="3" r="2" fill="black" />
                             </svg>
                       </div>
