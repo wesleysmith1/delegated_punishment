@@ -656,8 +656,9 @@ class GameConsumer(WebsocketConsumer):
             # intersection objects for Game Data
             game_data_intersections = []
 
-            # increased for each investigated intersection
-            # officer_bonus = 0
+            # increased for each investigated intersection and civilian fine
+            officer_bonus = 0
+            civilian_fine = 0
 
             for inter in intersections:
                 # print(inter)
@@ -702,6 +703,9 @@ class GameConsumer(WebsocketConsumer):
                     convicted_player.civilian_fine()
                     convicted_player.save()
 
+                    # increment counter
+                    civilian_fine += 1
+
                     # check if guilty player was convicted
                     wrongful_conviction = True
                     if convicted_pid == culprit:
@@ -717,7 +721,9 @@ class GameConsumer(WebsocketConsumer):
                     else:
                         officer = Player.objects.get(group_id=group_id, id_in_group=1)
                     officer.officer_bonus()
-                    # officer_bonus += officer.income
+
+                    # increment counter
+                    officer_bonus += 1
 
                     audit = np.random.binomial(1, Constants.officer_review_probability)
                     # print('HERE IS THE AUDIT RESULT: ' + str(audit))
@@ -752,6 +758,10 @@ class GameConsumer(WebsocketConsumer):
 
             # send down intersections
             if len(game_data_intersections) > 0:
+
+                # update group counters
+                Group.intersection_update(group_id, officer_bonus, civilian_fine)
+
                 game_data_dict["intersections"] = game_data_intersections
 
                 async_to_sync(self.channel_layer.group_send)(

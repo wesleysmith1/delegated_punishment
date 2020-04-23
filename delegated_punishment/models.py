@@ -138,6 +138,17 @@ class Group(BaseGroup):
     game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
+    officer_bonus_total = models.IntegerField(initial=0)
+    civilian_fine_total = models.IntegerField(initial=0)
+
+    @classmethod
+    def intersection_update(cls, group_id, bonus, fine):
+        with transaction.atomic():
+            me = Group.objects.select_for_update().get(id=group_id)
+            me.officer_bonus_total += bonus
+            me.civilian_fine_total += fine
+            me.save()
+
 
     def check_game_status(self, time):
         if self.group_ready():
