@@ -65,7 +65,7 @@ class Constants(BaseConstants):
     dt_range = 10
     dt_payment_max = 10
     dt_survey_payment = 50
-    dt_timeout_seconds = 60
+    dt_timeout_seconds = 5000
     dt_cost = 1
     dt_method = 1
     dt_q = 10
@@ -166,7 +166,6 @@ class Group(BaseGroup):
             me.civilian_fine_total += fine
             me.save()
 
-
     def check_game_status(self, time):
         if self.group_ready():
             event_time = time
@@ -262,66 +261,55 @@ class Group(BaseGroup):
         from delegated_punishment.generate_data import generate_csv
         generate_csv(self.session, self.subsession, meta_data)
 
-
-
     def get_c(self, sum_costs=None):
 
         if not sum_costs:
             sum_costs = sum(SurveyResponse.objects.filter(group=self).values_list('cost', flat=True))
 
-
-            c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n - sum_costs)
-            log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}")
+        c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n - sum_costs)
+        log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}")
 
         return c
 
-
+    def get_g(self):
+        """return net costs of policy"""
+        bonus_amount = self.get_player_by_id(1).income
+        g = self.officer_bonus_total * bonus_amount - self.civilian_fine_total * Constants.civilian_fine_amount
+        return g
 
     def calculate_survey_tax(self, survey_responses=None):
 
         if not survey_responses:
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
-
         sum_costs = sum(survey_responses.values('cost', flat=True))
-
         c = self.get_c(sum_costs)
-
         g = self.sum_officer_bonuses()
 
-        non_participant_fee = c + g - ((c + g) / Constants.big_n - Constants.rebate) * Constants.small_n
-        participant_fee = (c + g) / Constants.big_n - Constants.rebate
+        all_participants_fee = (c + g) / Constants.big_n
 
         for player in self.get_players():
 
             if player.id_in_group == 1:
                 continue
 
-
             try:
                 sr = survey_responses.get(player_id=player.id)
-
-
-                if sr.participant:
-                    sr.cost = participant_fee
-                else:
-                    sr.cost = non_participant_fee
-
+                sr.cost = all_participants_fee
             except SurveyResponse.DoesNotExist:
                 log.error(f"player {player.id} did not participate in survey in round: {self.round_number}")
-
-                SurveyResponse.objects.create(player=player, group=self, cost=non_participant_fee,
-                                               participant=False)
-
+                SurveyResponse.objects.create(player=player, group=self, cost=all_participants_fee, participant=False)
             else:
                 sr.save()
-
 
     def calculate_ogl_tax(self, survey_responses=None):
         """ogl actually has no tax but we subtract the rebate"""
 
         if not survey_responses:
-                survey_responses = SurveyResponse.objects.filter(group_id=self.id)
+            survey_responses = SurveyResponse.objects.filter(group_id=self.id)
+
+        g = self.get_g()
+        remaining_cost = g / Constants.big_n
 
         for player in self.get_players():
             if player.id_in_group == 1:
@@ -329,55 +317,47 @@ class Group(BaseGroup):
 
             try:
                 sr = survey_responses.get(player_id=player.id)
-
             except SurveyResponse.DoesNotExist:
                 log.error(f'was not able to find survey response for player {player.id}')
-
                 continue
             else:
                 # update cost with tax
-                updated_cost = sr.cost
-                sr.cost = updated_cost - Constants.rebate
+                tax = sr.cost + remaining_cost
+                sr.tax = tax
                 sr.save()
-
-
 
     def calculate_other_tax(self, survey_responses=None):
 
         if not survey_responses:
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
-            g = self.sum_officer_bonuses()
+        # total costs of participants
+        total_cost = sum(survey_responses.values_list('cost', flat=True))
 
-            # total costs of participants
-            cost = sum(survey_responses.values_list('cost', flat=True))
+        c = self.get_c(total_cost)
+        g = self.get_g()
 
-            c = self.get_c(cost)
-
-            non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
-
+        non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
 
         for player in self.get_players():
 
             if player.id_in_group == 1:
-                return
+                continue
 
             try:
                 sr = survey_responses.get(player_id=player.id)
 
-            # update non_participant code after round so that officer bonus can be applied after round
-
+                # update non_participant code after round so that officer bonus can be applied after round
                 if not sr.participant:
-                    sr.cost = non_participant_cost
+                    sr.tax = non_participant_cost
                     sr.save()
                 else:
-                    sr.cost -= Constants.rebate
+                    sr.tax -= sr.cost - Constants.rebate
 
             except SurveyResponse.DoesNotExist:
-                SurveyResponse.objects.create(player=player, group=self, cost=non_participant_cost, participant=False)
+                SurveyResponse.objects.create(player=player, group=self, tax=non_participant_cost, participant=False)
             else:
                 pass
-
 
     def calculate_taxes(self):
 
@@ -393,8 +373,7 @@ class Group(BaseGroup):
             log.error(f'Could not determine dt_method for group {self.id}')
 
     def apply_taxes(self):
-
-      # we need to run the calculate functions again to take into account the officer bonuses
+        # we need to run the calculate functions again to take into account the officer bonuses
         self.calculate_taxes()
 
         try:
@@ -411,16 +390,13 @@ class Group(BaseGroup):
             if player.id_in_group == 1:
                 continue
 
-        try:
-            sr = survey_responses.get(player_id=player.id)
-        except SurveyResponse.DoesNotExist:
-            log.error(f"could not map survey response to player {player.id} while applying tax")
-        else:
-            player.balance -= sr.cost
-            player.save()
-
-    def sum_officer_bonuses(self):
-        return self.get_officer_bonus() * self.officer_bonus_total
+            try:
+                sr = survey_responses.get(player_id=player.id)
+            except SurveyResponse.DoesNotExist:
+                log.error(f"could not map survey response to player {player.id} while applying tax")
+            else:
+                player.balance -= sr.tax
+                player.save()
 
     def get_officer_bonus(self):
 
@@ -432,11 +408,6 @@ class Group(BaseGroup):
             return 0
         else:
             return officer.income
-
-    # def increment_officer_bonus(self):
-    #
-    #     with transaction.atomic():
-    #         Group.objects.select_for_update().filter(id=self.id).update(officer_bonus_total=self.officer_bonus_total)
 
 
 def randomize_location():
@@ -465,7 +436,6 @@ class Player(BasePlayer):
             return True
         else:
             return False
-
 
     def other_players(self):
         return self.get_others_in_group()
@@ -579,6 +549,9 @@ class SurveyResponse(Model):
     total = models.IntegerField(initial=0)
     response = JSONField(null=True)
     participant = models.BooleanField(initial=False)
+    # tax is calculated multiple times.
+    # This field is convenience to hold latest calculation without overwriting cost field
+    tax = models.FloatField(initial=0)
 
     @classmethod
     def calculate_thetas(cls, survey_responses, total):
@@ -597,6 +570,8 @@ class SurveyResponse(Model):
                     continue
 
                 ptotal = sr2.total
+                # if player_id == sr2.player_id:
+                #     ptotal += 1
 
                 x += (ptotal - 1 / (Constants.small_n - 1) * (temp_total)) ** 2
 
@@ -631,7 +606,6 @@ class SurveyResponse(Model):
 
         return costs_results, totals_results
 
-
     @classmethod
     def csv_header(cls):
         if Constants.dt_method == 0:
@@ -654,7 +628,6 @@ class SurveyResponse(Model):
             return payment
         else:
             raise KeyError
-
 
     def validate(self):
         """pay players for valid survey response"""

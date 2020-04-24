@@ -429,7 +429,7 @@ class GameConsumer(WebsocketConsumer):
             if pu.get('period_start'):
                 game_data_dict.update({
                     'event_time': event_time,
-                    'event_type': 'period_start'
+                    'event_type': 'round_start'
                 })
 
                 GameData.objects.create(
@@ -439,6 +439,17 @@ class GameConsumer(WebsocketConsumer):
                     s=session_id,
                     round_number=round_number,
                     jdata=game_data_dict
+                )
+
+                Group.objects.filter(id=group_id).update(game_start=event_time)
+
+                # inform channel of round start
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'round_start',
+                        'start': True,
+                    }
                 )
             elif pu.get('period_end'):
                 # todo: period end will likely be a scheduled event that lets a players know the round is over
@@ -828,4 +839,9 @@ class GameConsumer(WebsocketConsumer):
     def round_over(self, event):
         self.send(text_data=json.dumps({
             'round_over': True
+        }))
+
+    def round_start(self, event):
+        self.send(text_data=json.dumps({
+            'round_start': True
         }))
