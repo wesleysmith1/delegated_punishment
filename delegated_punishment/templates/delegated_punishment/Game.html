@@ -54,6 +54,7 @@
         var gameDurationSeconds = {{ game_duration_seconds}};
 
         var resultsModalSeconds = {{ results_modal_seconds }}
+        var gameStarted = '{{ game_started }}' === 'True';
 
     </script>
 </header>
@@ -63,6 +64,23 @@
         {% csrf_token %}
         <button class="otree-btn-next btn btn-primary">Next</button>
     </form>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            {% if player.id_in_group != 1 %}
+            <p>Survey payment: {{ survey_payment }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
+            <p>Your tokens: {{ your_tokens }}</p>
+            <p>Your token Cost: {{ token_cost }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
+            {% endif %}
+
+            <p>Total tokens: {{ group.defend_token_total }}</p>
+            <p>Total token cost: {{ total_token_cost }}</p>
+        </div>
+
+    </div>
 
     {% verbatim %}
     <div id="app" v-show="gameStarted">
@@ -132,6 +150,9 @@
                     <div class="title-small data-row">
                         <div class="left"># Intercepts: </div>
                         <div class="right"><strong>{{ interceptCount }}</strong></div>
+
+
+
                     </div>
                     <div style="clear: both"></div>
                     <div class="title-small data-row">
@@ -143,31 +164,29 @@
                         <div class="left"># Reprimands: </div>
                         <div class="right"><strong>{{ falseArrestCount }}</strong></div>
                     </div>
-                    <br>
                 </div>
-
                 <br>
                 <br>
             </div>
             <div class="notifications-container">
-                    <br>
-                    <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
-                    <br>
-                    <probability-bar-component
-                            :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
-                            :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
-                    </probability-bar-component>
-                    <br>
-                    <probability-bar-component
-                            :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
-                            :percent=probabilityCulprit
-                    ></probability-bar-component>
-                    <br>
-                    <div v-if="isOfficer" class="investigation-data-container">
-                        <div class="title">Investigation Map</div>
-                        <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
-                    </div>
+                <br>
+                <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
+                <br>
+                <probability-bar-component
+                        :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
+                        :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
+                </probability-bar-component>
+                <br>
+                <probability-bar-component
+                        :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
+                        :percent=probabilityCulprit
+                ></probability-bar-component>
+                <br>
+                <div v-if="isOfficer" class="investigation-data-container">
+                    <div class="title">Investigation Map</div>
+                    <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
                 </div>
+            </div>
         </div>
         <results-modal-component ref="resultsmodal" :balance="balance"></results-modal-component>
     </div>
@@ -319,8 +338,21 @@
 
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
-                        // this.startTimer()
-                        console.log('game socket opened')
+
+                        if (!this.game_started) {
+
+                            if (this.isOfficer) {
+                                setTimeout(() => {
+                                    this.startRound()
+                                }, this.info_duration)
+                            }
+
+                        } else {
+                            console.log('game already started. page must have been refreshed')
+
+                            this.hideModal()
+                            this.startTimer()
+                        }
                     };
 
                     this.gameSocket.onmessage = (e) => {
@@ -357,7 +389,8 @@
                         } else if (data.round_start) {
                             console.log('Round Started')
                             this.gameStarted = true;
-                            this.startTimer();
+                            this.hideModal()
+                            this.startTimer()
                         }
                     };
 
@@ -398,8 +431,9 @@
                     this.$refs.resultsmodal.openModal();
 
                     // settimeout to close modal
-                    setTimeout(()=>{
-                            this.closeGameSocket()
+                    setTimeout(() => {
+                            console.log('Closing Socket');
+                            this.gameSocket.close();
 
                             // submit game
                             document.getElementById('form').submit();
@@ -410,6 +444,22 @@
                 closeGameSocket() {
                     console.log('Closing game socket')
                     this.gameSocket.close()
+                },
+                startRound: function() {
+                    if (!this.isOfficer) {
+                        console.warn('Only officer can start game')
+                        return
+                    }
+                    this.gameUpdate({
+                        'period_update': {'period_start': true},
+                    });
+                },
+                hideModal: function() {
+                    let modal = document.getElementById("myModal");
+                    modal.style.display = "none";
+                },
+                gameReady: function() {
+                    console.log('game ready function')
                 },
                 toggle: function() {
                     if (this.harvestScreen) { // toggle to steal

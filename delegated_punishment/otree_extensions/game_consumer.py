@@ -441,6 +441,10 @@ class GameConsumer(WebsocketConsumer):
                     jdata=game_data_dict
                 )
                 # inform players round has started
+
+                Group.objects.filter(id=group_id).update(game_start=event_time)
+
+                # inform channel of round start
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
@@ -838,6 +842,11 @@ class GameConsumer(WebsocketConsumer):
     def round_end(self, event):
         self.send(text_data=json.dumps({
             'round_end': True
+        }))
+
+    def round_start(self, event):
+        self.send(text_data=json.dumps({
+            'round_start': True
         }))
 
     def round_start(self, event):

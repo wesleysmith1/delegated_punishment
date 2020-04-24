@@ -199,7 +199,6 @@ class DefendTokenWaitPage(WaitPage):
         else:
             log.error(f"RESULTS CANNOT BE GENERATED CORRECTLY FOR THIS METHOD {Constants.dt_method}")
 
-
         log.info(f"THERE ARE {self.group.defend_token_total} TOKENS FOR GROUP {self.group.id}")
         for i in range(self.group.defend_token_total):
             DefendToken.objects.create(number=i + 1, group=self.group,)
@@ -218,7 +217,7 @@ class DefendTokenInfo(Page):
             survey_response = SurveyResponse.objects.get(player=self.player)
             your_tokens = survey_response.total
 
-            cost = survey_response.cost
+            cost = survey_response.tax
             participated = survey_response.participant
 
             if survey_response.valid:
@@ -245,7 +244,6 @@ class Wait(WaitPage):
 
 
 class Game(Page):
-
     # the template can be changed to GameTest.html to. Each tab sends up test data at intervals to the backend
     # template_name = 'delegated_punishment/GameTest.html'
     template_name = 'delegated_punishment/Game.html'
@@ -256,9 +254,33 @@ class Game(Page):
         return True
 
     def vars_for_template(self):
-
         #  todo: we need to query player here since a blank model is being created instead
         #   of pulling from db. This is required to load data from the database.
+
+        vars_dict = dict(survey_payment=0, num_tokens=self.group.defend_token_total)
+
+        try:
+            survey_response = SurveyResponse.objects.get(player=self.player)
+            your_tokens = survey_response.total
+
+            cost = survey_response.tax
+            participated = survey_response.participant
+
+            if survey_response.valid:
+                vars_dict['survey_payment'] = Constants.dt_survey_payment
+
+        except SurveyResponse.DoesNotExist:
+            log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
+            cost = 0
+            your_tokens = -1
+            participated = False
+
+        vars_dict['num_tokens'] = self.group.defend_token_total
+        vars_dict['token_cost'] = cost
+        vars_dict['total_token_cost'] = self.group.defend_token_cost
+
+        vars_dict['your_tokens'] = your_tokens
+        vars_dict['participated'] = participated
 
         pjson = dict()
         pjson['player'] = self.player.pk
@@ -267,7 +289,6 @@ class Game(Page):
         pjson['y'] = self.player.y
         pjson['harvest_screen'] = self.player.harvest_screen
 
-        vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
         vars_dict['defend_token_total'] = self.group.defend_token_total
@@ -295,12 +316,21 @@ class Game(Page):
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
-            # for o in officer_tokens:
-                # print("TOKEN {} - MAP  {} - X {:6.2f} - Y {:6.2f}".format(o.number, str(o.map), o.x, o.y)) #todo: these values are correct. Why are they not getting passed down to client?
+
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
-        vars_dict['timeout'] = Constants.num_rounds > 1 and self.round_number == 1
+        if Constants.num_rounds > 1 and self.round_number == 1:
+            timeout = True
+        else:
+            timeout = False
+
+        vars_dict['timeout'] = timeout
+
+        # this variable determines if game was started
+        # i.e. the game started then a player refreshed their page.
+        vars_dict['game_started'] = self.group.game_start and self.group.game_start > 0
+
         return vars_dict
 
 
@@ -358,4 +388,4 @@ class AfterTrialAdvancePage(Page):
         return False
 
 
-page_sequence = [SurveyInit, Intermission, DefendTokenSurvey, DefendTokenWaitPage, DefendTokenInfo, Wait, Game, ResultsWaitPage, AfterTrialAdvancePage]
+page_sequence = [SurveyInit, Intermission, DefendTokenSurvey, DefendTokenWaitPage, Wait, Game, ResultsWaitPage, AfterTrialAdvancePage]

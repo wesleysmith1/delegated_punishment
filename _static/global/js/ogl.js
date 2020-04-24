@@ -54,28 +54,29 @@ let oglComponent = {
                 return 0;
             }
             let thetaResults = {}
-            let total = this.arrSum(this.totals)
+            let total = this.arrSum(this.totals) + direction
             for(const pid in this.provisionalTotals) {
                 let x = 0;
                 let playerId2 = parseInt(pid)
 
-                let tempTotal = total + direction
+                let tempTotal = total // something here is wrong
                 tempTotal -= this.provisionalTotals[playerId2]
 
                 for(const pid2 in this.provisionalTotals) {
+                    let pid2_num = parseInt(pid2)
                     if (pid2 === pid)
                         continue;
 
                     let ptotal = this.provisionalTotals[parseInt(pid2)]
-                    if (this.playerId === pid2) {
+                    if (this.playerId === pid2_num) {
                         ptotal += direction
+                        debugger;
+                        console.log(ptotal)
                     }
 
                     xxx = Math.pow(ptotal - (1 / (this.smallN - 1)) * (tempTotal),2)
-                    console.log(xxx)
 
                     x += xxx
-                    console.log('?')
                 }
 
                 console.log('end of theta calculation')
@@ -92,10 +93,9 @@ let oglComponent = {
                 console.log('thetas: ', thetas)
             let oglResults = {}
 
-            let total = this.arrSum(this.provisionalTotals)
-            if (direction !== 0) {
-                total += direction;
-            }
+            let total = this.arrSum(this.provisionalTotals) + direction
+            console.log('total', total)
+
             for(let id in this.provisionalTotals) {
                 let pid = parseInt(id)
 
@@ -104,8 +104,9 @@ let oglComponent = {
                     ptotal += direction
                 }
 
-                oglResults[pid] = (this.q / this.bigN) * total + (this.gamma/2) * (this.smallN/(this.smallN-1)) * Math.pow(ptotal - (1/this.smallN) * total, 2) - thetas[pid]
+                console.log('ptotal', ptotal, 'total', total)
 
+                oglResults[pid] = (this.q / this.bigN) * total + (this.gamma/2) * (this.smallN/(this.smallN-1)) * Math.pow(ptotal - (1/this.smallN) * total, 2) - thetas[pid]
             }
 
             // console.log('OGL results ', oglResults)
@@ -135,27 +136,12 @@ let oglComponent = {
         `
       <div>
         <div class="row">
-            player_id: {{playerId}}
-        </div>
-        <div class="row">
-            server costs: {{ provisionalCosts }}
-        </div>
-        <div class="row">
-            local costs: {{ provisional }}    
-        </div>
-        <div class="row">
-            server totals: {{ provisionalTotals }}    
-        </div>
-        <div class="row">
-            local totals: {{ totals }}    
-        </div>
-        <div class="row">
             <div class="col-md-5 card bg-light">
                 <div class="card-body">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>
-                      </div>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>
+                        </div>
                         <select v-model.number="numberTokens" @change="inputChange()" :disabled="submitted" id="willingnessId" class="custom-select">
                             <option v-for="x in paymentOptions + 1" :value="x - (paymentOptions/2) - 1">{{ x - (paymentOptions/2) - 1 }}</option>
                         </select>
@@ -167,19 +153,19 @@ let oglComponent = {
                 <h5 style="text-align: center;">Provisional</h5>
                 <div class="list-group">
                     <div class="list-group-item">
-                        Your cost: {{ Math.round(provisional[playerId]) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
+                        Your cost: {{ Math.round(provisional[playerId] | 0)}} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
                     </div>
                     <div class="list-group-item">
-                        Total cost {{ Math.round(arrSum(provisional)) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
+                        Total cost {{ Math.round(arrSum(provisional) | 0) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
                     </div>              
                     <div class="list-group-item">
                         Total tokens: {{ arrSum(totals) }}
                     </div>  
                 </div>
                 <br>
-                <h5 style="text-align: center;">Deviations</h5>
+                <h5 v-show="increased[playerId] && decreased[playerId]" style="text-align: center;">Deviations</h5>
                 
-                <div class="list-group">
+                <div v-show="increased[playerId]" class="list-group">
                     <div class="list-group-item list-group-item-secondary">
                         +1 token
                     </div>
@@ -194,7 +180,7 @@ let oglComponent = {
                     </div> 
                 </div> 
                 <br>
-                <div class="list-group">
+                <div v-show="decreased[playerId]" class="list-group">
                      <div class="list-group-item list-group-item-secondary">
                         -1 token
                     </div>
