@@ -81,11 +81,12 @@ let stealGameComponent = {
             if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-centerde
                 for (let i in this.maps) {
-                    let id = parseInt(this.maps[i]) + 1;
-                    if (that.hitTest(this.$refs['prop' + id], '.000001')) {
-                        let map = this.$refs['prop' + id][0].getBoundingClientRect();
-                        this.calculateLocation(map, id);
-                        return;
+                let id = parseInt(this.maps[i]) + 1;
+                if (that.hitTest(this.$refs['prop' + id], '.000001')) {
+                    let map = this.$refs['prop' + id][0].getBoundingClientRect();
+                    this.calculateLocation(map, id);
+                    return;
+
                     }
                 }
             }
@@ -133,7 +134,7 @@ let stealGameComponent = {
             <div id="steal-container" class="upper" ref="stealcontainer">
                 <div class='title'>Civilian Maps</div> 
                     <div ref='htarget' class="maps-container">
-                      <div v-for="map in maps" class="map-container">
+                      <div v-if="map < 5" v-for="map in maps" class="map-container">
                             <div
                                 class="map"
                                 v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px', background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] > 0 ? 'rgba(224,53,49,' + activeStealMaps[groupPlayerId] * .25 + ')' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
@@ -169,6 +170,26 @@ let stealGameComponent = {
                       <div>
                     </div>
               </div>
+              <div ref='htarget' class="maps-container">
+                      <div v-if="map > 4" v-for="map in maps" class="map-container">
+                            <div
+                                class="map"
+                                v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px', background: (groupPlayerId==map+1 ? (activeStealMaps[groupPlayerId] > 0 ? 'rgba(224,53,49,' + activeStealMaps[groupPlayerId] * .25 + ')' : 'darkgrey') : (map+1 == activeSteal ? 'rgba(81,179,100,.5)' : 'white'))}" 
+                                v-bind:player-id="(map+1)" 
+                                :id='"prop" + (map+1)' 
+                                :ref='"prop" + (map+1)'>
+                                <div id="fine-notification" v-if="groupPlayerId==map+1" style="text-align: center; font-size: 50px; padding-top: 40px;">
+                                    {{fineNotification}}
+                                </div>
+                                <!-- svg indicator id format: map-player-->
+                                <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
+                                  <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
+                                </svg>
+                            </div>
+                            <div class="map-label">{{map+1 == groupPlayerId ? 'You' : 'Civilian ' + (map+1)}}</div>
+                      </div>
+                    </div>
+
         </div>
       </div>
       </div>

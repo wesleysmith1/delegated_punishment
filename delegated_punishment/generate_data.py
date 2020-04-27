@@ -23,6 +23,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         session_date = "1992_0414"
         officer_bonus = -1
         income_distribution = [-1, -1, -1, -1]
+        defend_token_total=9
     else:
         steal_starts = meta_data['steal_starts']
         player_ids_in_session = meta_data['player_ids_in_session']
@@ -34,13 +35,14 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         session_date = meta_data['session_date']
         officer_bonus = meta_data['officer_bonus']
         income_distribution = meta_data['income_distribution']
+        defend_token_total = meta_data['defend_token_total']
 
     # print("HERE IS THE ROUND NUMBER {}".format(round_number))
 
     # session_start is assigned to this
     round_start = -1
 
-    defend_tokens = init_defend_tokens()
+    defend_tokens = init_defend_tokens(defend_token_total)
 
     # get data
     game_data = GameData.objects.filter(s=session_id, g=group_pk, round_number=round_number,).order_by('event_time')
@@ -485,7 +487,7 @@ def format_row(pid, r, round_start, meta_data, id_in_session):
         [
             Constants.civilian_steal_rate,
             Constants.civilian_fine_amount,
-            Constants.defend_token_total,
+            meta_data['defend_token_total'],
             "a min 1 , a max 10",
             Constants.defend_token_size,
             Constants.civilian_map_size,
@@ -612,9 +614,9 @@ class CPlayer:
             return self.balance + self.roi * (event_time - self.last_updated)
 
 
-def init_defend_tokens():
+def init_defend_tokens(count):
     x = {}
-    for i in range(1, Constants.defend_token_total+1):
+    for i in range(1, count+1):
         x[i] = "[{}, {}, {}, {}, {}, {}]".format(i, 0, 0, 0, 0, 'NA')
     return x
 
