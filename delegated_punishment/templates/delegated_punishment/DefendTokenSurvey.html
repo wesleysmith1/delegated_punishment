@@ -1,0 +1,258 @@
+<html lang="">
+<header>
+    {% load otree %}
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap-reboot.min.css">
+    <link rel="stylesheet" href="/static/otree/css/theme.css">
+    <link rel="stylesheet" type="text/css" href="/static/global/theme.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}"></link>
+
+    <script src="{% static 'global/js/ogl.js' %}"></script>
+    <script src="{% static 'global/js/survey.js' %}"></script>
+
+    <script>
+
+        // load variables into template here as global javascript variables
+        var playerId = {{ player.pk }};
+        var groupId = {{ player.group_id }};
+        var timeoutSeconds = {{ timeout_seconds }};
+        var selected = '{{ selected }}' === 'True';
+        var tokenRange = {{ dt_range }};
+        var paymentMax = {{ dt_payment_max }};
+        var method = {{ dt_method }};
+        var dt_q = {{ dt_q }}
+        var bigN = {{ big_n }}
+        var smallN = {{ small_n }}
+        var gamma = {{ gamma }}
+
+    </script>
+    <style>
+        .otree-btn-next {
+            display: none;
+        }
+        .item {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        .custom-range {
+            width: 100%;
+            height: 1.4rem;
+            padding: 0;
+            background-color: transparent;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+    </style>
+</header>
+<body>
+    <form method="post" role="form" id="form" autocomplete="off" style="display:none">
+        {% csrf_token %}
+        <button class="otree-btn-next btn btn-primary">Next</button>
+    </form>
+
+   <div class="otree-body container">
+
+
+        {% verbatim %}
+            <div id="app">
+
+                <div v-if="playerSelected">
+                   <h2 class="otree-title page-header">
+                       {{ title }}
+                   </h2>
+
+                    <div class="otree-timer alert alert-warning">
+                        <p>Time left to complete this page:
+                            <span style="font-weight: bold">
+                                <span class="otree-timer__time-left">{{ minutes + ':' + seconds }}</span>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div v-if="method === 0">
+                        <survey-component
+                            ref="survey"
+                            :payment-max="paymentMax"
+                            :token-choices="tokenChoices"
+                            @submit-survey="submitSurvey"
+                        ></survey-component>
+
+                    </div>
+
+                    <div v-if="method === 1">
+                        <ogl-component
+                            :player-id="playerId"
+                            :payment-max="paymentMax"
+                            :q="q"
+                            :big-n="bigN"
+                            :small-n="smallN"
+                            :submitted="submitted"
+                            :provisional-costs="provisionalCosts"
+                            :provisional-totals="provisionalTotals"
+                            :gamma="gamma"
+                            :method="method"
+                            @update="oglUpdate"
+                        ></ogl-component>
+                    </div>
+
+                </div>
+                <div v-else>
+                   <h2 class="otree-title page-header">
+                       Determine the number of defend tokens
+                   </h2>
+                    <h3>
+                        You were not selected for the survey this round. Please wait patiently for the results.
+                    </h3>
+                </div>
+            </div>
+        {% endverbatim %}
+   </div>
+
+</body>
+
+<script id="websocket-redirect" src="{% static 'global/js/advance_slowest.js' %}"
+    data-socket-url="{{ view.socket_url|safe }}"
+    data-redirect-url="{{ view.redirect_url|safe }}"
+    data-is-browser-bot="False"
+    data-is-debug="True"
+></script>
+
+{% verbatim %}
+<script>
+
+
+    let app = new Vue({
+        el: '#app',
+        components: {
+            'ogl-component': oglComponent,
+            'survey-component': surveyComponent,
+        },
+        data: {
+            title: '',
+            playerId: playerId,
+            groupId: groupId,
+            method: method,
+            timeoutSeconds: timeoutSeconds,
+            tokenChoices: tokenRange,
+            paymentMax: paymentMax,
+            socket: null,
+            timer: null,
+            playerSelected: selected,
+            submitted: false,
+            provisionalTotals: {},
+            provisionalCosts: {},
+            bigN: bigN,
+            smallN: smallN,
+            q: dt_q,
+            gamma: gamma,
+
+        },
+        created: function(){
+
+            this.setTitle();
+
+            this.socket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/defend_tokens/' + this.groupId + '/');
+            this.socket.onopen = (e) => {
+                this.beginTimer();
+            };
+
+            this.socket.onmessage = (e) => {
+                let data = JSON.parse(e.data);
+                // console.log(data);
+                if (data.balance) {
+
+                } else if (data.provisional) {
+                    // console.log(data.provisional);
+                    this.provisionalCosts = data.provisional['costs']
+                    this.provisionalTotals = data.provisional['totals']
+                }
+            };
+
+            this.socket.onclose = (e) => {
+                // console.error('CHANNEL CLOSED UNEXPECTEDLY');
+            };
+        },
+        mounted: function() {
+        },
+        methods: {
+            oglUpdate: function(x) {
+                // console.log(x);
+                this.send({'ogl': {'data': x}})
+
+            },
+            submitSurvey: function(obj) {
+                // send result to server somehow?
+                this.send({'survey': obj});
+            },
+            beginTimer: function() {
+                this.timer = setInterval(()=>{
+                    this.timeoutSeconds -= 1;
+                    if (this.timeoutSeconds <= 0) {
+                        this.timeout()
+                    }
+                },1000)
+            },
+            timeout: function() {
+                this.stopTimer();
+
+                this.submitted = true;
+                // if not submitted submit final results
+
+                if (this.playerSelected) {
+                    switch(this.method) {
+                        case 0:
+                            if (!this.$refs.survey)
+                                console.error("Survey could not be submitted")
+                            this.$refs.survey.submit()
+                            break;
+                        case 1:
+                            break;
+                    }
+                }
+
+                let form = document.getElementById('form');
+                form.submit();
+            },
+            send: function(data) {
+                data.player_id = this.playerId;
+                data.group_id = this.groupId;
+                // console.log('THIS IS BEING SENT TO SERVER ', data)
+                this.socket.send(JSON.stringify(data));
+            },
+            stopTimer: function() {
+                clearInterval(this.timer);
+            },
+            setTitle: function() {
+                if (this.method === 0) {
+                    this.title = "What are we going to name this?";
+                } else {
+                    this.title = "Provisional choices and outcomes";
+                }
+            }
+        },
+        computed: {
+            minutes: function() {
+                return Math.floor(this.timeoutSeconds / 60)
+            },
+            seconds: function() {
+                let seconds = Math.floor(this.timeoutSeconds % 60)
+                return ('0' + seconds).slice(-2);
+            },
+        },
+        beforeDestroy () {
+            this.stopTimer()
+
+            if (this.socket.readyState === WebSocket.OPEN)
+                this.socket.close();
+        }
+
+    })
+</script>
+{% endverbatim %}
+
+</html>

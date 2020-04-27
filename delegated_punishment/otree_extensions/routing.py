@@ -6,8 +6,11 @@ from django.conf.urls import url
 
 from delegated_punishment.otree_extensions.game_consumer import GameConsumer
 from delegated_punishment.otree_extensions.game_sync_consumer import GameSyncConsumer
+from delegated_punishment.otree_extensions.defend_token_consumer import DefendTokenConsumer
+
 
 websocket_routes = [
     url(r'^delegated_punishment/sync/(?P<group_pk>[0-9]+)/', GameSyncConsumer),
+    url(r'^delegated_punishment/defend_tokens/(?P<group_pk>[0-9]+)/', DefendTokenConsumer),
     url(r'^delegated_punishment/(?P<group_pk>[0-9]+)/', GameConsumer),
 ]

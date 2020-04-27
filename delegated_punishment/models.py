@@ -21,12 +21,11 @@ doc = """
 
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
-    players_per_group = 6
+    players_per_group = 9
     num_rounds = 10
     # num_rounds = 1  # testing purposes
 
     # officer_intersection_payout = 10  # b: how much officer makes for intersection
-    defend_token_total = 8
 
     epoch = datetime.datetime.utcfromtimestamp(0)
 
@@ -39,8 +38,8 @@ class Constants(BaseConstants):
     officer_review_probability = .33  # THETA: chance that an intersection result will be reviewed
     officer_reprimand_amount = 600  # P punishment for officer if innocent civilian is punished
 
-    civilian_incomes_low = [38, 39, 40, 41, 43]
-    civilian_incomes_high = [57, 41, 38, 34, 31]
+    civilian_incomes_low = [38, 39, 40, 41, 43, 99, 99, 99]  # todo: add correct balances here
+    civilian_incomes_high = [57, 41, 38, 34, 31, 99, 99, 99]
     # officer_incomes = [0, 10, 20]
     officer_incomes = [180, 180, 180]
     # officer_incomes = [0, 180, 600]
@@ -62,6 +61,22 @@ class Constants(BaseConstants):
     steal_timeout_duration = 200000
 
     steal_token_positions = 20
+
+    dt_range = 10
+    dt_payment_max = 10
+    dt_survey_payment = 50
+    dt_timeout_seconds = 60
+    dt_cost = 1
+    dt_method = 1
+    dt_q = 10
+    dt_e0 = 5
+    big_n = 8
+    small_n = 8
+
+    gamma = 30
+
+    rebate = 0
+    endowment = 0
 
 
 
@@ -133,14 +148,13 @@ class Subsession(BaseSubsession):
                     officer = g.get_player_by_id(1)
                     officer.income = self.session.config['tutorial_officer_bonus']
 
-            for i in range(Constants.defend_token_total):
-                DefendToken.objects.create(number=i+1, group=g,)
-
 
 class Group(BaseGroup):
     game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
+    defend_token_total = models.IntegerField(initial=0)
+    defend_token_cost = models.FloatField(initial=0)
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
 
@@ -248,10 +262,181 @@ class Group(BaseGroup):
         from delegated_punishment.generate_data import generate_csv
         generate_csv(self.session, self.subsession, meta_data)
 
-        # try:
-        #     generate_csv(period_info)
-        # except:
-        #     print('THERE WAS AN ERROR WITH CSV GENERATION FOR PERIOD: {}'.format(self.subsession.round_number))
+
+
+    def get_c(self, sum_costs=None):
+
+        if not sum_costs:
+            sum_costs = sum(SurveyResponse.objects.filter(group=self).values_list('cost', flat=True))
+
+
+            c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n - sum_costs)
+            log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}")
+
+        return c
+
+
+
+    def calculate_survey_tax(self, survey_responses=None):
+
+        if not survey_responses:
+            survey_responses = SurveyResponse.objects.filter(group_id=self.id)
+
+
+        sum_costs = sum(survey_responses.values('cost', flat=True))
+
+        c = self.get_c(sum_costs)
+
+        g = self.sum_officer_bonuses()
+
+        non_participant_fee = c + g - ((c + g) / Constants.big_n - Constants.rebate) * Constants.small_n
+        participant_fee = (c + g) / Constants.big_n - Constants.rebate
+
+        for player in self.get_players():
+
+            if player.id_in_group == 1:
+                continue
+
+
+            try:
+                sr = survey_responses.get(player_id=player.id)
+
+
+                if sr.participant:
+                    sr.cost = participant_fee
+                else:
+                    sr.cost = non_participant_fee
+
+            except SurveyResponse.DoesNotExist:
+                log.error(f"player {player.id} did not participate in survey in round: {self.round_number}")
+
+                SurveyResponse.objects.create(player=player, group=self, cost=non_participant_fee,
+                                               participant=False)
+
+            else:
+                sr.save()
+
+
+    def calculate_ogl_tax(self, survey_responses=None):
+        """ogl actually has no tax but we subtract the rebate"""
+
+        if not survey_responses:
+                survey_responses = SurveyResponse.objects.filter(group_id=self.id)
+
+        for player in self.get_players():
+            if player.id_in_group == 1:
+                continue
+
+            try:
+                sr = survey_responses.get(player_id=player.id)
+
+            except SurveyResponse.DoesNotExist:
+                log.error(f'was not able to find survey response for player {player.id}')
+
+                continue
+            else:
+                # update cost with tax
+                updated_cost = sr.cost
+                sr.cost = updated_cost - Constants.rebate
+                sr.save()
+
+
+
+    def calculate_other_tax(self, survey_responses=None):
+
+        if not survey_responses:
+            survey_responses = SurveyResponse.objects.filter(group_id=self.id)
+
+            g = self.sum_officer_bonuses()
+
+            # total costs of participants
+            cost = sum(survey_responses.values_list('cost', flat=True))
+
+            c = self.get_c(cost)
+
+            non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
+
+
+        for player in self.get_players():
+
+            if player.id_in_group == 1:
+                return
+
+            try:
+                sr = survey_responses.get(player_id=player.id)
+
+            # update non_participant code after round so that officer bonus can be applied after round
+
+                if not sr.participant:
+                    sr.cost = non_participant_cost
+                    sr.save()
+                else:
+                    sr.cost -= Constants.rebate
+
+            except SurveyResponse.DoesNotExist:
+                SurveyResponse.objects.create(player=player, group=self, cost=non_participant_cost, participant=False)
+            else:
+                pass
+
+
+    def calculate_taxes(self):
+
+        if Constants.dt_method == 0:
+            self.calculate_survey_tax()
+        elif Constants.dt_method == 1:
+            self.calculate_ogl_tax()
+        elif Constants.dt_method == 2:
+            self.calculate_other_tax()
+        elif Constants.dt_method == 3:
+            self.calculate_other_tax()
+        else:
+            log.error(f'Could not determine dt_method for group {self.id}')
+
+    def apply_taxes(self):
+
+      # we need to run the calculate functions again to take into account the officer bonuses
+        self.calculate_taxes()
+
+        try:
+            survey_responses = SurveyResponse.objects.filter(group=self)
+        except SurveyResponse.DoesNotExist:
+            log.error(f"could not get any survey responses while applying taxes for group {self.id}")
+            return
+        else:
+            assert survey_responses.count() > 0
+
+        for player in self.get_players():
+            # officers never pay tax
+
+            if player.id_in_group == 1:
+                continue
+
+        try:
+            sr = survey_responses.get(player_id=player.id)
+        except SurveyResponse.DoesNotExist:
+            log.error(f"could not map survey response to player {player.id} while applying tax")
+        else:
+            player.balance -= sr.cost
+            player.save()
+
+    def sum_officer_bonuses(self):
+        return self.get_officer_bonus() * self.officer_bonus_total
+
+    def get_officer_bonus(self):
+
+        try:
+            officer = self.get_player_by_id(1)
+
+        except Player.DoesNotExist:
+            log.error(f'Officer does not exist for group {self.id}')
+            return 0
+        else:
+            return officer.income
+
+    # def increment_officer_bonus(self):
+    #
+    #     with transaction.atomic():
+    #         Group.objects.select_for_update().filter(id=self.id).update(officer_bonus_total=self.officer_bonus_total)
 
 
 def randomize_location():
@@ -352,6 +537,7 @@ class Player(BasePlayer):
         with transaction.atomic():
             player = Player.objects.select_for_update().get(pk=self.pk)
             player.balance += self.income
+
             player.save()
 
     def officer_reprimand(self):
@@ -383,3 +569,125 @@ class GameData(Model):
     s = models.IntegerField(initial=0)
     round_number = models.IntegerField(initial=0)
     jdata = JSONField()
+
+
+class SurveyResponse(Model):
+    player = ForeignKey(Player, on_delete='CASCADE')
+    group = ForeignKey(Group, on_delete='CASCADE')
+    valid = models.BooleanField(initial=False)
+    cost = models.FloatField(initial=0)
+    total = models.IntegerField(initial=0)
+    response = JSONField(null=True)
+    participant = models.BooleanField(initial=False)
+
+    @classmethod
+    def calculate_thetas(cls, survey_responses, total):
+        results = dict()
+
+        for sr in survey_responses:
+            x = 0
+            player_id = sr.player_id
+            eee = sr.total
+
+            temp_total = total
+            temp_total -= eee
+
+            for sr2 in survey_responses:
+                if sr2.player_id == player_id:
+                    continue
+
+                ptotal = sr2.total
+
+                x += (ptotal - 1 / (Constants.small_n - 1) * (temp_total)) ** 2
+
+            results[sr.player_id] = (Constants.gamma / 2) * (1 / (Constants.small_n - 2)) * x
+
+        return results
+
+    @classmethod
+    def calculate_ogl(cls, survey_responses):
+
+        costs_results = dict()
+        totals_results = dict()
+
+        total = sum(survey_responses.values_list('total', flat=True))
+
+        log.info(f"total token count {total}")
+
+        theta_results = SurveyResponse.calculate_thetas(survey_responses, total)
+        log.info(f'theta results {theta_results}')
+
+        for sr in survey_responses:
+            player_sum = sr.total
+
+            log.info(f"player sum {player_sum}")
+
+            theta = theta_results[sr.player_id] if Constants.dt_method <= 1 else 0  # todo: make this easier to identify/change easily for testing
+
+            ogl_results = (Constants.dt_q / Constants.big_n) * total + (Constants.gamma/2) * (Constants.small_n / (Constants.small_n-1)) * (player_sum - (1/Constants.small_n) * total)**2 - theta
+
+            costs_results[sr.player_id] = ogl_results
+            totals_results[sr.player_id] = player_sum
+
+        return costs_results, totals_results
+
+
+    @classmethod
+    def csv_header(cls):
+        if Constants.dt_method == 0:
+            header = f"Player_Id,Integer,"
+            for i in range(1, Constants.dt_range + 1):
+                header += f"{i},"
+        elif Constants.dt_method == 1:
+            header = f"Player_Id,Integer,Value"
+        else:
+            log.info(f"no csv header configured for method {Constants.dt_method}")
+            return None
+        return [header]
+
+    def get_survey_value(self, index):
+        if self.response.get(index):
+            payment = self.response[index].total
+            self.cost = payment
+            self.total = index
+            self.save()
+            return payment
+        else:
+            raise KeyError
+
+
+    def validate(self):
+        """pay players for valid survey response"""
+        self.valid = True
+
+        if Constants.dt_method == 0:
+            for r in self.response:
+                if not r:
+                    self.valid = False
+                    self.save()
+                    return
+        elif Constants.dt_method == 1:
+            # todo: if there is a default start value in method do we always validate as true
+            pass
+        else:
+            log.info(f"method {Constants.dt_method} is not setup for survey response validation")
+
+        if self.valid:
+            self.player.balance += Constants.dt_survey_payment
+            self.player.save()
+        else:
+            log.info(f"player {self.player_id} did not have a valid survey")
+
+    def csv_row(self):
+        row = f"{self.player_id},{self.group_id},"
+        if Constants.dt_method == 0:
+            for key in self.response:
+                row += f"{self.response[key]['total']},"
+        elif Constants.dt_method == 1:
+            row += f"{self.cost}"
+        else:
+            log.info(f"TOCSV not configured for method {Constants.dt_method}")
+            return
+
+        return [row]
+

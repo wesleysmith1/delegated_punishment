@@ -65,7 +65,7 @@ let officerGameComponent = {
             let that = this;
             let drag = Draggable.create("#unit" + (i+1), {
                 minimumMovement: .01,
-                bounds: this.$refs['officerGame'],
+                // bounds: this.$refs['officerGame'],
                 onDragStart: function () {
                     let token = that.mutableDefendTokens[i]
                     that.tokenDragStart(this, token);
@@ -97,24 +97,23 @@ let officerGameComponent = {
             this.$emit('token-drag', token);
         },
         validateLocation: function (that, token) {
-            if (that.hitTest(this.$refs.officerGame, '100%')) {
-                for (let i in this.maps) {
-                    let id = parseInt(this.maps[i]) + 1;
 
-                    if (that.hitTest(this.$refs['map' + id], '.000001%')) {
-                        this.map = id;
-                        token.map = id;
-                        let map = this.$refs['map' + id][0].getBoundingClientRect();
-                        this.calculateLocation(map, that, token);
-                        return;
-                    }
-                }
+            for (let i in this.maps) {
+                let id = parseInt(this.maps[i]) + 1;
 
-                if (that.hitTest(this.$refs.investigationcontainer, '100%')) {
-                    token.map = 11;
-                    this.$emit('investigation-update', token);
+                if (that.hitTest(this.$refs['map' + id], '.000001%')) {
+                    this.map = id;
+                    token.map = id;
+                    let map = this.$refs['map' + id][0].getBoundingClientRect();
+                    this.calculateLocation(map, that, token);
                     return;
                 }
+            }
+
+            if (that.hitTest(this.$parent.$refs.investigationcontainer, '100%')) {
+                token.map = 11;
+                this.$emit('investigation-update', token);
+                return;
             }
 
             this.resetDefendToken(that.target, token)
@@ -178,9 +177,10 @@ let officerGameComponent = {
               <div class="upper">      
                 <div class='title'>Civilian Maps</div> 
                 <div class="maps-container">
-                    <div v-for="map in maps" v-bind:player-id="(map+1)" :id='"map" + (map+1)' :ref='"map" + (map+1)' class="map-container">
+                    <div v-if="map < 5" v-for="map in maps" class="map-container">
                       <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)' v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px' }">
-                            <div v-for="player_id in 5" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
+                            <!--todo: pass down the number of players-->
+                            <div v-for="player_id in 8" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
                                 -1
                             </div>
                             <svg v-for="player_id in maps" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
@@ -188,6 +188,7 @@ let officerGameComponent = {
                             </svg>
                       </div>
                       <div class="map-label">
+                        Civilian {{ map+1 }}
                       </div>
                     </div>
                 </div>
@@ -231,9 +232,22 @@ let officerGameComponent = {
                         </div>
                     </div>
                 </div>
-                <div class="investigation-data-container">
-                    <div class="title">Investigation Map</div>
-                    <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
+                <div style="clear: both;"></div>
+                <div class="maps-container">
+                    <div v-if="map < 5" v-for="map in maps" class="map-container">
+                      <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)' v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px' }">
+                            <!--todo: pass down the number of players-->
+                            <div v-for="player_id in 8" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
+                                -1
+                            </div>
+                            <svg v-for="player_id in maps" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
+                                <circle cx="3" cy="3" r="2" fill="black" />
+                            </svg>
+                      </div>
+                      <div class="map-label">
+                        Civilian {{ map+1 }}
+                      </div>
+                    </div>
                 </div>
               </div>
           </div>

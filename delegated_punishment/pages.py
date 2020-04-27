@@ -1,9 +1,249 @@
 from ._builtin import Page, WaitPage
-import json, math
+import json, math, csv
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
 from delegated_punishment.helpers import skip_period
+from .models import Constants, DefendToken, Player, SurveyResponse
+import random
+from delegated_punishment.helpers import skip_period, write_session_dir
+from delegated_punishment.models import Group
+
+import logging
+log = logging.getLogger(__name__)
+
+
+class SurveyInit(WaitPage):
+    def after_all_players_arrive(self):
+        selected_players = Player.objects.filter(group_id=self.group.pk).exclude(id_in_group=1)
+
+        sample_size = Constants.small_n
+
+        if Constants.dt_method == 0:
+            selected_players = random.sample(list(selected_players), sample_size)
+        elif Constants.dt_method == 1:
+            selected_players = selected_players
+        elif Constants.dt_method == 2:
+            selected_players = random.sample(list(selected_players), sample_size)
+        elif Constants.dt_method == 3:
+            selected_players = random.sample(list(selected_players), sample_size)
+
+        for p in selected_players:
+            SurveyResponse.objects.create(group=self.group, player=p, response=dict(), participant=True)
+
+
+class Intermission(Page):
+    timeout_seconds = 80
+    timer_text = 'Please wait for round to start'
+
+    def is_displayed(self):
+        if skip_period(self.session, self.round_number):
+            return False
+
+        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
+            return True
+        else:
+            return False
+
+    def vars_for_template(self):
+        vars_dict = dict(
+            steal_rate=Constants.civilian_steal_rate,
+            fine=Constants.civilian_fine_amount,
+            officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
+            officer_reprimand=Constants.officer_reprimand_amount
+        )
+        if self.round_number == 2:
+            vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
+            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
+        else:
+            info = 'We are about to perform 4 periods sequentially.'
+        vars_dict['info'] = info
+        return vars_dict
+
+
+class DefendTokenSurvey(Page):
+
+    def vars_for_template(self):
+        # check to see if player was selected
+        sr = SurveyResponse.objects.filter(group=self.group, player=self.player)
+
+        if sr:
+            selected = True
+        else:
+            selected = False
+
+        template_vars = dict(
+            timeout_seconds=Constants.dt_timeout_seconds,
+            selected=selected,
+            dt_method=Constants.dt_method,
+            dt_range=Constants.dt_range,
+            dt_payment_max=Constants.dt_payment_max,
+            dt_q=Constants.dt_q,
+            big_n=Constants.players_per_group-1,
+            gamma=Constants.gamma,
+            small_n=Constants.small_n
+        )
+
+        return template_vars
+
+
+class DefendTokenWaitPage(WaitPage):
+
+    def after_all_players_arrive(self):
+        """calculate how many defend tokens are going to be used"""
+
+        survey_responses = SurveyResponse.objects.filter(group=self.group)
+        print("THAT WAS THE SURVEY RESULTS")
+        print(survey_responses)
+
+        file_path = write_session_dir(self.session.config['session_identifier'])
+        file_name = f"{file_path}Session_{self.group.session_id}_Group_{self.group.id}_{self.session.vars['session_date']}_{self.session.vars['session_start']}.csv"
+
+        # csv file output per player
+        f = open(file_name, 'a', newline='')
+        with f:
+            writer = csv.writer(f)
+            # write header
+
+            if self.round_number == 1:
+                writer.writerow(SurveyResponse.csv_header())
+
+            # determine if players received 50 grain
+            for r in survey_responses:
+
+                r.validate()
+
+                row = r.csv_row()
+                writer.writerow(row)
+
+        # method specific code
+        if Constants.dt_method == 0:
+
+            results = dict()
+            for i in range(1, Constants.dt_range + 1):
+                count = 0
+                total = 0
+
+                for r in survey_responses:
+                    print('HERE IS A SURVEY RESULT')
+                    print(r)
+                    if r.response.get(str(i)):
+                        if r.response[str(i)].get('wtp'):
+                            count += 1
+                            total += int(r.response[str(i)]['wtp'])
+                    else:
+                        print("THERE WAS AN ERROR COLLECTING DATA FROM RESPONSE BELOW...")
+                        print(r.response)
+                try:
+                    results[i] = total * (Constants.players_per_group - 1) / count  # subtract officer
+                except ZeroDivisionError:
+                    results[i] = 0
+
+            log.info('survey results generated')
+
+            number_tokens = 0
+            for i in range(Constants.dt_range, 0, -1):
+                print(f"token count {i}, average {results[i]}")
+                if results[i] > Constants.dt_cost:
+                    number_tokens = i
+                    break
+
+            log.info(f"number tokens for next round {number_tokens}")
+
+            log.info(f"group updated")
+
+            self.group.defend_token_total = int(number_tokens)
+            self.group.defend_token_cost = sum(survey_responses.values_list('cost', flat=True))
+            self.group.save()
+            # payments calculation
+            self.group.calculate_survey_tax(survey_responses)
+
+            log.info("defend tokens saved to group")
+        elif Constants.dt_method == 1:
+            # individual results calculated in consumer
+
+            values = survey_responses.values_list('total', flat=True)
+            token_total = sum(values)
+            token_cost = sum(survey_responses.values_list('cost', flat=True))
+            log.info(f'number of tokens for period {self.group.round_number} is {token_total} from values: {values}')
+
+            if token_total < 0:
+                log.info(f'number of tokens is {token_total}. changing to 0')
+                token_total = 0
+
+            # Group.objects.filter(id=self.group.id).update(defend_token_total=token_total)
+            self.group.defend_token_total = token_total
+            self.group.defend_token_cost = token_cost
+            self.group.save()
+
+            # civilian payment
+            self.group.calculate_ogl_tax(survey_responses)
+
+        elif Constants.dt_method == 2:
+
+            token_total = sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
+            token_cost = sum(survey_responses.values_list('cost', flat=True))
+
+            Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
+
+            self.group.calculate_other_tax(survey_responses)
+
+        elif Constants.dt_method == 3:
+
+            token_total = sum(survey_responses).values_list('total', flat=True) + Constants.dt_e0
+            token_cost = sum(survey_responses.values_list('cost', flat=True))
+
+            Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
+
+            self.group.calculate_other_tax(survey_responses)
+
+        else:
+            log.error(f"RESULTS CANNOT BE GENERATED CORRECTLY FOR THIS METHOD {Constants.dt_method}")
+
+
+        log.info(f"THERE ARE {self.group.defend_token_total} TOKENS FOR GROUP {self.group.id}")
+        for i in range(self.group.defend_token_total):
+            DefendToken.objects.create(number=i + 1, group=self.group,)
+
+        log.info('Defend tokens created')
+
+
+class DefendTokenInfo(Page):
+    timeout_seconds = 60
+    timer_text = 'The round will begin shortly'
+
+    def vars_for_template(self):
+        template_vars = dict(survey_payment=0, num_tokens=self.group.defend_token_total)
+
+        try:
+            survey_response = SurveyResponse.objects.get(player=self.player)
+            your_tokens = survey_response.total
+
+            cost = survey_response.cost
+            participated = survey_response.participant
+
+            if survey_response.valid:
+                template_vars['survey_payment'] = Constants.dt_survey_payment
+
+        except SurveyResponse.DoesNotExist:
+            log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
+            cost = 0
+            your_tokens = -1
+            participated = False
+
+        template_vars['num_tokens'] = self.group.defend_token_total
+        template_vars['token_cost'] = cost
+        template_vars['total_token_cost'] = self.group.defend_token_cost
+
+        template_vars['your_tokens'] = your_tokens
+        template_vars['participated'] = participated
+
+        return template_vars
+
+
+class Wait(WaitPage):
+    pass
+
 
 
 class Game(Page):
@@ -32,7 +272,7 @@ class Game(Page):
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
-        vars_dict['defend_token_total'] = Constants.defend_token_total
+        vars_dict['defend_token_total'] = self.group.defend_token_total
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 
@@ -65,12 +305,11 @@ class Game(Page):
         return vars_dict
 
 
-class Wait(WaitPage):
-    pass
-
-
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
+        # recalculate taxes and update player balances
+        self.group.apply_taxes()
+
         if Constants.num_rounds > 1 and self.round_number < 3:
             # dont generate results for the tutorial and trial period
             pass
@@ -89,6 +328,32 @@ class ResultsPage(Page):
 
     def vars_for_template(self):
         vars_dict = dict()
+
+        try:
+            sr = SurveyResponse.objects.get(player=self.player)
+        except SurveyResponse.DoesNotExist:
+
+            if self.player.id_in_group != 1:
+                log.error(f"could not find survey result for player {self.player.id}")
+                balance = before_tax = math.floor(self.player.balance)
+                tax = 0
+                your_tokens = -1
+                participant = False
+            else:
+                balance = math.floor(self.player.balance)
+                before_tax = math.floor(self.player.balance + sr.cost)
+                tax = math.floor(sr.cost)
+                your_tokens = sr.total
+                participant = sr.participant
+
+                vars_dict['before_tax'] = before_tax
+                vars_dict['tax'] = tax
+                vars_dict['balance'] = balance
+
+                vars_dict['defend_token_cost'] = self.group.defend_token_cost
+                vars_dict['your_tokens'] = your_tokens
+                vars_dict['participant'] = participant
+
         vars_dict['period'] = self.player.subsession.round_number
         vars_dict['steal_total'] = self.player.steal_total
         vars_dict['victim_total'] = self.player.victim_total
@@ -107,35 +372,6 @@ class ResultsPage(Page):
             return False
 
 
-class Intermission(Page):
-    timeout_seconds = 80
-    timer_text = 'Please wait for round to start'
-
-    def is_displayed(self):
-        if skip_period(self.session, self.round_number):
-            return False
-
-        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
-            return True
-        else:
-            return False
-
-    def vars_for_template(self):
-        vars_dict = dict(
-            steal_rate=Constants.civilian_steal_rate,
-            fine=Constants.civilian_fine_amount,
-            officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-            officer_reprimand=Constants.officer_reprimand_amount
-        )
-        if self.round_number == 2:
-            vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
-            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
-        else:
-            info = 'We are about to perform 4 periods sequentially.'
-        vars_dict['info'] = info
-        return vars_dict
-
-
 class AfterTrialAdvancePage(Page):
     def is_displayed(self):
         if skip_period(self.session, self.round_number) or self.round_number == 2:
@@ -144,4 +380,4 @@ class AfterTrialAdvancePage(Page):
         return True
 
 
-page_sequence = [Wait, Intermission, Game, ResultsWaitPage, AfterTrialAdvancePage]
+page_sequence = [SurveyInit, Intermission, DefendTokenSurvey, DefendTokenWaitPage, DefendTokenInfo, Wait, Game, ResultsWaitPage, ResultsPage, AfterTrialAdvancePage]

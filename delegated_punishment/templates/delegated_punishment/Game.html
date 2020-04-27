@@ -141,23 +141,30 @@
                         <div class="left"># Reprimands: </div>
                         <div class="right"><strong>{{ falseArrestCount }}</strong></div>
                     </div>
+                    <br>
                 </div>
+
                 <br>
             </div>
             <div class="notifications-container">
-                <br>
-                <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
-                <br>
-                <probability-bar-component
-                        :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
-                        :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
-                </probability-bar-component>
-                <br>
-                <probability-bar-component
-                        :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
-                        :percent=probabilityCulprit
-                ></probability-bar-component>
-            </div>
+                    <br>
+                    <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
+                    <br>
+                    <probability-bar-component
+                            :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
+                            :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
+                    </probability-bar-component>
+                    <br>
+                    <probability-bar-component
+                            :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
+                            :percent=probabilityCulprit
+                    ></probability-bar-component>
+                    <br>
+                    <div v-if="isOfficer" class="investigation-data-container">
+                        <div class="title">Investigation Map</div>
+                        <div id="officer-investigation-container" ref='investigationcontainer' v-bind:style="{ height: mapSize + 'px' }"></div>
+                    </div>
+                </div>
         </div>
         <results-modal-component ref="resultsmodal" :balance="balance"></results-modal-component>
     </div>
