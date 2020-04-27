@@ -201,7 +201,7 @@ let officerGameComponent = {
                         </div>
                         <div style="clear: both;"></div>
                     </div>
-                    <div class="officer-units" style="display:flex;">
+                    <div class="officer-units" style="display:flex;" v-bind:style="{ minHeight: defendTokenSize + 'px', }">
                         <div 
                             v-for="(unit, index) in mutableDefendTokens" 
                             :ref="'defendlocation'+(unit.number)"

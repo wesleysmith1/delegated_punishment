@@ -209,7 +209,7 @@ class GameConsumer(WebsocketConsumer):
 
             # update users with investigation token count
             if investigation_change:
-                token_count = DefendToken.objects.filter(group_id=group_id, map=11).count
+                token_count = DefendToken.objects.filter(group_id=group_id, map=11).count()
                 # print('TOTAL TOKEN COUNT ' + str(token_count))
 
                 # send token count to group
