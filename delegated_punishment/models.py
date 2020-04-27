@@ -65,7 +65,7 @@ class Constants(BaseConstants):
     dt_range = 10
     dt_payment_max = 10
     dt_survey_payment = 50
-    dt_timeout_seconds = 5000
+    dt_timeout_seconds = 60
     dt_cost = 1
     dt_method = 1
     dt_q = 10
