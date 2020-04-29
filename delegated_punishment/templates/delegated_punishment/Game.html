@@ -70,11 +70,13 @@
 
         <!-- Modal content -->
         <div class="modal-content">
+            <h3>Token Summary</h3>
+            <br>
             <table class="table table-bordered">
               <thead>
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">You</th>
+                  <th scope="col"></th>
+                  <th scope="col">Only You</th>
                   <th scope="col">Group</th>
                 </tr>
               </thead>
@@ -92,31 +94,6 @@
                           <th scope="row">Tax</th>
                           <td>{{ your_tax }}</td>
                           <td>{{ defend_token_cost }}</td>
-                        </tr>
-                    {% endif %}
-
-
-
-                    {% if mechanism_cost is not None %}
-                        <tr>
-                          <th scope="row">Mechanism Cost</th>
-                          <td>{{ mechanism_cost }}</td>
-                          <td>{{ defend_token_cost }}</td>
-                        </tr>
-                    {% endif %}
-
-
-
-                    {% if rebate is not None %}
-                        <tr>
-                          <th scope="row">Rebate</th>
-                          <td colspan="2">{{ rebate }}</td>
-                        </tr>
-                    {% endif %}
-                    {% if big_g is not None %}
-                        <tr>
-                          <th scope="row">G</th>
-                          <td colspan="2">{{ big_g }}</td>
                         </tr>
                     {% endif %}
 

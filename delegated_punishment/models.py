@@ -83,17 +83,17 @@ class Constants(BaseConstants):
 
     dt_range = 10
     dt_payment_max = 10
-    dt_timeout_seconds = 180
+    dt_timeout_seconds = 600000
     dt_cost = 1
-    dt_method = 0
+    dt_method = 2
     dt_q = 10
     dt_e0 = 5
-    big_n = 8
+    big_n = 4
     small_n = 4
 
     gamma = 30
 
-    rebate = 0
+    rebate = 20
     endowment = 0
 
 
@@ -645,6 +645,8 @@ class SurveyResponse(Model):
                 header += f"{i},"
         elif Constants.dt_method == 1:
             header = f"Player_Id,Integer,Value"
+        elif Constants.dt_method > 1:
+            header = f"Player_Id, Integer, Value"
         else:
             log.info(f"no csv header configured for method {Constants.dt_method}")
             return None
@@ -667,8 +669,10 @@ class SurveyResponse(Model):
                 row += f"{self.response[key]['total']},"
         elif Constants.dt_method == 1:
             row += f"{self.mechanism_cost}"
+        elif Constants.dt_method > 1:
+            row += f"{self.mechanism_cost}"
         else:
-            log.info(f"TOCSV not configured for method {Constants.dt_method}")
+            log.info(f"CSVROW not configured for method {Constants.dt_method}")
             return
 
         return [row]

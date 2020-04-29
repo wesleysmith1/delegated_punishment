@@ -372,7 +372,7 @@ class Intermission(Page):
         if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
             return True
         else:
-            return False
+            return True
 
     def vars_for_template(self):
         vars_dict = dict(
