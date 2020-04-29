@@ -83,14 +83,13 @@ class Constants(BaseConstants):
 
     dt_range = 10
     dt_payment_max = 10
-    dt_survey_payment = 50
-    dt_timeout_seconds = 60
+    dt_timeout_seconds = 180
     dt_cost = 1
-    dt_method = 1
+    dt_method = 0
     dt_q = 10
     dt_e0 = 5
     big_n = 8
-    small_n = 8
+    small_n = 4
 
     gamma = 30
 
@@ -175,6 +174,7 @@ class Group(BaseGroup):
     defend_token_cost = models.FloatField(initial=0)
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
+    big_c = models.FloatField(blank=True, default=None)
 
     @classmethod
     def intersection_update(cls, group_id, bonus, fine):
@@ -279,13 +279,19 @@ class Group(BaseGroup):
         from delegated_punishment.generate_data import generate_csv
         generate_csv(self.session, self.subsession, meta_data)
 
-    def get_c(self, sum_costs=None):
+    def get_set_c(self, sum_costs=None):
 
         if not sum_costs:
-            sum_costs = sum(SurveyResponse.objects.filter(group=self).values_list('cost', flat=True))
+            sum_costs = sum(SurveyResponse.objects.filter(group=self).values_list('mechanism_cost', flat=True))
 
-        c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n - sum_costs)
-        log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}")
+        # TODO:
+        # rebate * small_n will change if rebates require some form of validaiton.
+        c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n) - sum_costs
+        log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}, c: {c}, token_count: {self.defend_token_total}")
+
+        self.big_c = c
+        self.save()
+        log.info(f"THIS IS THE BIG C VALUE {self.big_c}")
 
         return c
 
@@ -300,9 +306,9 @@ class Group(BaseGroup):
         if not survey_responses:
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
-        sum_costs = sum(survey_responses.values('cost', flat=True))
-        c = self.get_c(sum_costs)
-        g = self.sum_officer_bonuses()
+        sum_costs = sum(survey_responses.values_list('mechanism_cost', flat=True))
+        c = self.get_set_c(sum_costs)
+        g = self.get_g()
 
         all_participants_fee = (c + g) / Constants.big_n
 
@@ -313,10 +319,11 @@ class Group(BaseGroup):
 
             try:
                 sr = survey_responses.get(player_id=player.id)
-                sr.cost = all_participants_fee
+                sr.mechanism_cost = all_participants_fee
+                sr.tax = all_participants_fee
             except SurveyResponse.DoesNotExist:
                 log.error(f"player {player.id} did not participate in survey in round: {self.round_number}")
-                SurveyResponse.objects.create(player=player, group=self, cost=all_participants_fee, participant=False)
+                SurveyResponse.objects.create(player=player, group=self, mechanism_cost=all_participants_fee, tax=all_participants_fee, participant=False)
             else:
                 sr.save()
 
@@ -327,6 +334,7 @@ class Group(BaseGroup):
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
         g = self.get_g()
+        self.get_set_c()
         remaining_cost = g / Constants.big_n
 
         for player in self.get_players():
@@ -340,7 +348,7 @@ class Group(BaseGroup):
                 continue
             else:
                 # update cost with tax
-                tax = sr.cost + remaining_cost
+                tax = sr.mechanism_cost + remaining_cost
                 sr.tax = tax
                 sr.save()
 
@@ -350,9 +358,9 @@ class Group(BaseGroup):
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
         # total costs of participants
-        total_cost = sum(survey_responses.values_list('cost', flat=True))
+        total_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
 
-        c = self.get_c(total_cost)
+        c = self.get_set_c(total_cost)
         g = self.get_g()
 
         non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
@@ -368,9 +376,13 @@ class Group(BaseGroup):
                 # update non_participant code after round so that officer bonus can be applied after round
                 if not sr.participant:
                     sr.tax = non_participant_cost
-                    sr.save()
+                    rebate = 0
                 else:
-                    sr.tax -= sr.cost - Constants.rebate
+                    rebate = Constants.rebate
+                    sr.tax = sr.mechanism_cost - rebate
+
+                sr.rebate = rebate
+                sr.save()
 
             except SurveyResponse.DoesNotExist:
                 SurveyResponse.objects.create(player=player, group=self, tax=non_participant_cost, participant=False)
@@ -563,13 +575,14 @@ class SurveyResponse(Model):
     player = ForeignKey(Player, on_delete='CASCADE')
     group = ForeignKey(Group, on_delete='CASCADE')
     valid = models.BooleanField(initial=False)
-    cost = models.FloatField(initial=0)
+    mechanism_cost = models.FloatField(initial=0)
     total = models.IntegerField(initial=0)
     response = JSONField(null=True)
     participant = models.BooleanField(initial=False)
     # tax is calculated multiple times.
     # This field is convenience to hold latest calculation without overwriting cost field
     tax = models.FloatField(initial=0)
+    rebate = models.IntegerField(null=True, default=None)
 
     @classmethod
     def calculate_thetas(cls, survey_responses, total):
@@ -640,34 +653,12 @@ class SurveyResponse(Model):
     def get_survey_value(self, index):
         if self.response.get(index):
             payment = self.response[index].total
-            self.cost = payment
+            self.mechanism_cost = payment
             self.total = index
             self.save()
             return payment
         else:
             raise KeyError
-
-    def validate(self):
-        """pay players for valid survey response"""
-        self.valid = True
-
-        if Constants.dt_method == 0:
-            for r in self.response:
-                if not r:
-                    self.valid = False
-                    self.save()
-                    return
-        elif Constants.dt_method == 1:
-            # todo: if there is a default start value in method do we always validate as true
-            pass
-        else:
-            log.info(f"method {Constants.dt_method} is not setup for survey response validation")
-
-        if self.valid:
-            self.player.balance += Constants.dt_survey_payment
-            self.player.save()
-        else:
-            log.info(f"player {self.player_id} did not have a valid survey")
 
     def csv_row(self):
         row = f"{self.player_id},{self.group_id},"
@@ -675,7 +666,7 @@ class SurveyResponse(Model):
             for key in self.response:
                 row += f"{self.response[key]['total']},"
         elif Constants.dt_method == 1:
-            row += f"{self.cost}"
+            row += f"{self.mechanism_cost}"
         else:
             log.info(f"TOCSV not configured for method {Constants.dt_method}")
             return

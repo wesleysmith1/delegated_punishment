@@ -78,15 +78,14 @@ let stealGameComponent = {
         },
         checkLocation: function (that) {
 
-            if (that.hitTest(this.$refs.htarget, '10%')) {
+            if (that.hitTest(this.$refs.stealcontainer, '10%')) {
                 //location-centerde
                 for (let i in this.maps) {
                 let id = parseInt(this.maps[i]) + 1;
-                if (that.hitTest(this.$refs['prop' + id], '.000001')) {
-                    let map = this.$refs['prop' + id][0].getBoundingClientRect();
-                    this.calculateLocation(map, id);
-                    return;
-
+                    if (that.hitTest(this.$refs['prop' + id], '.000001')) {
+                        let map = this.$refs['prop' + id][0].getBoundingClientRect();
+                        this.calculateLocation(map, id);
+                        return;
                     }
                 }
             }
@@ -133,7 +132,7 @@ let stealGameComponent = {
         <div class="game">
             <div id="steal-container" class="upper" ref="stealcontainer">
                 <div class='title'>Civilian Maps</div> 
-                    <div ref='htarget' class="maps-container">
+                    <div class="maps-container">
                       <div v-if="map < 5" v-for="map in maps" class="map-container">
                             <div
                                 class="map"
@@ -170,7 +169,7 @@ let stealGameComponent = {
                       <div>
                     </div>
               </div>
-              <div ref='htarget' class="maps-container">
+              <div class="maps-container">
                       <div v-if="map > 4" v-for="map in maps" class="map-container">
                             <div
                                 class="map"

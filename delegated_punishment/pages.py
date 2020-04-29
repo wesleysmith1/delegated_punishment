@@ -109,9 +109,6 @@ class DefendTokenWaitPage(WaitPage):
 
             # determine if players received 50 grain
             for r in survey_responses:
-
-                r.validate()
-
                 row = r.csv_row()
                 writer.writerow(row)
 
@@ -152,7 +149,7 @@ class DefendTokenWaitPage(WaitPage):
             log.info(f"group updated")
 
             self.group.defend_token_total = int(number_tokens)
-            self.group.defend_token_cost = sum(survey_responses.values_list('cost', flat=True))
+            self.group.defend_token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
             self.group.save()
             # payments calculation
             self.group.calculate_survey_tax(survey_responses)
@@ -163,7 +160,7 @@ class DefendTokenWaitPage(WaitPage):
 
             values = survey_responses.values_list('total', flat=True)
             token_total = sum(values)
-            token_cost = sum(survey_responses.values_list('cost', flat=True))
+            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
             log.info(f'number of tokens for period {self.group.round_number} is {token_total} from values: {values}')
 
             if token_total < 0:
@@ -181,7 +178,7 @@ class DefendTokenWaitPage(WaitPage):
         elif Constants.dt_method == 2:
 
             token_total = sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
-            token_cost = sum(survey_responses.values_list('cost', flat=True))
+            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
 
             Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
 
@@ -190,7 +187,7 @@ class DefendTokenWaitPage(WaitPage):
         elif Constants.dt_method == 3:
 
             token_total = sum(survey_responses).values_list('total', flat=True) + Constants.dt_e0
-            token_cost = sum(survey_responses.values_list('cost', flat=True))
+            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
 
             Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
 
@@ -221,12 +218,12 @@ class DefendTokenInfo(Page):
             participated = survey_response.participant
 
             if survey_response.valid:
-                template_vars['survey_payment'] = Constants.dt_survey_payment
+                template_vars['survey_payment'] = Constants.rebate
 
         except SurveyResponse.DoesNotExist:
             log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
             cost = 0
-            your_tokens = -1
+            your_tokens = 0
             participated = False
 
         template_vars['num_tokens'] = self.group.defend_token_total
@@ -263,25 +260,37 @@ class Game(Page):
             survey_response = SurveyResponse.objects.get(player=self.player)
             your_tokens = survey_response.total
 
-            cost = survey_response.tax
+            mechanism_cost = survey_response.mechanism_cost
+            your_tax = survey_response.tax
             participated = survey_response.participant
 
-            if survey_response.valid:
-                vars_dict['survey_payment'] = Constants.dt_survey_payment
+            if survey_response.rebate is None:
+                rebate = None #todo: this is super wrong
+            else:
+                rebate = survey_response.rebate
 
         except SurveyResponse.DoesNotExist:
+            # this should only be for officer
+
             log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
-            cost = 0
-            your_tokens = -1
+            mechanism_cost = None
+            your_tax = 0
+            your_tokens = 0
             participated = False
+            rebate = None
 
-        vars_dict['num_tokens'] = self.group.defend_token_total
-        vars_dict['token_cost'] = cost
-        vars_dict['total_token_cost'] = self.group.defend_token_cost
-
+        # table variables
+        vars_dict['rebate'] = rebate
+        vars_dict['mechanism_cost'] = mechanism_cost
+        vars_dict['your_tax'] = your_tax
         vars_dict['your_tokens'] = your_tokens
+        vars_dict['big_c'] = self.group.big_c
         vars_dict['participated'] = participated
 
+        g = self.group.get_g() or None
+        vars_dict['big_g'] = g
+
+        # game variables
         pjson = dict()
         pjson['player'] = self.player.pk
         pjson['map'] = self.player.map
@@ -292,6 +301,7 @@ class Game(Page):
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
         vars_dict['defend_token_total'] = self.group.defend_token_total
+        vars_dict['defend_token_cost'] = self.group.defend_token_cost
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 

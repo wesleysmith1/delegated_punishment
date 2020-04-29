@@ -46,26 +46,28 @@ let surveyComponent = {
     },
     template:
         `
-        <div>
+        <div style="margin: auto; width: 50%;">
             <div class="item">
-               <div>Number of officer tokens (<div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div>)</div>
+               <div>Officer's total # tokens</div>
             
-               <div>Total willingness to pay (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</div>
+               <div>Your total willingness to pay</div>
             </div>
             <hr>
             <div v-for="i in tokenChoices">
                 <div class="item">
-                    <div>{{ i }} officer {{ i > 1 ? 'tokens' : 'token' }}</div>
-            
-                    <select v-model="resultsObj[i]" :disabled="submitted" class="form-control form-control-sm">
-                        <option value="null" default>--</option>
-                        <option>0</option>
-                        <option v-for="x in paymentMax">{{ x }}</option>
-                    </select>
+                    <div>{{ i }} <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></div>
+                    
+                    <div style="display: flex;">
+                        <select v-model="resultsObj[i]" :disabled="submitted" class="form-control form-control-sm">
+                            <option value="null" default>--</option>
+                            <option>0</option>
+                            <option v-for="x in paymentMax">{{ x }}</option>
+                        </select>
+                        <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px; position: relative; top: 5px; left: 10px;">
+                    </div>
                 </div>
                 <hr>
             </div>
-            {{ resultsObj }}
         </div>
         `
 }
