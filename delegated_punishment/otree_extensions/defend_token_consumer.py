@@ -79,11 +79,11 @@ class DefendTokenConsumer(WebsocketConsumer):
             log.info(totals)
 
             log.info(f"value for player {player_id} is {costs[player_id]}")
-            # SurveyResponse.objects.filter(player_id=player_id).update(total=updated_input, cost=responses[player_id])
+            # SurveyResponse.objects.filter(player_id=player_id).update(total=updated_input, mechanism_cost=responses[player_id])
             for p_id in costs:
                 p_cost = costs[p_id]
                 log.info(f"value for player {p_id} is {p_cost}")
-                SurveyResponse.objects.filter(player_id=p_id).update(cost=p_cost)
+                SurveyResponse.objects.filter(player_id=p_id).update(mechanism_cost=p_cost)
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,

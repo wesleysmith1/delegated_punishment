@@ -70,7 +70,6 @@ let oglComponent = {
                     let ptotal = this.provisionalTotals[parseInt(pid2)]
                     if (this.playerId === pid2_num) {
                         ptotal += direction
-                        debugger;
                         console.log(ptotal)
                     }
 
@@ -135,63 +134,117 @@ let oglComponent = {
     template:
         `
       <div>
-        <div class="row">
-            <div class="col-md-5 card bg-light">
-                <div class="card-body">
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>
+        <div class="row" style="display: flex; justify-content: space-between;">
+            <div style="min-width: 200px;">
+                <div v-show="decreased[playerId]">
+                    <h5 style="text-align: center;">Deviation -1</h5>
+                    <div class="list-group">
+                         <div class="list-group-item list-group-item-secondary">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your tokens:</div>
+                                <div>{{yourTotal - 1}}</div>
+                            </div>
                         </div>
-                        <select v-model.number="numberTokens" @change="inputChange()" :disabled="submitted" id="willingnessId" class="custom-select">
-                            <option v-for="x in paymentOptions + 1" :value="x - (paymentOptions/2) - 1">{{ x - (paymentOptions/2) - 1 }}</option>
-                        </select>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your cost:</div>
+                                <div>{{ Math.round(decreased[playerId]) }}</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total cost:</div>
+                                <div>{{ Math.round(arrSum(decreased)) }}</div>
+                            </div>
+                        </div>              
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total tokens:</div>
+                                <div>{{ arrSum(totals) - 1 }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         
-            <div class="col-md-7">
-                <h5 style="text-align: center;">Provisional</h5>
-                <div class="list-group">
-                    <div class="list-group-item">
-                        Your cost: {{ Math.round(provisional[playerId] | 0)}} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
+        
+            <div style="min-width: 200px;">
+                <div>
+                    <h5 style="text-align: center;">Provisional</h5>
+                    <div class="list-group">
+                        <div class="list-group-item list-group-item-secondary">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your Tokens:</div>
+                                <div>{{provisionalTotals[playerId]}}</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your cost:</div>
+                                <div>{{ Math.round(provisional[playerId] | 0)}}</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total cost:</div>
+                                <div>{{ Math.round(arrSum(provisional) | 0) }}</div>
+                            </div>
+                        </div>              
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total tokens:</div>
+                                <div>{{ arrSum(totals) }}</div>
+                            </div>
+                        </div>  
                     </div>
-                    <div class="list-group-item">
-                        Total cost {{ Math.round(arrSum(provisional) | 0) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
-                    </div>              
-                    <div class="list-group-item">
-                        Total tokens: {{ arrSum(totals) }}
-                    </div>  
                 </div>
-                <br>
-                <h5 v-show="increased[playerId] && decreased[playerId]" style="text-align: center;">Deviations</h5>
-                
-                <div v-show="increased[playerId]" class="list-group">
-                    <div class="list-group-item list-group-item-secondary">
-                        +1 token
-                    </div>
-                    <div class="list-group-item">
-                        Your cost: {{ Math.round(increased[playerId]) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
-                    </div>
-                    <div class="list-group-item">
-                        Total cost {{ Math.round(arrSum(increased)) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
-                    </div>              
-                    <div class="list-group-item">
-                        Total tokens: {{ arrSum(totals) + 1}}
+            </div>
+            
+            <div style="min-width: 200px;">
+                <div v-show="increased[playerId] && decreased[playerId]">
+                    <h5 style="text-align: center;">Deviation +1</h5>
+            
+                    <div class="list-group">
+                        <div class="list-group-item list-group-item-secondary">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your tokens:</div>
+                                <div>{{ yourTotal + 1 }}</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Your cost:</div>
+                                <div>{{ Math.round(increased[playerId]) }}</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total cost:</div>
+                                <div>{{ Math.round(arrSum(increased)) }}</div>
+                            </div>
+                        </div>              
+                        <div class="list-group-item">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Total tokens:</div>
+                                <div>{{ arrSum(totals) + 1}}</div>
+                            </div>
+                        </div> 
                     </div> 
-                </div> 
-                <br>
-                <div v-show="decreased[playerId]" class="list-group">
-                     <div class="list-group-item list-group-item-secondary">
-                        -1 token
-                    </div>
-                    <div class="list-group-item">
-                        Your cost: {{ Math.round(decreased[playerId]) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
-                    </div>
-                    <div class="list-group-item">
-                        Total cost {{ Math.round(arrSum(decreased)) }} (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)
-                    </div>              
-                    <div class="list-group-item">
-                        Total tokens: {{ arrSum(totals) - 1 }}
+                </div>
+            </div>
+            
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-md-12 card bg-light">
+                <div class="card-body">
+                    <div class="input-group" style="margin: auto;">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>
+                        </div>
+                        <select v-model.number="numberTokens" @change="inputChange()" :disabled="submitted" id="willingnessId" class="custom-select" autofocus>
+                            <option v-for="x in paymentOptions + 1" :value="x - (paymentOptions/2) - 1">{{ x - (paymentOptions/2) - 1 }}</option>
+                        </select>
                     </div>
                 </div>
             </div>

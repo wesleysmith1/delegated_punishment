@@ -69,14 +69,60 @@
 
         <!-- Modal content -->
         <div class="modal-content">
-            {% if player.id_in_group != 1 %}
-            <p>Survey payment: {{ survey_payment }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
-            <p>Your tokens: {{ your_tokens }}</p>
-            <p>Your token Cost: {{ token_cost }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
-            {% endif %}
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">You</th>
+                  <th scope="col">Group</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Tokens</th>
+                  <td>{{ your_tokens }}</td>
+                  <td>{{ defend_token_total }}</td>
+                </tr>
 
-            <p>Total tokens: {{ group.defend_token_total }}</p>
-            <p>Total token cost: {{ total_token_cost }}</p>
+                {% if player.id_in_group != 1 %}
+
+                    {% if your_tax is not None and big_c is not None%}
+                        <tr>
+                          <th scope="row">Tax</th>
+                          <td>{{ your_tax }}</td>
+                          <td>{{ defend_token_cost }}</td>
+                        </tr>
+                    {% endif %}
+
+
+
+                    {% if mechanism_cost is not None %}
+                        <tr>
+                          <th scope="row">Mechanism Cost</th>
+                          <td>{{ mechanism_cost }}</td>
+                          <td>{{ defend_token_cost }}</td>
+                        </tr>
+                    {% endif %}
+
+
+
+                    {% if rebate is not None %}
+                        <tr>
+                          <th scope="row">Rebate</th>
+                          <td colspan="2">{{ rebate }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if big_g is not None %}
+                        <tr>
+                          <th scope="row">G</th>
+                          <td colspan="2">{{ big_g }}</td>
+                        </tr>
+                    {% endif %}
+
+                {% endif %}
+
+              </tbody>
+            </table>
         </div>
 
     </div>
@@ -148,9 +194,6 @@
                     <div class="title-small data-row">
                         <div class="left"># Intercepts: </div>
                         <div class="right"><strong>{{ interceptCount }}</strong></div>
-
-
-
                     </div>
                     <div style="clear: both"></div>
                     <div class="title-small data-row">
@@ -262,7 +305,7 @@
                 resultsModalDuration: resultsModalSeconds * 1000,
 
                 game_started: gameStarted,
-                info_duration: 10000
+                info_duration: 10000000
 
             },
             created: function () {

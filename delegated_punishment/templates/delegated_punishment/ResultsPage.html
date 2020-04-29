@@ -12,17 +12,64 @@
             display: none;
         }
     </style>
-    <div style="font-size: 30px;">
-        <p>You obtained <strong>{{ before_tax }}</strong>(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">) in round {{ group.round_number }}</p>
+    <div>
+        <p style="font-size: 30px;">You obtained <strong>{{ before_tax }}</strong>(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">) in round {{ group.round_number }}</p>
 
-        {% if player.id_in_group != 1 %}
-            <p>Defend token cost and taxes {{ tax }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
-            <p>Total {{ balance }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
-            <p>Your tokens: {{ your_tokens }}</p>
-        {% endif %}
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">You</th>
+              <th scope="col">Group</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Tokens</th>
+              <td>{{ your_tokens }}</td>
+              <td>{{ defend_token_total }}</td>
+            </tr>
 
-        <p>Total tokens: {{ group.defend_token_total }}</p>
-        <p>Total token cost: {{ total_token_cost }}(<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</p>
+            {% if player.id_in_group != 1 %}
+
+                {% if mechanism_cost is not None %}
+                    <tr>
+                      <th scope="row">Mechanism Cost</th>
+                      <td>{{ mechanism_cost }}</td>
+                      <td>{{ defend_token_cost }}</td>
+                    </tr>
+                {% endif %}
+                {% if rebate is not None %}
+                    <tr>
+                      <th scope="row">Rebate</th>
+                      <td colspan="2">{{ rebate }}</td>
+                    </tr>
+                {% endif %}
+                {% if big_g is not None %}
+                    <tr>
+                      <th scope="row">G</th>
+                      <td colspan="2">{{ big_g }}</td>
+                    </tr>
+                {% endif %}
+
+                {% if your_tax is not None and big_c is not None%}
+                    <tr>
+                      <th scope="row">Tax</th>
+                      <td>{{ your_tax }}</td>
+                      <td>{{ defend_token_cost }}</td>
+                    </tr>
+                {% endif %}
+
+                <tr>
+                  <th scope="row">Final Balance</th>
+                  <td>{{ player.balance }}</td>
+                  <td></td>
+                </tr>
+
+            {% endif %}
+
+          </tbody>
+        </table>
     </div>
 
 
