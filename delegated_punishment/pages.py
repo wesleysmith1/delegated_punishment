@@ -431,7 +431,7 @@ class ResultsPage(Page):
         elif self.round_number > 1:
             return True
         else:
-            return False
+            return True
 
 
 class AfterTrialAdvancePage(Page):

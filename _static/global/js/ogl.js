@@ -50,11 +50,18 @@ let oglComponent = {
             }, 0);
         },
         calculateThetas: function(direction) {
-            if (this.method !== 1) { // todo: make this more obvious so we don't forget about it and break something
-                return 0;
-            }
             let thetaResults = {}
             let total = this.arrSum(this.totals) + direction
+
+            if (this.method !== 1) { // todo: make this more obvious so we don't forget about it and break something
+                let empty = {}
+                let length = this.totals.length
+                for (const pid in this.provisionalTotals) {
+                    empty[parseInt(pid)] = 0
+                }
+                return empty
+            }
+
             for(const pid in this.provisionalTotals) {
                 let x = 0;
                 let playerId2 = parseInt(pid)
@@ -87,7 +94,7 @@ let oglComponent = {
         },
         calculateOgl: function(direction) {
             // the direction is +- 1.
-            let thetas = this.calculateThetas(direction)
+            let thetas = this.calculateThetas(direction, )
             if (direction === 0)
                 console.log('thetas: ', thetas)
             let oglResults = {}
@@ -126,6 +133,7 @@ let oglComponent = {
             // console.log('server', this.provisionalCosts)
             this.increased = this.calculateOgl(1)
             this.decreased = this.calculateOgl(-1)
+            debugger;
         },
     },
     computed: {
