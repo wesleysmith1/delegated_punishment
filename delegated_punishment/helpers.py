@@ -90,3 +90,13 @@ def average_harvest():
 
     print(f'AVERAGE HARVEST TIME {total_time/total}')
 
+
+def format_template_numbers(x):
+    if x is not None:
+        return int(round(x))
+    else:
+        return None
+
+
+def safe_list_sum(arr):
+    return sum([x for x in arr if x is not None])

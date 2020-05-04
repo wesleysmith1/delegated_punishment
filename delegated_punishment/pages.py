@@ -5,7 +5,7 @@ from .models import Constants, DefendToken, Player
 from random import random
 from .models import Constants, DefendToken, Player, SurveyResponse
 import random
-from delegated_punishment.helpers import skip_round, write_session_dir
+from delegated_punishment.helpers import skip_round, write_session_dir, format_template_numbers, safe_list_sum
 from delegated_punishment.models import Group
 
 import logging
@@ -120,19 +120,37 @@ class DefendTokenWaitPage(WaitPage):
                 count = 0
                 total = 0
 
+                token_index = str(i)
+
                 for r in survey_responses:
                     print('HERE IS A SURVEY RESULT')
                     print(r)
-                    if r.response.get(str(i)):
-                        if r.response[str(i)].get('wtp'):
-                            count += 1
-                            total += int(r.response[str(i)]['wtp'])
+                    # import pdb
+                    # pdb.set_trace()
+                    if r.response.get(token_index):
+                        if r.response[token_index].get('wtp'):
+                            log.info(f"HERE IT IS THE RESPONSE FOR THIS PLAYER IS {r.response[token_index]['wtp']}")
+
+                            try:
+                                response = r.response[token_index]['wtp']
+
+                                if response is not 'null':
+                                    count += 1
+                                    total += response
+                            except:
+                                log.info(f"COULD NOT INCREMENT TOTAL. TOTAL IS CURRENTLY AT {total}. Here was the value of response: {response}")
+
+
+
+                            log.error(f'ROW {i}, RESPONSE {response} COUNT {count} TOTAL {total}')
+                        pass
                     else:
                         print("THERE WAS AN ERROR COLLECTING DATA FROM RESPONSE BELOW...")
                         print(r.response)
                 try:
                     results[i] = total * (Constants.players_per_group - 1) / count  # subtract officer
                 except ZeroDivisionError:
+                    # there were no responses
                     results[i] = 0
 
             log.info('survey results generated')
@@ -140,16 +158,21 @@ class DefendTokenWaitPage(WaitPage):
             number_tokens = 0
             for i in range(Constants.dt_range, 0, -1):
                 print(f"token count {i}, average {results[i]}")
-                if results[i] > Constants.dt_cost:
+                if results[i] >= Constants.dt_q:
                     number_tokens = i
                     break
+
+            for sr in survey_responses:
+                if sr.response.get(number_tokens):
+                    sr.mechanism_cost = sr.response[number_tokens]['total']
+                    sr.save()
 
             log.info(f"number tokens for next round {number_tokens}")
 
             log.info(f"group updated")
 
             self.group.defend_token_total = int(number_tokens)
-            self.group.defend_token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
+            self.group.defend_token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
             self.group.save()
             # payments calculation
             self.group.calculate_survey_tax(survey_responses)
@@ -160,7 +183,7 @@ class DefendTokenWaitPage(WaitPage):
 
             values = survey_responses.values_list('total', flat=True)
             token_total = sum(values)
-            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
+            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
             log.info(f'number of tokens for period {self.group.round_number} is {token_total} from values: {values}')
 
             if token_total < 0:
@@ -177,8 +200,8 @@ class DefendTokenWaitPage(WaitPage):
 
         elif Constants.dt_method == 2:
 
-            token_total = sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
-            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
+            token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
+            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
 
             Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
 
@@ -186,8 +209,8 @@ class DefendTokenWaitPage(WaitPage):
 
         elif Constants.dt_method == 3:
 
-            token_total = sum(survey_responses).values_list('total', flat=True) + Constants.dt_e0
-            token_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
+            token_total = safe_list_sum(survey_responses).values_list('total', flat=True) + Constants.dt_e0
+            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
 
             Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
 
@@ -269,20 +292,23 @@ class Game(Page):
             else:
                 rebate = survey_response.rebate
 
+            if Constants.dt_method == 0:
+                your_tokens = "Not applicable"
+
         except SurveyResponse.DoesNotExist:
             # this should only be for officer
 
             log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
             mechanism_cost = None
             your_tax = 0
-            your_tokens = 0
+            your_tokens = "Not applicable"
             participated = False
             rebate = None
 
         # table variables
         vars_dict['rebate'] = rebate
         vars_dict['mechanism_cost'] = mechanism_cost
-        vars_dict['your_tax'] = your_tax
+        vars_dict['your_tax'] = format_template_numbers(your_tax)
         vars_dict['your_tokens'] = your_tokens
         vars_dict['big_c'] = self.group.big_c
         vars_dict['participated'] = participated
@@ -301,7 +327,7 @@ class Game(Page):
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
         vars_dict['defend_token_total'] = self.group.defend_token_total
-        vars_dict['defend_token_cost'] = self.group.defend_token_cost
+        vars_dict['defend_token_cost'] = format_template_numbers(self.group.defend_token_cost)
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 

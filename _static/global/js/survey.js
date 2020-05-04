@@ -33,15 +33,21 @@ let surveyComponent = {
                         'wtp': this.formatNum(this.resultsObj[i]),
                             'total': this.formatNum(this.resultsObj[i]) }
                 } else {
+                    let wtp = null
+                    if (this.formatNum(this.resultsObj[i-1]) !== null && this.formatNum(this.resultsObj[i]) !== null)
+                        wtp = this.formatNum(this.resultsObj[i]) - this.formatNum(this.resultsObj[i-1])
+                    let total = this.formatNum(this.resultsObj[i])
                     m[i] = {
-                        'wtp': this.formatNum(this.resultsObj[i]) - this.formatNum(this.resultsObj[i-1]),
-                            'total': this.formatNum(this.resultsObj[i])} }
+                        'wtp': wtp,
+                            'total': total} }
 
             }
+            console.log('HERE IT IS:', m)
            return m
         },
         formatNum: function(n) {
-            return n | 0
+            // return n | 0
+            return n
         }
     },
     template:
@@ -68,6 +74,11 @@ let surveyComponent = {
                 </div>
                 <hr>
             </div>
+            results: {{ resultsObj }}
+            <br>
+            willingness to pay: {{  willingnessToPay  }}
+            <br>
+            <button @click="mapWTP()">heyo</button>
         </div>
         `
 }

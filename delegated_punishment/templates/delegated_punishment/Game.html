@@ -76,13 +76,13 @@
               <thead>
                 <tr>
                   <th scope="col"></th>
-                  <th scope="col">Only You</th>
+                  <th scope="col">You</th>
                   <th scope="col">Group</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row">Tokens</th>
+                  <th scope="row">#Tokens <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></th>
                   <td>{{ your_tokens }}</td>
                   <td>{{ defend_token_total }}</td>
                 </tr>
@@ -91,7 +91,7 @@
 
                     {% if your_tax is not None and big_c is not None%}
                         <tr>
-                          <th scope="row">Tax</th>
+                          <th scope="row">Total token cost<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></th>
                           <td>{{ your_tax }}</td>
                           <td>{{ defend_token_cost }}</td>
                         </tr>

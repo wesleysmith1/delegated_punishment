@@ -62,18 +62,17 @@
             <div id="app">
 
                 <div v-if="playerSelected">
-                   <h2 class="otree-title page-header">
+                   <h2 class="otree-title page-header" style="text-align:center;">
                        {{ title }}
                    </h2>
-
-                    <div class="otree-timer alert alert-warning">
+                    <div class="otree-timer alert alert-warning" style="margin: auto;" v-bind:style="{width: (method == 0 ? '50%' : '100%')}">
                         <p>Time left to complete this page:
                             <span style="font-weight: bold">
                                 <span class="otree-timer__time-left">{{ minutes + ':' + seconds }}</span>
                             </span>
                         </p>
                     </div>
-
+                    <br>
                     <div v-if="method === 0">
                         <survey-component
                             ref="survey"
@@ -228,10 +227,10 @@
                 clearInterval(this.timer);
             },
             setTitle: function() {
-                if (this.method === 0) {
-                    this.title = "What are we going to name this?";
+                if (this.participant) {
+                    this.title = "We are determining the number of officer tokens for the next round. Please wait patiently."
                 } else {
-                    this.title = "Provisional choices and outcomes";
+                    this.title = "Determining the number of officer tokens in the next round."
                 }
             }
         },
