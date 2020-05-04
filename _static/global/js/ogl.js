@@ -25,6 +25,7 @@ let oglComponent = {
             provisional: {},
             increased: {},
             decreased: {},
+            formInputNum: null,
         }
     },
     created: function() {
@@ -34,6 +35,23 @@ let oglComponent = {
 
     },
     methods: {
+        incrementTotal: function() {
+            this.numberTokens += 1
+            this.inputChange()
+        },
+        decrementTotal: function() {
+            this.numberTokens -= 1
+            this.inputChange()
+        },
+        handleFormSubmission: function() {
+            if(Number.isInteger(this.formInputNum)) {
+                this.numberTokens = this.formInputNum
+                this.inputChange()
+            } else {
+                alert('invalid input')
+                this.formInputNum = null
+            }
+        },
         cancelTimeout: function() {
             if (this.timeout)
                 clearTimeout(this.timeout);
@@ -133,7 +151,6 @@ let oglComponent = {
             // console.log('server', this.provisionalCosts)
             this.increased = this.calculateOgl(1)
             this.decreased = this.calculateOgl(-1)
-            debugger;
         },
     },
     computed: {
@@ -147,25 +164,25 @@ let oglComponent = {
                 <div v-show="decreased[playerId]">
                     <h5 style="text-align: center;">Deviation -1</h5>
                     <div class="list-group">
-                         <div class="list-group-item list-group-item-secondary">
+                         <div class="list-group-item list-group-item-dark">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your tokens:</div>
                                 <div>{{yourTotal - 1}}</div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your cost:</div>
                                 <div>{{ Math.round(decreased[playerId]) }}</div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
                                 <div>{{ Math.round(arrSum(decreased)) }}</div>
                             </div>
                         </div>              
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total tokens:</div>
                                 <div>{{ arrSum(totals) - 1 }}</div>
@@ -213,25 +230,25 @@ let oglComponent = {
                     <h5 style="text-align: center;">Deviation +1</h5>
             
                     <div class="list-group">
-                        <div class="list-group-item list-group-item-secondary">
+                        <div class="list-group-item list-group-item-dark">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your tokens:</div>
                                 <div>{{ yourTotal + 1 }}</div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your cost:</div>
                                 <div>{{ Math.round(increased[playerId]) }}</div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
                                 <div>{{ Math.round(arrSum(increased)) }}</div>
                             </div>
                         </div>              
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total tokens:</div>
                                 <div>{{ arrSum(totals) + 1}}</div>
@@ -242,6 +259,25 @@ let oglComponent = {
             </div>
             
         </div>
+        <br>
+        <div class="row" style="display: flex; justify-content: space-between;">
+            <div>
+                <button @click="decrementTotal(1)" type="button" style="min-width: 200px;" class="btn btn-dark">-1</button>
+            </div>
+            
+            <form class="form-inline" @submit.prevent="handleFormSubmission()">
+              <div class="form-group" style="max-width: 200px;">
+                <input type="number" step="1" class="form-control" placeholder="Enter a number" style="max-width: 200px;" v-model.number="formInputNum">
+              </div>
+              <button type="submit" class="btn btn-dark">Update</button>
+            </form>
+            
+            <div>
+                <button @click="incrementTotal(1)" type="button" style="min-width: 200px;" class="btn btn-dark">+1</button>
+            </div>
+        </div>
+        <br>
+        <br>
         <br>
         <div class="row">
             <div class="col-md-12 card bg-light">

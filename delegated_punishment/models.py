@@ -12,6 +12,8 @@ from otree.api import (
 from otree.db.models import Model, ForeignKey
 from random import randrange
 
+from delegated_punishment.helpers import safe_list_sum
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -64,17 +66,16 @@ class Constants(BaseConstants):
 
     dt_range = 10
     dt_payment_max = 10
-    dt_timeout_seconds = 600000
-    dt_cost = 1
-    dt_method = 2
+    dt_timeout_seconds = 9000
+    dt_method = 0
     dt_q = 10
     dt_e0 = 5
-    big_n = 4
     small_n = 4
+    big_n = 8
 
     gamma = 30
 
-    rebate = 20
+    rebate = 0
     endowment = 0
 
 
@@ -264,7 +265,7 @@ class Group(BaseGroup):
     def get_set_c(self, sum_costs=None):
 
         if not sum_costs:
-            sum_costs = sum(SurveyResponse.objects.filter(group=self).values_list('mechanism_cost', flat=True))
+            sum_costs = safe_list_sum(SurveyResponse.objects.filter(group=self).values_list('mechanism_cost', flat=True))
 
         # TODO:
         # rebate * small_n will change if rebates require some form of validaiton.
@@ -288,11 +289,14 @@ class Group(BaseGroup):
         if not survey_responses:
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
-        sum_costs = sum(survey_responses.values_list('mechanism_cost', flat=True))
+        # filter out empty values
+        sum_costs = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
         c = self.get_set_c(sum_costs)
         g = self.get_g()
 
         all_participants_fee = (c + g) / Constants.big_n
+
+        self.defend_token_cost = all_participants_fee * Constants.big_n
 
         for player in self.get_players():
 
@@ -305,7 +309,7 @@ class Group(BaseGroup):
                 sr.tax = all_participants_fee
             except SurveyResponse.DoesNotExist:
                 log.error(f"player {player.id} did not participate in survey in round: {self.round_number}")
-                SurveyResponse.objects.create(player=player, group=self, mechanism_cost=all_participants_fee, tax=all_participants_fee, participant=False)
+                SurveyResponse.objects.create(player=player, group=self, mechanism_cost=None, tax=all_participants_fee, participant=False)
             else:
                 sr.save()
 
@@ -340,9 +344,9 @@ class Group(BaseGroup):
             survey_responses = SurveyResponse.objects.filter(group_id=self.id)
 
         # total costs of participants
-        total_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
+        # total_cost = sum(survey_responses.values_list('mechanism_cost', flat=True))
 
-        c = self.get_set_c(total_cost)
+        c = self.get_set_c()
         g = self.get_g()
 
         non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
@@ -557,7 +561,7 @@ class SurveyResponse(Model):
     player = ForeignKey(Player, on_delete='CASCADE')
     group = ForeignKey(Group, on_delete='CASCADE')
     valid = models.BooleanField(initial=False)
-    mechanism_cost = models.FloatField(initial=0)
+    mechanism_cost = models.FloatField(null=True, default=None)
     total = models.IntegerField(initial=0)
     response = JSONField(null=True)
     participant = models.BooleanField(initial=False)
@@ -598,7 +602,7 @@ class SurveyResponse(Model):
         costs_results = dict()
         totals_results = dict()
 
-        total = sum(survey_responses.values_list('total', flat=True))
+        total = safe_list_sum(survey_responses.values_list('total', flat=True))
 
         log.info(f"total token count {total}")
 

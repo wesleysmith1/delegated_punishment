@@ -7,50 +7,27 @@
 
 
 {% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}">
     <style>
         .otree-btn-next {
             display: none;
         }
     </style>
-    <div>
-        <h4>Earnings summary</h4>
-        <table class="table table-bordered">
-{#          <thead>#}
-{#            <tr>#}
-{#              <th scope="col"></th>#}
-{#              <th scope="col">Earnings summary</th>#}
-{#            </tr>#}
-{#          </thead>#}
-          <tbody>
-            <tr>
-              <th scope="row">In game</th>
-              <td>{{ before_tax }}</td>
-            </tr>
-            {% if your_tax is not None %}
-            <tr>
-              <th scope="row">Taxes</th>
-              <td>{{ your_tax }}</td>
-            </tr>
-            {% endif %}
-            <tr>
-              <th scope="row">Net earnings</th>
-              <td>{{ player.balance }}</td>
-            </tr>
-          </tbody>
-        </table>
 
+    <div>
+        <br>
         <h4>Token Summary</h4>
-        <table class="table table-bordered">
+        <table class="table table-floating">
           <thead>
             <tr>
-              <th scope="col"></th>
-              <th scope="col">Only You</th>
+              <th scope="col">Description</th>
+              <th scope="col">You</th>
               <th scope="col">Group</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <th scope="row">Tokens</th>
+              <td># Tokens <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px;"></div></td>
               <td>{{ your_tokens }}</td>
               <td>{{ defend_token_total }}</td>
             </tr>
@@ -59,20 +36,50 @@
 
                 {% if your_tax is not None and big_c is not None%}
                     <tr>
-                      <th scope="row">Tax</th>
+                      <td>Total token Cost<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
                       <td>{{ your_tax }}</td>
                       <td>{{ defend_token_cost }}</td>
                     </tr>
                 {% endif %}
-
             {% endif %}
-
           </tbody>
         </table>
     </div>
 
+    <br>
 
-    <p>{% next_button %}</p>
+    <div>
+        <h4 class="card-title">Earnings Summary</h4>
+        <div class="scrollable">
+            <table class="table table-floating table-debug">
+                <thead>
+                    <tr>
+                      <th scope="col">Description</th>
+                      <th scope="col">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                        <td>{{ balance }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Before tax earnings<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                        <td>{{ before_tax }}</td>
+                    </tr>
+                    {% if your_tax is not None %}
+                    <tr>
+                        <td scope="row">Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                        <td>{{ your_tax }}</td>
+                    </tr>
+                    {% endif %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 
 {% endblock %}
