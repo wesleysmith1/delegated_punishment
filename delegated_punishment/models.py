@@ -83,20 +83,18 @@ class Constants(BaseConstants):
     officer_start_balance = 1000
     civilian_start_balance = 0
 
+    small_n = 8
+    dt_method = 1
+    dt_q = 10
+    dt_timeout_seconds = 6000  # seconds
+    previous_modal_mili = 10000  # miliseconds
+
+    dt_e0 = 5
     dt_range = 10
     dt_payment_max = 10
-    dt_timeout_seconds = 9000
-    dt_method = 0
-    dt_q = 10
-    dt_e0 = 5
-    small_n = 4
     big_n = 8
-
     gamma = 30
-
     rebate = 0
-    endowment = 0
-
 
 class Subsession(BaseSubsession):
 
@@ -309,7 +307,7 @@ class Group(BaseGroup):
 
         # filter out empty values
         sum_costs = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
-        c = self.get_set_c(sum_costs)
+        c = self.defend_token_total * Constants.dt_q
         g = self.get_g()
 
         all_participants_fee = (c + g) / Constants.big_n
@@ -352,7 +350,7 @@ class Group(BaseGroup):
                 continue
             else:
                 # update cost with tax
-                tax = sr.mechanism_cost + remaining_cost
+                tax = sr.mechanism_cost + remaining_cost # todo this breaks frequently nonetype + float illegal
                 sr.tax = tax
                 sr.save()
 

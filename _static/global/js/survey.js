@@ -54,9 +54,9 @@ let surveyComponent = {
         `
         <div style="margin: auto; width: 50%;">
             <div class="item">
-               <div>Officer's total # tokens</div>
+               <div>Total number of officer tokens</div>
             
-               <div>Your total willingness to pay</div>
+               <div>Maximum you would pay</div>
             </div>
             <hr>
             <div v-for="i in tokenChoices">

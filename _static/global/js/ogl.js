@@ -30,6 +30,15 @@ let oglComponent = {
     },
     created: function() {
         this.paymentOptions = this.paymentMax * 2;
+
+        // this.yourTotal = {};
+        // this.YourCost = 0;
+        // this.totals = Object.values(newVal);
+        // this.costs = {};
+        //
+        this.provisional = this.calculateOgl(0)
+        this.increased = this.calculateOgl(1)
+        this.decreased = this.calculateOgl(-1)
     },
     mounted: function () {
 
@@ -158,13 +167,38 @@ let oglComponent = {
     },
     template:
         `
-      <div>
+      <div>      
+        <div class="row" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
+                <h5 style="text-align: center;">Deviation</h5>
+                <div style="text-align: center;">
+                    <button @click="decrementTotal(1)" type="button" class="btn btn-primary">Update tokens -1</button>
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="text-align: center;">Provisional</h3>
+                <form class="form-inline" @submit.prevent="handleFormSubmission()">
+                  <button type="submit" class="btn btn-primary">Update tokens</button>
+                  <div class="form-group" style="max-width: 250px;">
+                    <input type="number" step="1" class="form-control" placeholder="Enter a number" style="max-width: 250px;" v-model.number="formInputNum">
+                  </div>
+                </form>
+            </div>
+            
+            <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
+                <h5 style="text-align: center;">Deviation</h5>
+                <div style="text-align: center;">
+                    <button @click="incrementTotal(1)" type="button" class="btn btn-primary">Update tokens +1</button>
+                </div>
+            </div>
+        </div>
+      
         <div class="row" style="display: flex; justify-content: space-between;">
             <div style="min-width: 200px;">
-                <div v-show="decreased[playerId]">
-                    <h5 style="text-align: center;">Deviation -1</h5>
+                <div>
                     <div class="list-group">
-                         <div class="list-group-item list-group-item-dark">
+                         <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your tokens:</div>
                                 <div>{{yourTotal - 1}}</div>
@@ -193,20 +227,19 @@ let oglComponent = {
             </div>
         
         
-            <div style="min-width: 200px;">
+            <div style="min-width: 350px;">
                 <div>
-                    <h5 style="text-align: center;">Provisional</h5>
                     <div class="list-group">
-                        <div class="list-group-item list-group-item-secondary">
+                        <div class="list-group-item">
                             <div style="display: flex; justify-content: space-between;">
-                                <div>Your Tokens:</div>
-                                <div>{{provisionalTotals[playerId]}}</div>
+                                <div><b>Your Tokens:</b></div>
+                                <div><b>{{provisionalTotals[playerId]}}</b></div>
                             </div>
                         </div>
                         <div class="list-group-item">
                             <div style="display: flex; justify-content: space-between;">
-                                <div>Your cost:</div>
-                                <div>{{ Math.round(provisional[playerId] | 0)}}</div>
+                                <div><b>Your cost:</b></div>
+                                <div><b>{{ Math.round(provisional[playerId] | 0)}}</b></div>
                             </div>
                         </div>
                         <div class="list-group-item">
@@ -226,11 +259,9 @@ let oglComponent = {
             </div>
             
             <div style="min-width: 200px;">
-                <div v-show="increased[playerId] && decreased[playerId]">
-                    <h5 style="text-align: center;">Deviation +1</h5>
-            
+                <div>            
                     <div class="list-group">
-                        <div class="list-group-item list-group-item-dark">
+                        <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your tokens:</div>
                                 <div>{{ yourTotal + 1 }}</div>
@@ -257,42 +288,24 @@ let oglComponent = {
                     </div> 
                 </div>
             </div>
-            
         </div>
-        <br>
-        <div class="row" style="display: flex; justify-content: space-between;">
-            <div>
-                <button @click="decrementTotal(1)" type="button" style="min-width: 200px;" class="btn btn-dark">-1</button>
-            </div>
-            
-            <form class="form-inline" @submit.prevent="handleFormSubmission()">
-              <div class="form-group" style="max-width: 200px;">
-                <input type="number" step="1" class="form-control" placeholder="Enter a number" style="max-width: 200px;" v-model.number="formInputNum">
-              </div>
-              <button type="submit" class="btn btn-dark">Update</button>
-            </form>
-            
-            <div>
-                <button @click="incrementTotal(1)" type="button" style="min-width: 200px;" class="btn btn-dark">+1</button>
-            </div>
-        </div>
-        <br>
-        <br>
-        <br>
-        <div class="row">
-            <div class="col-md-12 card bg-light">
-                <div class="card-body">
-                    <div class="input-group" style="margin: auto;">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>
-                        </div>
-                        <select v-model.number="numberTokens" @change="inputChange()" :disabled="submitted" id="willingnessId" class="custom-select" autofocus>
-                            <option v-for="x in paymentOptions + 1" :value="x - (paymentOptions/2) - 1">{{ x - (paymentOptions/2) - 1 }}</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>    
+<!--        <br>-->
+<!--        <br>-->
+<!--        <br>-->
+<!--        <div class="row">-->
+<!--            <div class="col-md-12 card bg-light">-->
+<!--                <div class="card-body">-->
+<!--                    <div class="input-group" style="margin: auto;">-->
+<!--                        <div class="input-group-prepend">-->
+<!--                            <label class="input-group-text" for="inputGroupSelect01">Your tokens</label>-->
+<!--                        </div>-->
+<!--                        <select v-model.number="numberTokens" @change="inputChange()" :disabled="submitted" id="willingnessId" class="custom-select" autofocus>-->
+<!--                            <option v-for="x in paymentOptions + 1" :value="x - (paymentOptions/2) - 1">{{ x - (paymentOptions/2) - 1 }}</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>    -->
       </div>
       `
 }

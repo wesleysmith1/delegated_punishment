@@ -8,7 +8,8 @@
     <link rel="stylesheet" type="text/css" href="/static/global/theme.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}"></link>
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/modal.css' %}">
 
     <script src="{% static 'global/js/ogl.js' %}"></script>
     <script src="{% static 'global/js/survey.js' %}"></script>
@@ -23,10 +24,19 @@
         var tokenRange = {{ dt_range }};
         var paymentMax = {{ dt_payment_max }};
         var method = {{ dt_method }};
-        var dt_q = {{ dt_q }}
-        var bigN = {{ big_n }}
-        var smallN = {{ small_n }}
-        var gamma = {{ gamma }}
+        var dt_q = {{ dt_q }};
+        var bigN = {{ big_n }};
+        var smallN = {{ small_n }};
+        var gamma = {{ gamma }};
+        var previousModalMili = {{ previous_modal_mili }}
+
+        var previous_tokens
+
+        {% if previous_tokens is not None %}
+            previousTokens = {{ previous_tokens }};
+        {% else %}
+            previousTokens = null
+        {% endif %}
 
     </script>
     <style>
@@ -50,6 +60,55 @@
     </style>
 </header>
 <body>
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <h3 style="text-align:center;">Officer tokens determined last round</h3>
+            <br>
+
+            <div style="margin: auto; min-width: 350px;">
+                <div class="list-group">
+                    {% if your_previous_tokens is not None %}
+                    <div class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div><b>Your Tokens:</b></div>
+                            <div><b>{{your_previous_tokens}}</b></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if your_previous_cost is not None %}
+                    <div class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div><b>Your cost:</b></div>
+                            <div><b>{{ your_previous_cost }}</b></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if your_previous_cost is not None %}
+                    <div class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Total cost:</div>
+                            <div>{{ previous_cost }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Total tokens:</div>
+                            <div>{{ previous_tokens }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
     <form method="post" role="form" id="form" autocomplete="off" style="display:none">
         {% csrf_token %}
         <button class="otree-btn-next btn btn-primary">Next</button>
@@ -150,10 +209,37 @@
             q: dt_q,
             gamma: gamma,
 
+            previousTokens: previousTokens,
+
+            modalDuration: previousModalMili,
+
         },
         created: function(){
 
+            if (this.previousTokens !== null) {
+                debugger;
+                // modal is displayed... maybe we should set a timeout here?
+                    setTimeout(()=>{
+                        this.closeModal()
+                    },
+                    this.modalDuration
+                )
+            } else {
+                this.closeModal();
+            }
+
             this.setTitle();
+
+            this.provisionalTotals = {}
+
+            // this initializes the code so that the ogl component has data to start with
+            for(let i = 0; i < this.smallN; i++) {
+                let index = i;
+                if (i === 0) {
+                    index = this.playerId;
+                }
+                this.provisionalTotals[index] = 0
+            }
 
             this.socket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/defend_tokens/' + this.groupId + '/');
             this.socket.onopen = (e) => {
@@ -166,7 +252,7 @@
                 if (data.balance) {
 
                 } else if (data.provisional) {
-                    // console.log(data.provisional);
+                    console.log(data.provisional);
                     this.provisionalCosts = data.provisional['costs']
                     this.provisionalTotals = data.provisional['totals']
                 }
@@ -179,6 +265,10 @@
         mounted: function() {
         },
         methods: {
+            closeModal: function() {
+                let modal = document.getElementById("myModal");
+                modal.style.display = "none";
+            },
             oglUpdate: function(x) {
                 // console.log(x);
                 this.send({'ogl': {'data': x}})
@@ -227,11 +317,7 @@
                 clearInterval(this.timer);
             },
             setTitle: function() {
-                if (this.participant) {
-                    this.title = "We are determining the number of officer tokens for the next round. Please wait patiently."
-                } else {
-                    this.title = "Determining the number of officer tokens in the next round."
-                }
+                this.title = "Number of officer tokens determined for the next round."
             }
         },
         computed: {
