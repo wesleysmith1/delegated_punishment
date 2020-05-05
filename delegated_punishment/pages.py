@@ -63,13 +63,42 @@ class Intermission(Page):
 class DefendTokenSurvey(Page):
 
     def vars_for_template(self):
-        # check to see if player was selected
-        sr = SurveyResponse.objects.filter(group=self.group, player=self.player)
+        selected = False
+        previous_cost = None
+        previous_tokens = None
+        your_previous_cost = None
+        your_previous_tokens = None
 
-        if sr:
-            selected = True
+        try:
+            sr = SurveyResponse.objects.get(group=self.group, player=self.player)
+        except SurveyResponse.DoesNotExist:
+            pass
         else:
-            selected = False
+            selected = True
+
+        if selected and self.round_number != 1:  # todo: probably fix this. not officer and not first round
+
+            # todo make this select info for previous round dum dum
+            previous_round = self.round_number - 1
+            previous_player = self.player.in_round(previous_round)
+            previous_group = previous_player.group
+
+            try:
+                previous_response = SurveyResponse.objects.get(player=previous_player, group=previous_group)
+            except SurveyResponse.DoesNotExist:
+                previous_cost = None
+                your_previous_cost = None
+                your_previous_tokens = None
+            else:
+                # not displayed in survey...
+                if Constants.dt_method > 0:
+                    previous_cost = format_template_numbers(previous_group.defend_token_cost)
+
+                    if previous_response.participant:
+                        your_previous_cost = format_template_numbers(previous_response.tax)
+                        your_previous_tokens = previous_response.total
+            finally:
+                previous_tokens = previous_group.defend_token_total
 
         template_vars = dict(
             timeout_seconds=Constants.dt_timeout_seconds,
@@ -80,7 +109,13 @@ class DefendTokenSurvey(Page):
             dt_q=Constants.dt_q,
             big_n=Constants.players_per_group-1,
             gamma=Constants.gamma,
-            small_n=Constants.small_n
+            small_n=Constants.small_n,
+
+            previous_cost=previous_cost,
+            previous_tokens=previous_tokens,
+            your_previous_cost=your_previous_cost,
+            your_previous_tokens=your_previous_tokens,
+            previous_modal_mili=Constants.previous_modal_mili,
         )
 
         return template_vars
@@ -125,8 +160,7 @@ class DefendTokenWaitPage(WaitPage):
                 for r in survey_responses:
                     print('HERE IS A SURVEY RESULT')
                     print(r)
-                    # import pdb
-                    # pdb.set_trace()
+
                     if r.response.get(token_index):
                         if r.response[token_index].get('wtp'):
                             log.info(f"HERE IT IS THE RESPONSE FOR THIS PLAYER IS {r.response[token_index]['wtp']}")
@@ -224,39 +258,6 @@ class DefendTokenWaitPage(WaitPage):
             DefendToken.objects.create(number=i + 1, group=self.group,)
 
         log.info('Defend tokens created')
-
-
-class DefendTokenInfo(Page):
-    timeout_seconds = 60
-    timer_text = 'The round will begin shortly'
-
-    def vars_for_template(self):
-        template_vars = dict(survey_payment=0, num_tokens=self.group.defend_token_total)
-
-        try:
-            survey_response = SurveyResponse.objects.get(player=self.player)
-            your_tokens = survey_response.total
-
-            cost = survey_response.tax
-            participated = survey_response.participant
-
-            if survey_response.valid:
-                template_vars['survey_payment'] = Constants.rebate
-
-        except SurveyResponse.DoesNotExist:
-            log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
-            cost = 0
-            your_tokens = 0
-            participated = False
-
-        template_vars['num_tokens'] = self.group.defend_token_total
-        template_vars['token_cost'] = cost
-        template_vars['total_token_cost'] = self.group.defend_token_cost
-
-        template_vars['your_tokens'] = your_tokens
-        template_vars['participated'] = participated
-
-        return template_vars
 
 
 class Wait(WaitPage):
@@ -421,7 +422,6 @@ class ResultsPage(Page):
             balance = math.floor(self.player.balance)
             before_tax = math.floor(self.player.balance + sr.tax)
             tax = math.floor(sr.tax)
-            participated = sr.participant
 
         # table variables
         vars_dict['rebate'] = rebate
@@ -429,7 +429,6 @@ class ResultsPage(Page):
         vars_dict['your_tax'] = format_template_numbers(your_tax)
         vars_dict['your_tokens'] = your_tokens
         vars_dict['big_c'] = self.group.big_c
-        vars_dict['participated'] = participated
 
         g = self.group.get_g()
         vars_dict['big_g'] = g
@@ -441,7 +440,6 @@ class ResultsPage(Page):
         vars_dict['defend_token_cost'] = format_template_numbers(self.group.defend_token_cost) #todo: make sure we want to save percise value
         vars_dict['defend_token_total'] = self.group.defend_token_total
         vars_dict['your_tokens'] = your_tokens
-        vars_dict['participated'] = participated
 
         # summary variables
         vars_dict['period'] = self.player.subsession.round_number

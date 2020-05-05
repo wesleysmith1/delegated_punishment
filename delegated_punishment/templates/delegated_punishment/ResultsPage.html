@@ -15,21 +15,53 @@
     </style>
 
     <div>
+        <div>
+            <h4 class="card-title">Earnings Summary</h4>
+            <div class="scrollable">
+                <table class="table table-floating table-debug">
+                    <thead>
+                        <tr>
+                          <th scope="col">Description</th>
+                          <th scope="col" style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                            <td style="text-align: right;">{{ balance }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>Before tax earnings<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                            <td style="text-align: right;">{{ before_tax }}</td>
+                        </tr>
+                        {% if your_tax is not None %}
+                        <tr>
+                            <td scope="row">Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
+                            <td style="text-align: right;">{{ your_tax }}</td>
+                        </tr>
+                        {% endif %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <br>
         <h4>Token Summary</h4>
         <table class="table table-floating">
           <thead>
             <tr>
               <th scope="col">Description</th>
-              <th scope="col">You</th>
-              <th scope="col">Group</th>
+              <th scope="col" style="text-align: right;">You</th>
+              <th scope="col" style="text-align: right;">Group</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td># Tokens <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px;"></div></td>
-              <td>{{ your_tokens }}</td>
-              <td>{{ defend_token_total }}</td>
+              <td style="text-align: right;">{{ your_tokens }}</td>
+              <td style="text-align: right;">{{ defend_token_total }}</td>
             </tr>
 
             {% if player.id_in_group != 1 %}
@@ -37,8 +69,8 @@
                 {% if your_tax is not None and big_c is not None%}
                     <tr>
                       <td>Total token Cost<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                      <td>{{ your_tax }}</td>
-                      <td>{{ defend_token_cost }}</td>
+                      <td style="text-align: right;">{{ your_tax }}</td>
+                      <td style="text-align: right;">{{ defend_token_cost }}</td>
                     </tr>
                 {% endif %}
             {% endif %}
@@ -47,39 +79,4 @@
     </div>
 
     <br>
-
-    <div>
-        <h4 class="card-title">Earnings Summary</h4>
-        <div class="scrollable">
-            <table class="table table-floating table-debug">
-                <thead>
-                    <tr>
-                      <th scope="col">Description</th>
-                      <th scope="col">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                    <tr>
-                        <td>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                        <td>{{ balance }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Before tax earnings<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                        <td>{{ before_tax }}</td>
-                    </tr>
-                    {% if your_tax is not None %}
-                    <tr>
-                        <td scope="row">Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                        <td>{{ your_tax }}</td>
-                    </tr>
-                    {% endif %}
-
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-
 {% endblock %}

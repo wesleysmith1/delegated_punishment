@@ -28,3 +28,16 @@
 .results-modal .results-modal-content {
   text-align: center;
 }
+
+.modal-table {
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+}
+
+.modal-table .align-right {
+  text-align: right;
+}

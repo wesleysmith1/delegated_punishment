@@ -69,9 +69,9 @@
 
         <!-- Modal content -->
         <div class="modal-content">
-            <h3>Token Summary</h3>
+            <h3 style="text-align:center;">Number of tokens determined for round</h3>
             <br>
-            <table class="table table-bordered">
+            <table class="table table-bordered modal-table">
               <thead>
                 <tr>
                   <th scope="col"></th>
@@ -82,17 +82,17 @@
               <tbody>
                 <tr>
                   <th scope="row">#Tokens <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></th>
-                  <td>{{ your_tokens }}</td>
-                  <td>{{ defend_token_total }}</td>
+                  <td class="align-right">{{ your_tokens }}</td>
+                  <td class="align-right">{{ defend_token_total }}</td>
                 </tr>
 
                 {% if player.id_in_group != 1 %}
 
-                    {% if your_tax is not None and big_c is not None%}
+                    {% if your_tax is not None%}
                         <tr>
                           <th scope="row">Total token cost<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></th>
-                          <td>{{ your_tax }}</td>
-                          <td>{{ defend_token_cost }}</td>
+                          <td class="align-right">{{ your_tax }}</td>
+                          <td class="align-right">{{ defend_token_cost }}</td>
                         </tr>
                     {% endif %}
 
