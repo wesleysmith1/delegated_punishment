@@ -170,9 +170,9 @@ let oglComponent = {
       <div>      
         <div class="row" style="display: flex; justify-content: space-between; align-items: flex-end;">
             <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
-                <h5 style="text-align: center;">Deviation</h5>
+                <h5 style="text-align: center;"></h5>
                 <div style="text-align: center;">
-                    <button @click="decrementTotal(1)" type="button" class="btn btn-primary">Update tokens -1</button>
+                    <button @click="decrementTotal(1)" type="button" class="btn btn-primary">Update tokens (-1)</button>
                 </div>
             </div>
             
@@ -187,9 +187,9 @@ let oglComponent = {
             </div>
             
             <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
-                <h5 style="text-align: center;">Deviation</h5>
+                <h5 style="text-align: center;"></h5>
                 <div style="text-align: center;">
-                    <button @click="incrementTotal(1)" type="button" class="btn btn-primary">Update tokens +1</button>
+                    <button @click="incrementTotal(1)" type="button" class="btn btn-primary">Update tokens (+1)</button>
                 </div>
             </div>
         </div>
@@ -230,25 +230,25 @@ let oglComponent = {
             <div style="min-width: 350px;">
                 <div>
                     <div class="list-group">
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div><b>Your Tokens:</b></div>
                                 <div><b>{{provisionalTotals[playerId]}}</b></div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div><b>Your cost:</b></div>
                                 <div><b>{{ Math.round(provisional[playerId] | 0)}}</b></div>
                             </div>
                         </div>
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
                                 <div>{{ Math.round(arrSum(provisional) | 0) }}</div>
                             </div>
                         </div>              
-                        <div class="list-group-item">
+                        <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total tokens:</div>
                                 <div>{{ arrSum(totals) }}</div>
