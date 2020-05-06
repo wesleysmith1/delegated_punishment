@@ -45,6 +45,7 @@ class Constants(BaseConstants):
     officer_incomes = [180, 180, 180]
     # officer_incomes = [0, 180, 600]
 
+
     # also change in officer.css
     defend_token_size = 68  # this is the size of the tokens that players with role of officer drag around
     civilian_map_size = 200
@@ -52,14 +53,16 @@ class Constants(BaseConstants):
     beta = .9
     a_max = 6
 
-    tutorial_duration = 1800000
+    tutorial_duration_seconds = 1800
     game_duration_seconds = 198
+    results_modal_seconds = 30
 
     officer_start_balance = 1000
 
     steal_timeout_duration = 200000
 
     steal_token_positions = 20
+
 
 
 class Subsession(BaseSubsession):

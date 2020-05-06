@@ -5,14 +5,21 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/Draggable.min.js"></script>
 
+    <!-- TODO: reformat this to be like the others -->
+    <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap-reboot.min.css">
+    <link rel="stylesheet" href="/static/otree/css/theme.css">
+
     <script src="{% static 'global/js/officer.js' %}"></script>
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
+    <script src="{% static 'global/js/results-modal.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/main.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/modal.css' %}">
 
     <script>
         // data is rendered on api here, then later read by vue instance
@@ -29,7 +36,7 @@
         var sessionId = {{ subsession.session_id }};
         var defendTokenTotal = {{ defend_token_total }};
         var timeout = '{{ timeout }}' === 'True';
-        var tutorialDuration = {{ tutorial_duration }};
+        var tutorialDurationSeconds = {{ tutorial_duration_seconds }};
         var aMax = {{ a_max }};
         var beta = {{ beta }};
         var playersPerGroup = {{ players_per_group }};
@@ -44,6 +51,8 @@
         var reviewProbability = {{ officer_review_probability }};
         var stealTimeoutTime = {{ steal_timeout_duration }};
         var gameDurationSeconds = {{ game_duration_seconds}};
+
+        var resultsModalSeconds = {{ results_modal_seconds }}
 
     </script>
 </header>
@@ -150,6 +159,7 @@
                 ></probability-bar-component>
             </div>
         </div>
+        <results-modal-component ref="resultsmodal" :balance="balance"></results-modal-component>
     </div>
     {% endverbatim %}
 
@@ -172,6 +182,7 @@
                 'steal-game-component': stealGameComponent,
                 'officer-game-component': officerGameComponent,
                 'probability-bar-component': probabilityBarComponent,
+                'results-modal-component': resultsModalComponent,
             },
             data: {
                 gameStarted: true,
@@ -220,6 +231,7 @@
                 reviewProbability: reviewProbability,
                 stealTimeoutTime: stealTimeoutTime,
                 stealTokenPositions: stealTokenPositions,
+                resultsModalDuration: resultsModalSeconds * 1000,
             },
             created: function () {
 
@@ -235,7 +247,7 @@
                 this.gameDuration = gameDurationSeconds * 1000;
 
                 if (this.timeout) {
-                    this.tutorialDuration = tutorialDuration;
+                    this.tutorialDuration = tutorialDurationSeconds * 1000;
                     this.gameDuration = this.tutorialDuration;
                 }
                 // debug
@@ -329,6 +341,14 @@
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
                             this.investigationCount = data.investigation_update
+                        } else if (data.round_over) {
+                            // get results from api
+                            this.getPeriodResults()
+                            // open modal
+                            this.openResultsModal()
+
+                        } else if (data.round_results) {
+                            this.balance = data.round_results.balance
                         }
                     };
 
@@ -341,6 +361,30 @@
 
             },
             methods: {
+                getPeriodResults: function() {
+                    // players individually pull results
+                    let x = {
+                      'period_update': {
+                          'period_results': true
+                      }
+                    };
+                    this.gameUpdate(x);
+                },
+                openResultsModal: function() {
+                    // open modal
+                    this.$refs.resultsmodal.openModal();
+
+                    // settimeout to close modal
+                    setTimeout(()=>{
+                            console.log('Closing Socket');
+                            this.gameSocket.close();
+
+                            // submit game
+                            document.getElementById('form').submit();
+                        },
+                        this.resultsModalDuration
+                    )
+                },
                 gameReady: function() {
                     console.log('game ready function')
                 },
@@ -554,16 +598,14 @@
                             'period_update': {'period_start': true},
                         });
                     }
-                    // start 4 minute timer
+
                     setTimeout(() => {
                         // officer records period end
+                        // todo: the period end event should originate from the api. schedule it when the game is started
                         if (this.isOfficer)
                             this.periodEndEvent();
 
-                        // close socket
-                        this.gameSocket.close()
-                        document.getElementById('form').submit()
-                    }, this.gameDuration); // 4 minute periods
+                    }, this.gameDuration);
 
                 },
                 periodEndEvent: function() {

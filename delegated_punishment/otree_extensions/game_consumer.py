@@ -441,6 +441,8 @@ class GameConsumer(WebsocketConsumer):
                     jdata=game_data_dict
                 )
             elif pu.get('period_end'):
+                # todo: period end will likely be a scheduled event that lets a players know the round is over
+
                 end_time = date_now_milli()
 
                 game_data_dict.update({
@@ -463,6 +465,23 @@ class GameConsumer(WebsocketConsumer):
                     round_number=round_number,
                     jdata=game_data_dict
                 )
+
+                # inform players that round is over
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'round_over',
+                        'round_over': None,
+                    }
+                )
+
+            elif pu.get('period_results'):
+                round_results = dict(balance=player.balance)
+
+                # send token count to group
+                self.send(text_data=json.dumps({
+                    'round_results': round_results
+                }))
 
         else:
             # the following cases require more computation and send data down to all players
@@ -806,3 +825,7 @@ class GameConsumer(WebsocketConsumer):
             'balance': balance_update
         }))
 
+    def round_over(self, event):
+        self.send(text_data=json.dumps({
+            'round_over': True
+        }))

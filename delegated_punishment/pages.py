@@ -39,13 +39,15 @@ class Game(Page):
         vars_dict['civilian_fine'] = Constants.civilian_fine_amount
         vars_dict['civilian_map_size'] = Constants.civilian_map_size
         vars_dict['defend_token_size'] = Constants.defend_token_size
-        vars_dict['tutorial_duration'] = Constants.tutorial_duration
+        vars_dict['tutorial_duration_seconds'] = Constants.tutorial_duration_seconds
         vars_dict['officer_reprimand_amount'] = Constants.officer_reprimand_amount
         vars_dict['officer_review_probability'] = Constants.officer_review_probability
         vars_dict['steal_timeout_duration'] = Constants.steal_timeout_duration
         vars_dict['game_duration_seconds'] = Constants.game_duration_seconds
         vars_dict['players_per_group'] = Constants.players_per_group
         vars_dict['steal_token_positions'] = Constants.steal_token_positions
+
+        vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
@@ -142,4 +144,4 @@ class AfterTrialAdvancePage(Page):
         return True
 
 
-page_sequence = [Wait, Intermission, Game, ResultsWaitPage, ResultsPage, AfterTrialAdvancePage]
+page_sequence = [Wait, Intermission, Game, ResultsWaitPage, AfterTrialAdvancePage]
