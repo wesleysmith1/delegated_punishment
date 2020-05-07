@@ -171,9 +171,7 @@ let oglComponent = {
         <div class="row" style="display: flex; justify-content: space-between; align-items: flex-end;">
             <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
                 <h5 style="text-align: center;"></h5>
-                <div style="text-align: center;">
-                    <button @click="decrementTotal(1)" type="button" class="btn btn-primary">Update tokens (-1)</button>
-                </div>
+                <button @click="decrementTotal(1)" type="button" class="btn btn-primary">Update tokens (-1)</button>
             </div>
             
             <div>
@@ -188,9 +186,7 @@ let oglComponent = {
             
             <div style="min-width: 200px; display: flex; flex-direction: column; margin-bottom: 16px;">
                 <h5 style="text-align: center;"></h5>
-                <div style="text-align: center;">
-                    <button @click="incrementTotal(1)" type="button" class="btn btn-primary">Update tokens (+1)</button>
-                </div>
+                <button @click="incrementTotal(1)" type="button" class="btn btn-primary">Update tokens (+1)</button>
             </div>
         </div>
       

@@ -486,8 +486,17 @@ class GameConsumer(WebsocketConsumer):
                     }
                 )
 
-            elif pu.get('period_results'):
+            elif pu.get('round_results'):
                 round_results = dict(balance=player.balance)
+
+                group = Group.objects.get(id=group_id)
+
+                player = Player.objects.get(id=player_id)
+
+                variables = Group.round_outcome_variables(group, player)
+
+                # get other variables that will be fucking required son
+                round_results.update(variables)
 
                 # send token count to group
                 self.send(text_data=json.dumps({

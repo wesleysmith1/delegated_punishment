@@ -60,10 +60,10 @@ let surveyComponent = {
             </div>
             <hr>
             <div v-for="i in tokenChoices">
-                <div class="item">
+                <div class="item" style="justify-content: space-around">
                     <div>{{ i }} <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></div>
                     
-                    <div style="display: flex;">
+                    <div style="display: flex; justify-content: space-around">
                         <select v-model="resultsObj[i]" :disabled="submitted" class="form-control form-control-sm">
                             <option value="null" default>--</option>
                             <option>0</option>
@@ -74,11 +74,6 @@ let surveyComponent = {
                 </div>
                 <hr>
             </div>
-            results: {{ resultsObj }}
-            <br>
-            willingness to pay: {{  willingnessToPay  }}
-            <br>
-            <button @click="mapWTP()">heyo</button>
         </div>
         `
 }

@@ -182,7 +182,7 @@ class DefendTokenWaitPage(WaitPage):
                         print("THERE WAS AN ERROR COLLECTING DATA FROM RESPONSE BELOW...")
                         print(r.response)
                 try:
-                    results[i] = total * (Constants.players_per_group - 1) / count  # subtract officer
+                    results[i] = total * Constants.big_n / count
                 except ZeroDivisionError:
                     # there were no responses
                     results[i] = 0
@@ -281,41 +281,34 @@ class Game(Page):
         vars_dict = dict(survey_payment=0, num_tokens=self.group.defend_token_total)
 
         try:
-            survey_response = SurveyResponse.objects.get(player=self.player)
-            your_tokens = survey_response.total
+            response = SurveyResponse.objects.get(player=self.player)
+            # your_tokens = response.total
 
-            mechanism_cost = survey_response.mechanism_cost
-            your_tax = survey_response.tax
-            participated = survey_response.participant
+            # your_tax = response.tax
 
-            if survey_response.rebate is None:
-                rebate = None #todo: this is super wrong
-            else:
-                rebate = survey_response.rebate
-
-            if Constants.dt_method == 0:
-                your_tokens = "Not applicable"
+            # if Constants.dt_method == 0:
+                # your_tokens = None
 
         except SurveyResponse.DoesNotExist:
             # this should only be for officer
 
             log.error(f"survey response not found for player {self.player.id} for defendtokeninfo page")
-            mechanism_cost = None
-            your_tax = 0
-            your_tokens = "Not applicable"
-            participated = False
-            rebate = None
+            # your_tax = None
+            # your_tokens = None
 
-        # table variables
-        vars_dict['rebate'] = rebate
-        vars_dict['mechanism_cost'] = mechanism_cost
-        vars_dict['your_tax'] = format_template_numbers(your_tax)
-        vars_dict['your_tokens'] = your_tokens
-        vars_dict['big_c'] = self.group.big_c
-        vars_dict['participated'] = participated
+            response = None
+        finally:
+            start_object = self.group.generate_start_vars(self.player.id_in_group, response)
 
-        g = self.group.get_g() or None
-        vars_dict['big_g'] = g
+        # start_object = {
+        #     'your_tax': format_template_numbers(your_tax),
+        #     'your_tokens': your_tokens,
+        #     'defend_token_cost': format_template_numbers(self.group.defend_token_cost),
+        #     'defend_token_total': self.group.defend_token_total
+        # }
+
+        vars_dict['start_object'] = start_object
+
 
         # game variables
         pjson = dict()
@@ -328,7 +321,6 @@ class Game(Page):
         vars_dict['pjson'] = json.dumps(pjson)
         vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
         vars_dict['defend_token_total'] = self.group.defend_token_total
-        vars_dict['defend_token_cost'] = format_template_numbers(self.group.defend_token_cost)
         vars_dict['a_max'] = Constants.a_max
         vars_dict['beta'] = Constants.beta
 
@@ -344,6 +336,7 @@ class Game(Page):
         vars_dict['steal_token_positions'] = Constants.steal_token_positions
 
         vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
+        vars_dict['start_modal_seconds'] = Constants.start_modal_seconds
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
@@ -382,84 +375,6 @@ class ResultsWaitPage(WaitPage):
                     player.participant.vars['balances'].append(math.floor(player.balance))
 
 
-class ResultsPage(Page):
-    timeout_seconds = 300000
-    timer_text = 'Time remaining on results page'
-
-    def vars_for_template(self):
-        vars_dict = dict()
-
-        try:
-            sr = SurveyResponse.objects.get(player=self.player)
-        except SurveyResponse.DoesNotExist:
-
-            if self.player.id_in_group != 1:
-                log.error(f"could not find survey result for player {self.player.id}")
-
-            rebate = None
-            mechanism_cost = None
-            your_tax = None
-
-            balance = before_tax = math.floor(self.player.balance)
-            tax = 0
-            your_tokens = "Not applicable"
-            participated = False
-
-        else:
-            if sr.rebate is None:
-                rebate = None #todo: this is super wrong
-            else:
-                rebate = sr.rebate
-
-            if Constants.dt_method == 0:
-                your_tokens = "Not applicable"
-            else:
-                your_tokens = sr.total
-
-            mechanism_cost = sr.mechanism_cost
-            your_tax = sr.tax
-
-            balance = math.floor(self.player.balance)
-            before_tax = math.floor(self.player.balance + sr.tax)
-            tax = math.floor(sr.tax)
-
-        # table variables
-        vars_dict['rebate'] = rebate
-        vars_dict['mechanism_cost'] = mechanism_cost
-        vars_dict['your_tax'] = format_template_numbers(your_tax)
-        vars_dict['your_tokens'] = your_tokens
-        vars_dict['big_c'] = self.group.big_c
-
-        g = self.group.get_g()
-        vars_dict['big_g'] = g
-
-        vars_dict['before_tax'] = format_template_numbers(before_tax)
-        vars_dict['tax'] = format_template_numbers(tax)
-        vars_dict['balance'] = format_template_numbers(balance)
-
-        vars_dict['defend_token_cost'] = format_template_numbers(self.group.defend_token_cost) #todo: make sure we want to save percise value
-        vars_dict['defend_token_total'] = self.group.defend_token_total
-        vars_dict['your_tokens'] = your_tokens
-
-        # summary variables
-        vars_dict['period'] = self.player.subsession.round_number
-        vars_dict['steal_total'] = self.player.steal_total
-        vars_dict['victim_total'] = self.player.victim_total
-        vars_dict['balance'] = math.floor(self.player.balance)
-        return vars_dict
-
-    def is_displayed(self):
-        if skip_period(self.session, self.round_number):
-            return False
-
-        if Constants.num_rounds == 1:
-            return True
-        elif self.round_number > 1:
-            return True
-        else:
-            return True
-
-
 class AfterTrialAdvancePage(Page):
     def is_displayed(self):
         if skip_period(self.session, self.round_number) or self.round_number == 2:
@@ -468,4 +383,4 @@ class AfterTrialAdvancePage(Page):
         return True
 
 
-page_sequence = [SurveyInit, Intermission, DefendTokenSurvey, DefendTokenWaitPage, Wait, Game, ResultsWaitPage, ResultsPage, AfterTrialAdvancePage]
+page_sequence = [SurveyInit, Intermission, DefendTokenSurvey, DefendTokenWaitPage, Wait, Game, ResultsWaitPage, AfterTrialAdvancePage]

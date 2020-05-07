@@ -11,8 +11,10 @@ from otree.api import (
 )
 from otree.db.models import Model, ForeignKey
 from random import randrange
+import math
 
-from delegated_punishment.helpers import safe_list_sum
+from delegated_punishment.helpers import safe_list_sum, format_template_numbers
+from delegated_punishment.mechanism import OglMechanism, OtherMechanism, SurveyMechanism
 
 import logging
 log = logging.getLogger(__name__)
@@ -54,9 +56,10 @@ class Constants(BaseConstants):
     beta = .9
     a_max = 6
 
-    tutorial_duration_seconds = 1800
-    game_duration_seconds = 198
-    results_modal_seconds = 30
+    tutorial_duration_seconds = 10  # 1800
+    game_duration_seconds = 20  # 198
+    results_modal_seconds = 9000  # 30
+    start_modal_seconds = 10
 
     officer_start_balance = 1000
 
@@ -67,7 +70,7 @@ class Constants(BaseConstants):
     small_n = 8
     dt_method = 1
     dt_q = 10
-    dt_timeout_seconds = 6000  # seconds
+    dt_timeout_seconds = 30  # seconds
     previous_modal_mili = 10000  # miliseconds
 
     dt_e0 = 5
@@ -157,6 +160,86 @@ class Group(BaseGroup):
     civilian_fine_total = models.IntegerField(initial=0)
     big_c = models.FloatField(blank=True, default=None)
 
+    # todo: turn this into a proper factory or part of a generator. :)
+    @classmethod
+    def round_outcome_variables(cls, group, player):
+
+        try:
+            response = SurveyResponse.objects.get(player=player)
+        except SurveyResponse.DoesNotExist:
+            response = None
+
+        if Constants.dt_method == 0:
+            vars = SurveyMechanism.result_vars(group, player, response)
+        elif Constants.dt_method == 1:
+            vars = OglMechanism.result_vars(group, player, response)
+        elif Constants.dt_method > 1:
+            vars = OtherMechanism.result_vars(group, player, response)
+        else:
+            # todo: there was an error:
+            pass
+
+        return vars
+        # try:
+        #     sr = SurveyResponse.objects.get(player=player)
+        # except SurveyResponse.DoesNotExist:
+        #
+        #     if player.id_in_group != 1:
+        #         log.error(f"could not find survey result for player {player.id}")
+        #
+        #     rebate = None
+        #     mechanism_cost = None
+        #     your_tax = None
+        #
+        #     balance = before_tax = math.floor(player.balance)
+        #     tax = 0
+        #     your_tokens = None
+        #
+        # else:
+        #     if sr.rebate is None:
+        #         rebate = None  # todo: this is super wrong
+        #     else:
+        #         rebate = sr.rebate
+        #
+        #     if Constants.dt_method == 0:
+        #         your_tokens = None
+        #     else:
+        #         your_tokens = sr.total
+        #
+        #     mechanism_cost = sr.mechanism_cost
+        #     your_tax = format_template_numbers(sr.tax)
+        #
+        #     before_tax = math.floor(player.balance)
+        #     # tax = math.floor(sr.tax)
+        #
+        #     #todo: tax has not been applied yet. is there a way to make this more clear?
+        #     balance = math.floor(player.balance - sr.tax)
+        #
+        # # table variables
+        # vars_dict['rebate'] = rebate
+        # vars_dict['mechanism_cost'] = mechanism_cost
+        # vars_dict['your_tax'] = your_tax
+        # vars_dict['your_tokens'] = your_tokens
+        # vars_dict['big_c'] = group.big_c
+        #
+        # g = group.get_g()
+        # vars_dict['big_g'] = g
+        #
+        # vars_dict['before_tax'] = format_template_numbers(before_tax)
+        # # vars_dict['tax'] = format_template_numbers(tax)
+        # vars_dict['balance'] = format_template_numbers(balance)
+        #
+        # vars_dict['defend_token_cost'] = format_template_numbers(
+        #     group.defend_token_cost)  # todo: make sure we want to save percise value
+        # vars_dict['defend_token_total'] = group.defend_token_total
+        # vars_dict['your_tokens'] = your_tokens
+        #
+        # # summary variables
+        # vars_dict['period'] = player.subsession.round_number
+        # vars_dict['steal_total'] = player.steal_total
+        # vars_dict['victim_total'] = player.victim_total
+        # return vars_dict
+
     @classmethod
     def intersection_update(cls, group_id, bonus, fine):
         with transaction.atomic():
@@ -185,6 +268,41 @@ class Group(BaseGroup):
                 )
                 return Constants.game_duration_seconds
         return False
+
+    def generate_start_vars(self, id_in_group, response=None):
+
+        if Constants.dt_method == 0:
+
+            x = SurveyMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        elif Constants.dt_method == 1:
+
+            x = OglMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        elif Constants.dt_method > 1:
+
+            x = OtherMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        else:
+            x = None
+
+        return x
+
 
     def group_ready(self):
         """Have all player pages loaded"""

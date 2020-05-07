@@ -84,6 +84,13 @@ let officerGameComponent = {
         }
     },
     methods: {
+        disableAllTokens: function() {
+            // todo: determie how to better disable this stuff
+            for (let i = 0; i < this.mutableDefendTokens.length; i++) {
+                let token = Draggable.get("#unit" + (i+1));
+                token.disable();
+            }
+        },
         disableToken: function(id) {
             let selector = "#unit" + id;
             let dragToken = Draggable.get(selector);

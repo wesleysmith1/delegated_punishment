@@ -14,6 +14,7 @@
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
     <script src="{% static 'global/js/results-modal.js' %}"></script>
+    <script src="{% static 'global/js/start-modal.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}">
@@ -52,8 +53,11 @@
         var stealTimeoutTime = {{ steal_timeout_duration }};
         var gameDurationSeconds = {{ game_duration_seconds}};
 
-        var resultsModalSeconds = {{ results_modal_seconds }}
+        var resultsModalSeconds = {{ results_modal_seconds }};
+        var startModalSeconds = {{ start_modal_seconds }}
         var gameStarted = '{{ game_started }}' === 'True';
+
+        var startObject = {{ start_object|json }};
 
     </script>
 </header>
@@ -64,50 +68,12 @@
         <button class="otree-btn-next btn btn-primary">Next</button>
     </form>
 
-    <!-- The Modal -->
-    <div id="myModal" class="modal">
-
-        <!-- Modal content -->
-        <div class="modal-content">
-            <h3 style="text-align:center;">Number of officer tokens determined for this round.</h3>
-            <br>
-            <table class="table table-bordered modal-table">
-              <thead>
-                <tr>
-                  <th scope="col"></th>
-                  <th scope="col">You</th>
-                  <th scope="col">Group</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">#Tokens <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></th>
-                  <td class="align-right">{{ your_tokens }}</td>
-                  <td class="align-right">{{ defend_token_total }}</td>
-                </tr>
-
-                {% if player.id_in_group != 1 %}
-
-                    {% if your_tax is not None%}
-                        <tr>
-                          <th scope="row">Total token cost<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></th>
-                          <td class="align-right">{{ your_tax }}</td>
-                          <td class="align-right">{{ defend_token_cost }}</td>
-                        </tr>
-                    {% endif %}
-
-                {% endif %}
-
-              </tbody>
-            </table>
-        </div>
-
-    </div>
-
     {% verbatim %}
-    <div id="app" v-show="gameStarted">
+    <!--fix this v-show at some point-->
+    <div id="app" v-show="true">
         <officer-game-component
             id="officerGame"
+            ref="officercomponent"
             class="game-container"
             v-if="isOfficer"
             :maps="maps"
@@ -128,6 +94,7 @@
         <div id="harvestGame" class="game-container" v-else>
             <harvest-items-component
                     v-if="harvestScreen"
+                    ref="harvestcomponent"
                     class="harvest"
                     style="display:flex;"
                     :harvest-status="harvestStatus"
@@ -205,7 +172,11 @@
                 </div>
             </div>
         </div>
-        <results-modal-component ref="resultsmodal" :balance="balance"></results-modal-component>
+        <start-modal-component
+                ref="startmodal"
+                :start-object="startModalObject"
+        ></start-modal-component>
+        <results-modal-component ref="resultsmodal" :results-obj="resultsObj"></results-modal-component>
     </div>
     {% endverbatim %}
 
@@ -229,6 +200,7 @@
                 'officer-game-component': officerGameComponent,
                 'probability-bar-component': probabilityBarComponent,
                 'results-modal-component': resultsModalComponent,
+                'start-modal-component': startModalComponent,
             },
             data: {
                 gameStarted: true,
@@ -281,8 +253,14 @@
 
                 resultsModalDuration: resultsModalSeconds * 1000,
 
-                game_started: gameStarted,
-                info_duration: 10000000
+                startModalDuration: startModalSeconds * 1000,
+
+                // these variables are used for the start modal
+                startModalObject: startObject,
+
+                resultsObj: null,
+
+                balanceInterval: null,
 
             },
             created: function () {
@@ -363,20 +341,26 @@
                 // todo look into routing questions
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
-                        if (!this.game_started) {
 
-                            if (this.isOfficer) {
-                                setTimeout(() => {
-                                    this.startRound()
-                                }, this.info_duration)
-                            }
+                        // todo: this needs to be fixed when game flow has updated structure.
+                        // Start Modal
+                        setTimeout(() => {
+                            this.showStartModal(false);
 
-                        } else {
-                            console.log('game already started. page must have been refreshed')
+                            // only officer
+                            this.startTimer();
 
-                            this.hideModal()
-                            this.startTimer()
-                        }
+                            // todo: the period end will be a message from the server in final version
+                            // Results Modal
+                            setTimeout(()=> {
+                                this.disableStealTokens(); // todo: this should be done more elegantly
+
+                                this.getPeriodResults();
+                                this.openResultsModal(); // todo: this needs to be fixed brap brap
+                            }, this.gameDuration + 3000); // todo: remove this milisecond offset that is in place so that players have a final balance triggered by the officer end game event
+
+                        }, this.startModalDuration);
+
                     };
 
                     this.gameSocket.onmessage = (e) => {
@@ -406,17 +390,19 @@
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
                             this.investigationCount = data.investigation_update
-                        } else if (data.round_over) {
-                            // get results from api
-                            this.getPeriodResults()
+                        //} else if (data.round_over) {
+                        //    // get results from api
+                        //    this.getPeriodResults()
                             // open modal
-                            this.openResultsModal()
+                        //    this.openResultsModal()
 
                         } else if (data.round_results) {
-                            this.balance = data.round_results.balance
+                            console.log(data.round_results);
+                            this.resultsObj = data.round_results;
                         } else if (data.round_start) {
-                            this.hideModal()
-                            this.startTimer()
+                            console.warn("This needs to trigger start modal closing")
+                            // this.showStartModal(false)
+                            // this.startTimer()
                         }
                     };
 
@@ -428,12 +414,26 @@
                      this.subscribeToBalance()
 
             },
+            mounted: function() {
+                this.showStartModal(true)
+            },
             methods: {
+                disableStealTokens: function() {
+                    if (this.isOfficer) {
+                        this.$refs.officercomponent.disableAllTokens()
+                    } else {
+                        if (this.harvestScreen)
+                            this.$refs.harvestcomponent.disableDraggables();
+                        else {
+                            this.$refs.stealcomponent.disableSteal();
+                        }
+                    }
+                },
                 getPeriodResults: function() {
                     // players individually pull results
                     let x = {
                       'period_update': {
-                          'period_results': true
+                          'round_results': true
                       }
                     };
                     this.gameUpdate(x);
@@ -462,9 +462,12 @@
                         'period_update': {'period_start': true},
                     });
                 },
-                hideModal: function() {
-                    let modal = document.getElementById("myModal");
-                    modal.style.display = "none";
+                showStartModal: function(b) {
+                    if (b) {
+                        this.$refs.startmodal.open();
+                    } else {
+                        this.$refs.startmodal.close();
+                    }
                 },
                 gameReady: function() {
                     console.log('game ready function')
@@ -525,7 +528,7 @@
                     }
                 },
                 subscribeToBalance: function () {
-                    setInterval(() => {
+                    this.balanceInterval = setInterval(() => {
                         if (this.gameSocket.readyState == WebSocket.OPEN) {
                             this.gameUpdate({
                                 'balance': true,
@@ -678,16 +681,26 @@
                         this.gameUpdate({
                             'period_update': {'period_start': true},
                         });
+
+                        // schedule period end
+                        // todo: this should be udpated to be sent down form api please and thankyou
+                        setTimeout(() => {
+                                // officer records period end
+                                this.periodEndEvent();
+
+                                // stop balance from being calculated
+                                this.cancelBalanceInterval();
+                            },
+                            this.gameDuration
+                        );
                     }
+                },
+                cancelBalanceInterval: function() {
+                    // officer cancel balance stream
+                    if (!this.isOfficer)
+                        return
 
-                    setTimeout(() => {
-                        // officer records period end
-                        // todo: the period end event should originate from the api. schedule it when the game is started
-                        if (this.isOfficer)
-                            this.periodEndEvent();
-
-                    }, this.gameDuration);
-
+                    clearInterval(this.balanceInterval)
                 },
                 periodEndEvent: function() {
                     this.gameUpdate({
