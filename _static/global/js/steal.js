@@ -25,12 +25,13 @@ let stealGameComponent = {
             locationx: 0,
             locationy: 0,
             timeout: null,
+            stealDraggable: null,
         }
     },
     mounted: function () {
         let that = this;
         let selector = '#location';
-        Draggable.create(selector, {
+        this.stealDraggable = Draggable.create(selector, {
             minimumMovement: .01,
             bounds: that.$refs.stealcontainer,
             onDragStart: function () {
@@ -46,6 +47,9 @@ let stealGameComponent = {
         roundEnd() {
             // disable tokens at end of round
             Draggable.get('#location').disable()
+        },
+        disableSteal: function() {
+            this.stealDraggable[0].disable();
         },
         cancelTimeout: function() {
             if (this.timeout)

@@ -33,6 +33,15 @@ let harvestItemsComponent = {
         }
     },
     methods: {
+        disableDraggables: function() {
+            // todo: clean this up
+            for (let i = 0; i < this.items.length; i++) {
+                let that = this;
+                let selector = "#" + this.items[i]
+                let dragToken = Draggable.get(selector);
+                dragToken.disable();
+            }
+        },
         checkLocation: function (that, id) {
             let index = that.target.attributes.index.value;
             if (index == this.harvestStatus && that.hitTest(this.$refs.htarget, '100%')) {

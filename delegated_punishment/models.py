@@ -11,8 +11,10 @@ from otree.api import (
 )
 from otree.db.models import Model, ForeignKey
 from random import randrange
+import math
 
-from delegated_punishment.helpers import safe_list_sum
+from delegated_punishment.helpers import safe_list_sum, format_template_numbers
+from delegated_punishment.mechanism import OglMechanism, OtherMechanism, SurveyMechanism
 
 import logging
 log = logging.getLogger(__name__)
@@ -68,6 +70,7 @@ class Constants(BaseConstants):
     tutorial_duration_seconds = 1800
     game_duration_seconds = 198
     results_modal_seconds = 30
+    start_modal_seconds = 10
 
     """
     this defines how long a steal token remains on a map before resetting to the 'steal home'
@@ -86,7 +89,7 @@ class Constants(BaseConstants):
     small_n = 8
     dt_method = 1
     dt_q = 10
-    dt_timeout_seconds = 6000  # seconds
+    dt_timeout_seconds = 30  # seconds
     previous_modal_mili = 10000  # miliseconds
 
     dt_e0 = 5
@@ -175,6 +178,27 @@ class Group(BaseGroup):
     civilian_fine_total = models.IntegerField(initial=0)
     big_c = models.FloatField(blank=True, default=None)
 
+    # todo: turn this into a proper factory or part of a generator. :)
+    @classmethod
+    def round_outcome_variables(cls, group, player):
+
+        try:
+            response = SurveyResponse.objects.get(player=player)
+        except SurveyResponse.DoesNotExist:
+            response = None
+
+        if Constants.dt_method == 0:
+            vars = SurveyMechanism.result_vars(group, player, response)
+        elif Constants.dt_method == 1:
+            vars = OglMechanism.result_vars(group, player, response)
+        elif Constants.dt_method > 1:
+            vars = OtherMechanism.result_vars(group, player, response)
+        else:
+            # todo: there was an error:
+            pass
+
+        return vars
+
     @classmethod
     def intersection_update(cls, group_id, bonus, fine):
         with transaction.atomic():
@@ -203,6 +227,41 @@ class Group(BaseGroup):
                 )
                 return Constants.game_duration_seconds
         return False
+
+    def generate_start_vars(self, id_in_group, response=None):
+
+        if Constants.dt_method == 0:
+
+            x = SurveyMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        elif Constants.dt_method == 1:
+
+            x = OglMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        elif Constants.dt_method > 1:
+
+            x = OtherMechanism.start_vars(
+                id_in_group,
+                self.defend_token_total,
+                self.defend_token_cost,
+                response,
+            )
+
+        else:
+            x = None
+
+        return x
+
 
     def group_ready(self):
         """Have all player pages loaded"""
