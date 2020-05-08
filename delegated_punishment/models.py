@@ -56,8 +56,8 @@ class Constants(BaseConstants):
     beta = .9
     a_max = 6
 
-    tutorial_duration_seconds = 10  # 1800
-    game_duration_seconds = 20  # 198
+    tutorial_duration_seconds = 5  # 1800
+    game_duration_seconds = 5  # 198
     results_modal_seconds = 9000  # 30
     start_modal_seconds = 10
 
@@ -67,10 +67,10 @@ class Constants(BaseConstants):
 
     steal_token_positions = 20
 
-    small_n = 8
-    dt_method = 1
+    small_n = 4
+    dt_method = 0
     dt_q = 10
-    dt_timeout_seconds = 30  # seconds
+    dt_timeout_seconds = 120  # seconds
     previous_modal_mili = 10000  # miliseconds
 
     dt_e0 = 5

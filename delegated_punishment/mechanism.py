@@ -20,7 +20,9 @@ class SurveyMechanism:
     def result_vars(cls, group, player, response=None):
         if player.id_in_group == 1:
             return dict(
-                defend_token_total=group.defend_token_total
+                defend_token_total=group.defend_token_total,
+                fine_total=group.civilian_fine_total,
+                bonus_total=group.officer_bonus_total,
             )
         else:
             if response is not None:
@@ -58,7 +60,9 @@ class OglMechanism:
     def result_vars(cls, group, player, response=None):
         if player.id_in_group == 1:
             return dict(
-                defend_token_total=group.defend_token_total
+                defend_token_total=group.defend_token_total,
+                fine_total=group.civilian_fine_total,
+                bonus_total=group.officer_bonus_total,
             )
         else:
             if response is not None:
@@ -100,7 +104,9 @@ class OtherMechanism:
     def result_vars(cls, group, player, response=None):
         if player.id_in_group == 1:
             return dict(
-                defend_token_total=group.defend_token_total
+                defend_token_total=group.defend_token_total,
+                fine_total=group.civilian_fine_total,
+                bonus_total=group.officer_bonus_total,
             )
         else:
             if response is not None:

@@ -55,6 +55,7 @@ let oglComponent = {
         handleFormSubmission: function() {
             if(Number.isInteger(this.formInputNum)) {
                 this.numberTokens = this.formInputNum
+                this.formInputNum = null;
                 this.inputChange()
             } else {
                 alert('invalid input')
@@ -179,7 +180,7 @@ let oglComponent = {
                 <form class="form-inline" @submit.prevent="handleFormSubmission()">
                   <button type="submit" class="btn btn-primary">Update tokens</button>
                   <div class="form-group" style="max-width: 250px;">
-                    <input type="number" step="1" class="form-control" placeholder="Enter a number" style="max-width: 250px;" v-model.number="formInputNum">
+                    <input type="number" step="1" class="form-control" :placeholder="provisionalTotals[playerId]" style="max-width: 250px;" v-model.number="formInputNum">
                   </div>
                 </form>
             </div>
