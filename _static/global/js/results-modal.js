@@ -1,6 +1,7 @@
 let resultsModalComponent = {
     props: {
         resultsObj: Object,
+        roundNumber: Number,
     },
     data: function() {
         return {
@@ -22,26 +23,28 @@ let resultsModalComponent = {
                 <p>You obtained <strong>{{ balance | integerFilter}}</strong> grain</p>
             <!-- Modal content -->
             <div v-if="resultsObj" class="modal-content results-modal">
-                <h4 style="text-align: center;">Round results</h4>
+                <h4 style="text-align: center;">Round {{ roundNumber }} results</h4>
                 
-                <p class="card-title" style="text-align: center;">Earnings Summary</p>
-                <div class="scrollable">
-                    <table class="table table-floating table-debug">
-                        <tbody>
-                            <tr v-if="resultsObj.balance != null">
-                                <td>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                                <td style="text-align: right;">{{ resultsObj.balance }}</td>
-                            </tr>
-                            <tr v-if="resultsObj['before_tax'] != null">
-                                <td>Before tax earnings<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                                <td style="text-align: right;">{{ resultsObj.before_tax }}</td>
-                            </tr>
-                            <tr v-if="resultsObj.your_tax != null">
-                                <td scope="row">Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></td>
-                                <td style="text-align: right;">{{ resultsObj.your_tax }}</td>
-                            </tr>    
-                        </tbody>
-                    </table>
+                <p style="text-align: center;">Earnings summary</p>
+                <div class="list-group" style="width: 350px; margin: auto;">
+                     <div v-if="resultsObj.balance != null" class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{resultsObj.balance}}</div>
+                        </div>
+                    </div>
+                    <div v-if="resultsObj.before_tax != null" class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Before tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{ resultsObj.before_tax }}</div>
+                        </div>
+                    </div>
+                    <div v-if="resultsObj.defend_token_cost != null" class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{ resultsObj.your_tax }}</div>
+                        </div>
+                    </div>              
                 </div>
                 <br>
                 
@@ -64,6 +67,18 @@ let resultsModalComponent = {
                             <div>Total cost:</div>
                             <div>{{ resultsObj.defend_token_cost }}</div>
                         </div>
+                    </div>    
+                    <div v-if="resultsObj.fine_total != null" class="list-group-item list-group-item-primary">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Total civilian reprimands:</div>
+                            <div>{{ resultsObj.fine_total }}</div>
+                        </div>
+                    </div>          
+                    <div v-if="resultsObj.bonus_total != null" class="list-group-item list-group-item-primary">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Total officer bonuses:</div>
+                            <div>{{ resultsObj.bonus_total }}</div>
+                        </div>
                     </div>              
                     <div class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
@@ -73,7 +88,6 @@ let resultsModalComponent = {
                     </div>
                 </div>
             </div>
-            <div v-else>Results are loading...</div>
             </div>
                 
         

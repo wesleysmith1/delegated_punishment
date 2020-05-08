@@ -86,10 +86,10 @@ class Constants(BaseConstants):
     officer_start_balance = 1000
     civilian_start_balance = 0
 
-    small_n = 8
-    dt_method = 1
+    small_n = 4
+    dt_method = 0
     dt_q = 10
-    dt_timeout_seconds = 30  # seconds
+    dt_timeout_seconds = 120  # seconds
     previous_modal_mili = 10000  # miliseconds
 
     dt_e0 = 5
