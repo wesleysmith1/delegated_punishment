@@ -7,18 +7,25 @@ let surveyComponent = {
     data: function () {
         return {
             submitted: false,
-            resultsObj: {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0},
-            willingnessToPay: {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0},
+            // objects need to have initial values in order for the
+            // created hook to initialize their values for some reason
+            resultsObj: {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null},
+            willingnessToPay: {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null},
+            inputValues: {1:null,2:null,3:null,4:null,5:null,6:null,7:null,8:null,9:null,10:null}
         }
     },
     created: function() {
         for(let i = 1; i < this.tokenChoices+1; i++) {
-            this.resultsObj[i] = null;
-            this.willingnessToPay[i] = null;
+            let k = (i).toString()
+            this.resultsObj[k] = null;
+            this.willingnessToPay[k] = null;
+            this.inputValues[k] = null;
         }
     },
     mounted: function () {
 
+    },
+    computed: {
     },
     methods: {
         submit: function() {
@@ -42,17 +49,50 @@ let surveyComponent = {
                             'total': total} }
 
             }
-            console.log('HERE IT IS:', m)
            return m
         },
         formatNum: function(n) {
-            // return n | 0
             return n
+        },
+        updateResults: function(i) {
+            this.resultsObj[i] = this.inputValues[i];
+            this.clearInputAt(i);
+        },
+        incrementInput: function(i) {
+            this.clearInputAt(i);
+            this.resultsObj[i]++;
+        },
+        decrementInput: function(i){
+            this.clearInputAt(i);
+            this.resultsObj[i]--;
+        },
+        clearInputAt: function(i) {
+            // clear value
+            this.$refs['surveyinput' + i][0].value = null;
+
+            this.inputValues[i] = null;
+        },
+        isNumber: function(evt) {
+            evt = (evt) ? evt : window.evt;
+            var charCode = (evt.which) ? evt.which : evt.keyCode;
+            if ((charCode < 48 || charCode > 57) && charCode !== 45) {
+                evt.preventDefault();
+            } else {
+                return true;
+            }
+        },
+        onEnter: function(i) {
+            if (this.showSubmit(i))
+                this.updateResults(i)
+        },
+        showSubmit: function(i) {
+            return !(this.inputValues[i] !== 0 && !this.inputValues[i])
         }
     },
     template:
         `
         <div style="margin: auto; width: 50%;">
+          
             <div class="item">
                <div>Total number of officer tokens</div>
             
@@ -60,17 +100,23 @@ let surveyComponent = {
             </div>
             <hr>
             <div v-for="i in tokenChoices">
-                <div class="item" style="justify-content: space-around">
+                <div class="item" style="display: flex;">
                     <div>{{ i }} <div class="officer-unit" style="display: inline-block; height: 15px; width: 15px; "></div></div>
                     
-                    <div style="display: flex; justify-content: space-around">
-                        <select v-model="resultsObj[i]" :disabled="submitted" class="form-control form-control-sm">
-                            <option value="null" default>--</option>
-                            <option>0</option>
-                            <option v-for="x in paymentMax">{{ x }}</option>
-                        </select>
-                        <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px; position: relative; top: 5px; left: 10px;">
+                    <div style="display: flex;">
+                        <button v-show="showSubmit(i)" type="button" class="btn btn-warning" style="position: relative; left: 250px;" @click="updateResults(i)">Update</button>
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <button type="button" class="btn btn-secondary" @click="decrementInput(i)">-</button>
+                          </div>
+                          <input v-on:keyup.enter="onEnter(i)"  :placeholder="resultsObj[i]" :ref="'surveyinput' + i" v-model.number="inputValues[i]" @keypress="isNumber($event)" type="number" class="form-control" style="width: 100px; text-align: center;">
+                          <div class="input-group-append">
+                            <button type="button" class="btn btn-secondary" @click="incrementInput(i)">+</button>
+                          </div>
+                            <!--<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px; position: relative; top: 5px; left: 10px;">-->
+                        </div>
                     </div>
+            
                 </div>
                 <hr>
             </div>

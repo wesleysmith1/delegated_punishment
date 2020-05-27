@@ -37,6 +37,12 @@ let startModalComponent = {
                                     <div><strong>{{ startObject.your_tax }}</strong></div>
                                 </div>
                             </div>
+                            <div v-if="startObject.rebate != null" class="list-group-item list-group-item-primary">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div><strong>Your rebate:</strong></div>
+                                    <div><strong>{{ startObject.rebate }}</strong></div>
+                                </div>
+                            </div>
                             <div v-if="startObject.defend_token_cost != null" class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
                                     <div>Total cost:</div>

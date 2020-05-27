@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.contrib.postgres.fields import JSONField
 from django.db import transaction
@@ -9,15 +10,16 @@ from otree.api import (
     BaseGroup,
     BasePlayer,
 )
-from otree.db.models import Model, ForeignKey
+from otree.db.models import Model, ForeignKey, DecimalField
 from random import randrange
-import math
 
-from delegated_punishment.helpers import safe_list_sum, format_template_numbers
+from delegated_punishment.helpers import safe_list_sum, format_template_numbers, date_now_milli
 from delegated_punishment.mechanism import OglMechanism, OtherMechanism, SurveyMechanism
 
 import logging
 log = logging.getLogger(__name__)
+
+from decimal import Decimal
 
 doc = """
 """
@@ -56,29 +58,66 @@ class Constants(BaseConstants):
     beta = .9
     a_max = 6
 
-    tutorial_duration_seconds = 5  # 1800
-    game_duration_seconds = 5  # 198
-    results_modal_seconds = 9000  # 30
-    start_modal_seconds = 10
-
     officer_start_balance = 1000
-
+    steal_token_positions = 20
     steal_timeout_duration = 200000
 
-    steal_token_positions = 20
+    tutorial_duration_seconds = 60  # 1800
+    game_duration_seconds = 60  # 198
 
-    small_n = 4
-    dt_method = 0
-    dt_q = 10
-    dt_timeout_seconds = 120  # seconds
-    previous_modal_mili = 10000  # miliseconds
-
-    dt_e0 = 5
     dt_range = 10
     dt_payment_max = 10
     big_n = 8
-    gamma = 30
-    rebate = 0
+
+    dt_mechanism_seconds = 30  # seconds
+    results_modal_seconds = 9000  # 30
+    start_modal_seconds = 10
+
+    # Uncomment a block below for Mechanism Configuration
+
+    # """
+    # Survey
+    dt_method = 0
+    small_n = 4
+    gamma = -1
+    omega = -1
+    dt_rebate = 0
+    dt_e0 = None
+    dt_q = 8
+    # """
+
+    """
+    #OGL
+    dt_method = 1
+    small_n = 8
+    gamma = 9
+    omega = 100
+    dt_rebate = 0
+    dt_e0 = 0
+    dt_q = 8
+    """
+
+    """
+    #MGL - Statistical 
+    dt_method = 2
+    small_n = 4
+    gamma = 9
+    omega = 100
+    dt_rebate = 20
+    dt_e0 = 0
+    dt_q = 8
+    """
+
+    """
+    #MGL - Experimental
+    dt_method = 3
+    small_n = 4
+    gamma = 9
+    omega = 2
+    dt_rebate = 20
+    dt_e0 = 8
+    dt_q = 8
+    """
 
 
 class Subsession(BaseSubsession):
@@ -155,10 +194,10 @@ class Group(BaseGroup):
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
     defend_token_total = models.IntegerField(initial=0)
-    defend_token_cost = models.FloatField(initial=0)
+    defend_token_cost = models.DecimalField(initial=0, max_digits=10, decimal_places=5) # maybe this hsould be moved over to tha mechanism table
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
-    big_c = models.FloatField(blank=True, default=None)
+    big_c = models.DecimalField(blank=True, default=None, max_digits=10, decimal_places=5) # maybe this hsould be moved over to tha mechanism table
 
     # todo: turn this into a proper factory or part of a generator. :)
     @classmethod
@@ -170,75 +209,17 @@ class Group(BaseGroup):
             response = None
 
         if Constants.dt_method == 0:
-            vars = SurveyMechanism.result_vars(group, player, response)
+            vars = SurveyMechanism().result_vars(group, player, response)
         elif Constants.dt_method == 1:
-            vars = OglMechanism.result_vars(group, player, response)
+            vars = OglMechanism().result_vars(group, player, response)
         elif Constants.dt_method > 1:
-            vars = OtherMechanism.result_vars(group, player, response)
+            vars = OtherMechanism().result_vars(group, player, response)
         else:
+            vars = {}
             # todo: there was an error:
             pass
 
         return vars
-        # try:
-        #     sr = SurveyResponse.objects.get(player=player)
-        # except SurveyResponse.DoesNotExist:
-        #
-        #     if player.id_in_group != 1:
-        #         log.error(f"could not find survey result for player {player.id}")
-        #
-        #     rebate = None
-        #     mechanism_cost = None
-        #     your_tax = None
-        #
-        #     balance = before_tax = math.floor(player.balance)
-        #     tax = 0
-        #     your_tokens = None
-        #
-        # else:
-        #     if sr.rebate is None:
-        #         rebate = None  # todo: this is super wrong
-        #     else:
-        #         rebate = sr.rebate
-        #
-        #     if Constants.dt_method == 0:
-        #         your_tokens = None
-        #     else:
-        #         your_tokens = sr.total
-        #
-        #     mechanism_cost = sr.mechanism_cost
-        #     your_tax = format_template_numbers(sr.tax)
-        #
-        #     before_tax = math.floor(player.balance)
-        #     # tax = math.floor(sr.tax)
-        #
-        #     #todo: tax has not been applied yet. is there a way to make this more clear?
-        #     balance = math.floor(player.balance - sr.tax)
-        #
-        # # table variables
-        # vars_dict['rebate'] = rebate
-        # vars_dict['mechanism_cost'] = mechanism_cost
-        # vars_dict['your_tax'] = your_tax
-        # vars_dict['your_tokens'] = your_tokens
-        # vars_dict['big_c'] = group.big_c
-        #
-        # g = group.get_g()
-        # vars_dict['big_g'] = g
-        #
-        # vars_dict['before_tax'] = format_template_numbers(before_tax)
-        # # vars_dict['tax'] = format_template_numbers(tax)
-        # vars_dict['balance'] = format_template_numbers(balance)
-        #
-        # vars_dict['defend_token_cost'] = format_template_numbers(
-        #     group.defend_token_cost)  # todo: make sure we want to save percise value
-        # vars_dict['defend_token_total'] = group.defend_token_total
-        # vars_dict['your_tokens'] = your_tokens
-        #
-        # # summary variables
-        # vars_dict['period'] = player.subsession.round_number
-        # vars_dict['steal_total'] = player.steal_total
-        # vars_dict['victim_total'] = player.victim_total
-        # return vars_dict
 
     @classmethod
     def intersection_update(cls, group_id, bonus, fine):
@@ -273,7 +254,7 @@ class Group(BaseGroup):
 
         if Constants.dt_method == 0:
 
-            x = SurveyMechanism.start_vars(
+            x = SurveyMechanism().start_vars(
                 id_in_group,
                 self.defend_token_total,
                 self.defend_token_cost,
@@ -282,7 +263,7 @@ class Group(BaseGroup):
 
         elif Constants.dt_method == 1:
 
-            x = OglMechanism.start_vars(
+            x = OglMechanism().start_vars(
                 id_in_group,
                 self.defend_token_total,
                 self.defend_token_cost,
@@ -291,7 +272,7 @@ class Group(BaseGroup):
 
         elif Constants.dt_method > 1:
 
-            x = OtherMechanism.start_vars(
+            x = OtherMechanism().start_vars(
                 id_in_group,
                 self.defend_token_total,
                 self.defend_token_cost,
@@ -381,11 +362,11 @@ class Group(BaseGroup):
     def get_set_c(self, sum_costs=None):
 
         if not sum_costs:
-            sum_costs = safe_list_sum(SurveyResponse.objects.filter(group=self).values_list('mechanism_cost', flat=True))
+            sum_costs = Decimal(safe_list_sum(SurveyResponse.objects.filter(group=self).values_list('mechanism_cost', flat=True)))
 
         # TODO:
         # rebate * small_n will change if rebates require some form of validaiton.
-        c = self.defend_token_total * Constants.dt_q + (Constants.rebate * Constants.small_n) - sum_costs
+        c = self.defend_token_total * Constants.dt_q + (Constants.dt_rebate * Constants.small_n) - sum_costs
         log.info(f"cost for group {self.id} in round {self.round_number} : {sum_costs}, c: {c}, token_count: {self.defend_token_total}")
 
         self.big_c = c
@@ -410,9 +391,9 @@ class Group(BaseGroup):
         c = self.defend_token_total * Constants.dt_q
         g = self.get_g()
 
-        all_participants_fee = (c + g) / Constants.big_n
+        all_participants_fee = Decimal((c + g) / Constants.big_n)
 
-        self.defend_token_cost = all_participants_fee * Constants.big_n
+        self.defend_token_cost = Decimal(all_participants_fee * Constants.big_n)
 
         for player in self.get_players():
 
@@ -421,7 +402,7 @@ class Group(BaseGroup):
 
             try:
                 sr = survey_responses.get(player_id=player.id)
-                sr.mechanism_cost = all_participants_fee
+                sr.mechanism_cost = Decimal(all_participants_fee)
                 sr.tax = all_participants_fee
             except SurveyResponse.DoesNotExist:
                 log.error(f"player {player.id} did not participate in survey in round: {self.round_number}")
@@ -437,7 +418,7 @@ class Group(BaseGroup):
 
         g = self.get_g()
         self.get_set_c()
-        remaining_cost = g / Constants.big_n
+        remaining_cost = Decimal(str(g)) / Decimal(str(Constants.big_n))
 
         for player in self.get_players():
             if player.id_in_group == 1:
@@ -450,7 +431,7 @@ class Group(BaseGroup):
                 continue
             else:
                 # update cost with tax
-                tax = sr.mechanism_cost + remaining_cost # todo this breaks frequently nonetype + float illegal
+                tax = Decimal(sr.mechanism_cost + remaining_cost)  # todo this breaks frequently nonetype + float illegal
                 sr.tax = tax
                 sr.save()
 
@@ -465,7 +446,7 @@ class Group(BaseGroup):
         c = self.get_set_c()
         g = self.get_g()
 
-        non_participant_cost = (c + g) / (Constants.big_n - Constants.small_n)
+        non_participant_cost = Decimal((c + g) / (Constants.big_n - Constants.small_n))
 
         for player in self.get_players():
 
@@ -480,8 +461,8 @@ class Group(BaseGroup):
                     sr.tax = non_participant_cost
                     rebate = 0
                 else:
-                    rebate = Constants.rebate
-                    sr.tax = sr.mechanism_cost - rebate
+                    rebate = Constants.dt_rebate
+                    sr.tax = Decimal(sr.mechanism_cost)
 
                 sr.rebate = rebate
                 sr.save()
@@ -527,7 +508,9 @@ class Group(BaseGroup):
             except SurveyResponse.DoesNotExist:
                 log.error(f"could not map survey response to player {player.id} while applying tax")
             else:
-                player.balance -= sr.tax
+                # todo: this should checked later. we may make balance field a decimal type
+                # rebate is only applicable for MGL mechanisms
+                player.balance = float(Decimal(player.balance) - sr.tax + sr.rebate)
                 player.save()
 
     def get_officer_bonus(self):
@@ -677,38 +660,38 @@ class SurveyResponse(Model):
     player = ForeignKey(Player, on_delete='CASCADE')
     group = ForeignKey(Group, on_delete='CASCADE')
     valid = models.BooleanField(initial=False)
-    mechanism_cost = models.FloatField(null=True, default=None)
+    mechanism_cost = models.DecimalField(initial=0, max_digits=10, decimal_places=5)
     total = models.IntegerField(initial=0)
     response = JSONField(null=True)
     participant = models.BooleanField(initial=False)
     # tax is calculated multiple times.
     # This field is convenience to hold latest calculation without overwriting cost field
-    tax = models.FloatField(initial=0)
-    rebate = models.IntegerField(null=True, default=None)
+    tax = models.DecimalField(max_digits=10, decimal_places=5)
+    rebate = models.IntegerField(initial=0)
 
     @classmethod
     def calculate_thetas(cls, survey_responses, total):
         results = dict()
 
         for sr in survey_responses:
-            x = 0
+            x = Decimal(0)
             player_id = sr.player_id
-            eee = sr.total
+            eee = Decimal(sr.total)
 
-            temp_total = total
+            temp_total = Decimal(total)
             temp_total -= eee
 
             for sr2 in survey_responses:
                 if sr2.player_id == player_id:
                     continue
 
-                ptotal = sr2.total
+                ptotal = Decimal(sr2.total)
                 # if player_id == sr2.player_id:
                 #     ptotal += 1
 
-                x += (ptotal - 1 / (Constants.small_n - 1) * (temp_total)) ** 2
+                x = x + Decimal((ptotal - Decimal(1) / (Constants.small_n - Decimal(1)) * temp_total) ** 2)
 
-            results[sr.player_id] = (Constants.gamma / 2) * (1 / (Constants.small_n - 2)) * x
+            results[sr.player_id] = Decimal(Constants.gamma / 2) * Decimal(1 / (Constants.small_n - 2)) * x
 
         return results
 
@@ -732,31 +715,16 @@ class SurveyResponse(Model):
 
             theta = theta_results[sr.player_id] if Constants.dt_method <= 1 else 0  # todo: make this easier to identify/change easily for testing
 
-            ogl_results = (Constants.dt_q / Constants.big_n) * total + (Constants.gamma/2) * (Constants.small_n / (Constants.small_n-1)) * (player_sum - (1/Constants.small_n) * total)**2 - theta
+            ogl_results = Decimal((Constants.dt_q / Constants.big_n) * total + (Constants.gamma/2) * (Constants.small_n / (Constants.small_n-1)) * (player_sum - (1/Constants.small_n) * total)**2) - theta
 
             costs_results[sr.player_id] = ogl_results
             totals_results[sr.player_id] = player_sum
 
         return costs_results, totals_results
 
-    @classmethod
-    def csv_header(cls):
-        if Constants.dt_method == 0:
-            header = f"Player_Id,Integer,"
-            for i in range(1, Constants.dt_range + 1):
-                header += f"{i},"
-        elif Constants.dt_method == 1:
-            header = f"Player_Id,Integer,Value"
-        elif Constants.dt_method > 1:
-            header = f"Player_Id, Integer, Value"
-        else:
-            log.info(f"no csv header configured for method {Constants.dt_method}")
-            return None
-        return [header]
-
     def get_survey_value(self, index):
         if self.response.get(index):
-            payment = self.response[index].total
+            payment = Decimal(self.response[index].total)
             self.mechanism_cost = payment
             self.total = index
             self.save()
@@ -764,18 +732,26 @@ class SurveyResponse(Model):
         else:
             raise KeyError
 
-    def csv_row(self):
-        row = f"{self.player_id},{self.group_id},"
-        if Constants.dt_method == 0:
-            for key in self.response:
-                row += f"{self.response[key]['total']},"
-        elif Constants.dt_method == 1:
-            row += f"{self.mechanism_cost}"
-        elif Constants.dt_method > 1:
-            row += f"{self.mechanism_cost}"
-        else:
-            log.info(f"CSVROW not configured for method {Constants.dt_method}")
-            return
+    def survey_row(self):
+        row = f"{self.player_id},{self.player.pariticipant_id},{self.group_id},"
+        for key in self.response:
+            row += f"{self.response[key]['total']},"
 
         return [row]
 
+
+class MechanismInput(Model):
+    player = ForeignKey(Player, on_delete='CASCADE')
+    participant_id = models.IntegerField()
+    group = ForeignKey(Group, on_delete='CASCADE')
+    value = models.IntegerField(initial=0)
+    created_at = models.FloatField()
+
+    @classmethod
+    def record(cls, value, player_id, group_id):
+        creation_time = date_now_milli()
+        MechanismInput.objects.create(value=value, player_id=player_id, group_id=group_id, created_at=creation_time)
+
+    def gl_row(self):
+        row = f"{self.group_id},{self.participant_id},{self.player_id},{self.value},{self.created_at}"
+        return [row]

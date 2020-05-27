@@ -7,6 +7,9 @@ from .models import Constants, DefendToken, Player, SurveyResponse
 import random
 from delegated_punishment.helpers import skip_period, write_session_dir, format_template_numbers, safe_list_sum
 from delegated_punishment.models import Group
+from delegated_punishment.mechanism import MechCSVBuilder
+
+from decimal import Decimal
 
 import logging
 log = logging.getLogger(__name__)
@@ -64,10 +67,6 @@ class DefendTokenSurvey(Page):
 
     def vars_for_template(self):
         selected = False
-        previous_cost = None
-        previous_tokens = None
-        your_previous_cost = None
-        your_previous_tokens = None
 
         try:
             sr = SurveyResponse.objects.get(group=self.group, player=self.player)
@@ -76,32 +75,8 @@ class DefendTokenSurvey(Page):
         else:
             selected = True
 
-        if selected and self.round_number != 1:  # todo: probably fix this. not officer and not first round
-
-            # todo make this select info for previous round dum dum
-            previous_round = self.round_number - 1
-            previous_player = self.player.in_round(previous_round)
-            previous_group = previous_player.group
-
-            try:
-                previous_response = SurveyResponse.objects.get(player=previous_player, group=previous_group)
-            except SurveyResponse.DoesNotExist:
-                previous_cost = None
-                your_previous_cost = None
-                your_previous_tokens = None
-            else:
-                # not displayed in survey...
-                if Constants.dt_method > 0:
-                    previous_cost = format_template_numbers(previous_group.defend_token_cost)
-
-                    if previous_response.participant:
-                        your_previous_cost = format_template_numbers(previous_response.tax)
-                        your_previous_tokens = previous_response.total
-            finally:
-                previous_tokens = previous_group.defend_token_total
-
         template_vars = dict(
-            timeout_seconds=Constants.dt_timeout_seconds,
+            timeout_seconds=Constants.dt_mechanism_seconds,
             selected=selected,
             dt_method=Constants.dt_method,
             dt_range=Constants.dt_range,
@@ -109,13 +84,8 @@ class DefendTokenSurvey(Page):
             dt_q=Constants.dt_q,
             big_n=Constants.players_per_group-1,
             gamma=Constants.gamma,
+            omega=Constants.omega,
             small_n=Constants.small_n,
-
-            previous_cost=previous_cost,
-            previous_tokens=previous_tokens,
-            your_previous_cost=your_previous_cost,
-            your_previous_tokens=your_previous_tokens,
-            previous_modal_mili=Constants.previous_modal_mili,
         )
 
         return template_vars
@@ -133,19 +103,7 @@ class DefendTokenWaitPage(WaitPage):
         file_path = write_session_dir(self.session.config['session_identifier'])
         file_name = f"{file_path}Session_{self.group.session_id}_Group_{self.group.id}_{self.session.vars['session_date']}_{self.session.vars['session_start']}.csv"
 
-        # csv file output per player
-        f = open(file_name, 'a', newline='')
-        with f:
-            writer = csv.writer(f)
-            # write header
-
-            if self.round_number == 1:
-                writer.writerow(SurveyResponse.csv_header())
-
-            # determine if players received 50 grain
-            for r in survey_responses:
-                row = r.csv_row()
-                writer.writerow(row)
+        MechCSVBuilder(Constants.dt_method, survey_responses, file_name, input_range=Constants.dt_range)
 
         # method specific code
         if Constants.dt_method == 0:
@@ -174,8 +132,6 @@ class DefendTokenWaitPage(WaitPage):
                             except:
                                 log.info(f"COULD NOT INCREMENT TOTAL. TOTAL IS CURRENTLY AT {total}. Here was the value of response: {response}")
 
-
-
                             log.error(f'ROW {i}, RESPONSE {response} COUNT {count} TOTAL {total}')
                         pass
                     else:
@@ -198,7 +154,7 @@ class DefendTokenWaitPage(WaitPage):
 
             for sr in survey_responses:
                 if sr.response.get(number_tokens):
-                    sr.mechanism_cost = sr.response[number_tokens]['total']
+                    sr.mechanism_cost = Decimal(sr.response[number_tokens]['total'])
                     sr.save()
 
             log.info(f"number tokens for next round {number_tokens}")
@@ -206,7 +162,7 @@ class DefendTokenWaitPage(WaitPage):
             log.info(f"group updated")
 
             self.group.defend_token_total = int(number_tokens)
-            self.group.defend_token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
+            self.group.defend_token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
             self.group.save()
             # payments calculation
             self.group.calculate_survey_tax(survey_responses)
@@ -217,14 +173,14 @@ class DefendTokenWaitPage(WaitPage):
 
             values = survey_responses.values_list('total', flat=True)
             token_total = sum(values)
-            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
+            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
             log.info(f'number of tokens for period {self.group.round_number} is {token_total} from values: {values}')
 
             if token_total < 0:
                 log.info(f'number of tokens is {token_total}. changing to 0')
                 token_total = 0
 
-            # Group.objects.filter(id=self.group.id).update(defend_token_total=token_total)
+            # Group.objectsm.filter(id=self.group.id).update(defend_token_total=token_total)
             self.group.defend_token_total = token_total
             self.group.defend_token_cost = token_cost
             self.group.save()
@@ -235,16 +191,32 @@ class DefendTokenWaitPage(WaitPage):
         elif Constants.dt_method == 2:
 
             token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
-            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
 
-            Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
+            if token_total < 0:
+                log.info(f'number of tokens is {token_total}. changing to 0')
+                token_total = 0
+
+            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
+
+            self.group.defend_token_total = token_total
+            self.group.defend_token_cost = token_cost
+            self.group.save()
 
             self.group.calculate_other_tax(survey_responses)
 
         elif Constants.dt_method == 3:
 
-            token_total = safe_list_sum(survey_responses).values_list('total', flat=True) + Constants.dt_e0
-            token_cost = safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True))
+            token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
+
+            if token_total < 0:
+                log.info(f'number of tokens is {token_total}. changing to 0')
+                token_total = 0
+
+            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
+
+            self.group.defend_token_total = token_total
+            self.group.defend_token_cost = token_cost
+            self.group.save()
 
             Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
 
@@ -263,6 +235,14 @@ class DefendTokenWaitPage(WaitPage):
 class Wait(WaitPage):
     pass
 
+class DecimalEncoder(json.JSONEncoder):
+    def _iterencode(self, o, markers=None):
+        if isinstance(o, Decimal):
+            # wanted a simple yield str(o) in the next line,
+            # but that would mean a yield on the line with super(...),
+            # which wouldn't work (see my comment below), so...
+            return (str(o) for o in [o])
+        return super(DecimalEncoder, self)._iterencode(o, markers)
 
 class Game(Page):
     # the template can be changed to GameTest.html to. Each tab sends up test data at intervals to the backend
@@ -300,15 +280,7 @@ class Game(Page):
         finally:
             start_object = self.group.generate_start_vars(self.player.id_in_group, response)
 
-        # start_object = {
-        #     'your_tax': format_template_numbers(your_tax),
-        #     'your_tokens': your_tokens,
-        #     'defend_token_cost': format_template_numbers(self.group.defend_token_cost),
-        #     'defend_token_total': self.group.defend_token_total
-        # }
-
         vars_dict['start_object'] = start_object
-
 
         # game variables
         pjson = dict()
@@ -342,7 +314,7 @@ class Game(Page):
             officer_tokens = DefendToken.objects.filter(group=self.group)
 
             results = [obj.to_dict() for obj in officer_tokens]
-            vars_dict['dtokens'] = json.dumps(results)
+            vars_dict['dtokens'] = json.dumps(results, cls=DecimalEncoder)
 
         if Constants.num_rounds > 1 and self.round_number == 1:
             timeout = True
