@@ -311,6 +311,11 @@
                         t.slot = t.number;
                         t.map = 0; // todo: make this loaded from the database
                     });
+
+                    if (!this.officerTokens) {
+                        console.log('There are no officer tokens this round')
+                    }
+
                 }
 
                 // player maps

@@ -8,8 +8,9 @@ from delegated_punishment.helpers import date_now_milli
 import logging
 log = logging.getLogger(__name__)
 
-from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, SurveyResponse
+from decimal import Decimal
 
+from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, SurveyResponse, MechanismInput
 
 class DefendTokenConsumer(WebsocketConsumer):
 
@@ -59,6 +60,8 @@ class DefendTokenConsumer(WebsocketConsumer):
 
             updated_input = data_json['ogl']['data']
 
+            MechanismInput.record(updated_input, player_id, group_id)
+
             print(updated_input)
 
             # append to a table or something.
@@ -73,23 +76,22 @@ class DefendTokenConsumer(WebsocketConsumer):
 
             costs, totals = SurveyResponse.calculate_ogl(survey_responses)
 
-            log.info('costs:')
-            log.info(costs)
-            log.info('totals:')
-            log.info(totals)
-
             log.info(f"value for player {player_id} is {costs[player_id]}")
             # SurveyResponse.objects.filter(player_id=player_id).update(total=updated_input, mechanism_cost=responses[player_id])
             for p_id in costs:
-                p_cost = costs[p_id]
+                p_cost = Decimal(costs[p_id])
                 log.info(f"value for player {p_id} is {p_cost}")
-                SurveyResponse.objects.filter(player_id=p_id).update(mechanism_cost=p_cost)
+                try:
+                    response = SurveyResponse.objects.filter(player_id=p_id)
+                    response.update(mechanism_cost=p_cost)
+                except Exception:
+                    log.info(f"PLAYER {p_id} SPENT {p_cost} BUT WE COULD NOT UPDATE THE OBJECT")
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
                     'type': 'ogl_update',
-                    'provisional': {'costs': costs, 'totals': totals}
+                    'provisional': {'totals': totals}
                 }
             )
 

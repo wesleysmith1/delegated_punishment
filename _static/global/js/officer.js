@@ -246,7 +246,7 @@ let officerGameComponent = {
                 </div>
                 <div style="clear: both;"></div>
                 <div class="maps-container">
-                    <div v-if="map < 5" v-for="map in maps" class="map-container">
+                    <div v-if="map > 4" v-for="map in maps" class="map-container">
                       <div class="map other" :id='"map" + (map+1)' :ref='"map" + (map+1)' v-bind:style="{ height: mapSize + 'px', width: mapSize + 'px' }">
                             <!--todo: pass down the number of players-->
                             <div v-for="player_id in 8" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >

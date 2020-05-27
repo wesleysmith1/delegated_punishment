@@ -44,7 +44,13 @@ let resultsModalComponent = {
                             <div>Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
                             <div>{{ resultsObj.your_tax }}</div>
                         </div>
-                    </div>              
+                    </div>      
+                    <div v-if="resultsObj.rebate != null" class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Your rebate <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{ resultsObj.rebate }}</div>
+                        </div>
+                    </div>        
                 </div>
                 <br>
                 
