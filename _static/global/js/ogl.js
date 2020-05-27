@@ -68,9 +68,10 @@ let oglComponent = {
             this.$emit('update', this.numberTokens);
         },
         arrIntSum: function(arr) {
-            if (!arr)
+            if (!arr) {
                 console.error('arrIntSum received empty value')
                 return -999
+            }
 
             if (!Array.isArray(arr))
                 arr = Object.values(arr)
