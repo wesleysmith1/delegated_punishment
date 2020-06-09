@@ -27,20 +27,20 @@ let startModalComponent = {
                         <div class="list-group" style="width: 350px; margin: auto;">
                              <div v-if="startObject.your_tokens != null" class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div><strong>Your tokens:</strong></div>
-                                    <div><strong>{{startObject.your_tokens}}</strong></div>
+                                    <div>Your tokens:</div>
+                                    <div>{{startObject.your_tokens}}</div>
                                 </div>
                             </div>
                             <div v-if="startObject.your_tax != null" class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
                                     <div><strong>Your cost:</strong></div>
-                                    <div><strong>{{ startObject.your_tax }}</strong></div>
+                                    <div><strong>{{ startObject.your_tax | integerFilter }}</strong></div>
                                 </div>
                             </div>
-                            <div v-if="startObject.rebate != null" class="list-group-item list-group-item-primary">
+                            <div class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div><strong>Your rebate:</strong></div>
-                                    <div><strong>{{ startObject.rebate }}</strong></div>
+                                    <div><strong>Total tokens:</strong></div>
+                                    <div><strong>{{ startObject.defend_token_total | integerFilter }}</strong></div>
                                 </div>
                             </div>
                             <div v-if="startObject.defend_token_cost != null" class="list-group-item list-group-item-primary">
@@ -49,12 +49,6 @@ let startModalComponent = {
                                     <div>{{ startObject.defend_token_cost }}</div>
                                 </div>
                             </div>              
-                            <div class="list-group-item list-group-item-primary">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <div>Total tokens:</div>
-                                    <div>{{ startObject.defend_token_total }}</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -29,28 +29,30 @@ let resultsModalComponent = {
                 <div class="list-group" style="width: 350px; margin: auto;">
                      <div v-if="resultsObj.balance != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>After tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
-                            <div>{{resultsObj.balance}}</div>
+                            <div>Earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{resultsObj.before_tax | integerFilter}}</div>
                         </div>
                     </div>
                     <div v-if="resultsObj.before_tax != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Before tax earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
-                            <div>{{ resultsObj.before_tax }}</div>
+                            <div>Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{ resultsObj.your_tax | integerFilter }}</div>
                         </div>
                     </div>
-                    <div v-if="resultsObj.defend_token_cost != null" class="list-group-item">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
-                            <div>{{ resultsObj.your_tax }}</div>
-                        </div>
-                    </div>      
                     <div v-if="resultsObj.rebate != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Your rebate <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>Rebate <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
                             <div>{{ resultsObj.rebate }}</div>
                         </div>
-                    </div>        
+                    </div>    
+                    
+                    <div v-if="resultsObj.defend_token_cost != null" class="list-group-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Net Earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>{{ resultsObj.balance | integerFilter }}</div>
+                        </div>
+                    </div>      
+    
                 </div>
                 <br>
                 
@@ -58,22 +60,29 @@ let resultsModalComponent = {
                 <div class="list-group" style="width: 350px; margin: auto;">
                      <div v-if="resultsObj.your_tokens != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
-                            <div><strong>Your tokens:</strong></div>
-                            <div><strong>{{resultsObj.your_tokens}}</strong></div>
+                            <div>Your tokens:</div>
+                            <div>{{resultsObj.your_tokens}}</div>
                         </div>
                     </div>
                     <div v-if="resultsObj.your_tax != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
                             <div><strong>Your cost:</strong></div>
-                            <div><strong>{{ resultsObj.your_tax }}</strong></div>
+                            <div><strong>{{ resultsObj.your_tax | integerFilter }}</strong></div>
+                        </div>
+                    </div>
+                    <div class="list-group-item list-group-item-primary">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div><strong>Total tokens:</strong></div>
+                            <div><strong>{{ resultsObj.defend_token_total }}</strong></div>
                         </div>
                     </div>
                     <div v-if="resultsObj.defend_token_cost != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
                             <div>Total cost:</div>
-                            <div>{{ resultsObj.defend_token_cost }}</div>
+                            <div>{{ resultsObj.defend_token_cost | integerFilter  }}</div>
                         </div>
                     </div>    
+                    
                     <div v-if="resultsObj.fine_total != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
                             <div>Total civilian reprimands:</div>
@@ -86,12 +95,6 @@ let resultsModalComponent = {
                             <div>{{ resultsObj.bonus_total }}</div>
                         </div>
                     </div>              
-                    <div class="list-group-item list-group-item-primary">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>Total tokens:</div>
-                            <div>{{ resultsObj.defend_token_total }}</div>
-                        </div>
-                    </div>
                 </div>
             </div>
             </div>

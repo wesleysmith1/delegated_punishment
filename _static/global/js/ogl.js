@@ -23,6 +23,7 @@ let oglComponent = {
             formInputNum: null,
             increasedTotals: {},
             decreasedTotals: {},
+            inputPlaceholder: 0,
         }
     },
     created: function() {
@@ -51,10 +52,15 @@ let oglComponent = {
             this.numberTokens -= 1
             this.inputChange()
         },
+        validateOmega: function() {
+            return (this.formInputNum < this.omega && this.formInputNum > (-1* this.omega))
+        },
         handleFormSubmission: function() {
-            if(Number.isInteger(this.formInputNum)) {
+            if (Number.isInteger(this.formInputNum) && this.validateOmega()) {
                 this.numberTokens = this.formInputNum
+                this.inputPlaceholder = this.formInputNum
                 this.formInputNum = null;
+
                 this.inputChange()
             } else {
                 this.formInputNum = null
@@ -202,7 +208,7 @@ let oglComponent = {
                 <form class="form-inline" @submit.prevent="handleFormSubmission()">
                   <button type="submit" class="btn btn-primary" :disabled="!formInputNum">Update tokens</button>
                   <div class="form-group" style="max-width: 250px;">
-                    <input type="number" step="1" class="form-control" @keypress="isNumber($event)" :placeholder="provisionalTotals[playerId]" style="max-width: 250px;" v-model.number="formInputNum">
+                    <input type="number" step="1" class="form-control" v-on:keyup.enter="handleFormSubmission()" @keypress="isNumber($event)" :placeholder="inputPlaceholder" style="max-width: 250px;" v-model.number="formInputNum">
                   </div>
                 </form>
             </div>
@@ -226,13 +232,13 @@ let oglComponent = {
                         <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your cost:</div>
-                                <div>{{ decreased[playerId] }}</div>
+                                <div>{{ decreased[playerId] | integerFilter }}</div>
                             </div>
                         </div>
                         <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
-                                <div>{{ decimalSum(decreased) }}</div>
+                                <div>{{ decimalSum(decreased) | integerFilter }}</div>
                             </div>
                         </div>              
                         <div class="list-group-item list-group-item-secondary">
@@ -258,13 +264,13 @@ let oglComponent = {
                         <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div><b>Your cost:</b></div>
-                                <div><b>{{ provisional[playerId]}}</b></div>
+                                <div><b>{{ provisional[playerId] | integerFilter }}</b></div>
                             </div>
                         </div>
                         <div class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
-                                <div>{{ decimalSum(provisional) }}</div>
+                                <div>{{ decimalSum(provisional) | integerFilter }}</div>
                             </div>
                         </div>              
                         <div class="list-group-item list-group-item-primary">
@@ -289,13 +295,13 @@ let oglComponent = {
                         <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Your cost:</div>
-                                <div>{{ increased[playerId] }}</div>
+                                <div>{{ increased[playerId] | integerFilter }}</div>
                             </div>
                         </div>
                         <div class="list-group-item list-group-item-secondary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total cost:</div>
-                                <div>{{ decimalSum(increased) }}</div>
+                                <div>{{ decimalSum(increased) | integerFilter  }}</div>
                             </div>
                         </div>              
                         <div class="list-group-item list-group-item-secondary">

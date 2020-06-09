@@ -57,6 +57,11 @@ let surveyComponent = {
         updateResults: function(i) {
             this.resultsObj[i] = this.inputValues[i];
             this.clearInputAt(i);
+            let nextI = i+1
+            if (nextI > this.tokenChoices) {
+                this.$refs['surveyinput'+i][0].blur()
+            }
+            this.$refs['surveyinput'+nextI][0].focus()
         },
         incrementInput: function(i) {
             this.clearInputAt(i);
@@ -107,11 +112,11 @@ let surveyComponent = {
                         <button v-show="showSubmit(i)" type="button" class="btn btn-warning" style="position: relative; left: 250px;" @click="updateResults(i)">Update</button>
                         <div class="input-group">
                           <div class="input-group-prepend">
-                            <button type="button" class="btn btn-secondary" @click="decrementInput(i)">-</button>
+                            <button type="button" class="btn btn-primary" @click="decrementInput(i)">-</button>
                           </div>
                           <input v-on:keyup.enter="onEnter(i)"  :placeholder="resultsObj[i]" :ref="'surveyinput' + i" v-model.number="inputValues[i]" @keypress="isNumber($event)" type="number" class="form-control" style="width: 100px; text-align: center;">
                           <div class="input-group-append">
-                            <button type="button" class="btn btn-secondary" @click="incrementInput(i)">+</button>
+                            <button type="button" class="btn btn-primary" @click="incrementInput(i)">+</button>
                           </div>
                             <!--<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px; position: relative; top: 5px; left: 10px;">-->
                         </div>

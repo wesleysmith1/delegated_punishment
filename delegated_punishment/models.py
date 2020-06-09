@@ -94,9 +94,15 @@ class Constants(BaseConstants):
 
     dt_mechanism_seconds = 30  # seconds
 
-    # Uncomment a block below for Mechanism Configuration
+    """
+    # debug
+    dt_mechanism_seconds = 120  # seconds
+    results_modal_seconds = 30  # 30
+    start_modal_seconds = 10
+    """
 
-    # """
+    # Uncomment a block below for Mechanism Configuration
+    """
     # Survey
     dt_method = 0
     small_n = 4
@@ -105,9 +111,9 @@ class Constants(BaseConstants):
     dt_rebate = 0
     dt_e0 = None
     dt_q = 8
-    # """
-
     """
+
+    # """
     #OGL
     dt_method = 1
     small_n = 8
@@ -116,7 +122,7 @@ class Constants(BaseConstants):
     dt_rebate = 0
     dt_e0 = 0
     dt_q = 8
-    """
+    # """
 
     """
     #MGL - Statistical 
