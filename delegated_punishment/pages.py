@@ -42,12 +42,18 @@ class Game(Page):
         vars_dict['tutorial_duration_seconds'] = Constants.tutorial_duration_seconds
         vars_dict['officer_reprimand_amount'] = Constants.officer_reprimand_amount
         vars_dict['officer_review_probability'] = Constants.officer_review_probability
-        vars_dict['steal_timeout_duration'] = Constants.steal_timeout_duration
+        vars_dict['steal_timeout_milli'] = Constants.steal_timeout_milli
         vars_dict['game_duration_seconds'] = Constants.game_duration_seconds
         vars_dict['players_per_group'] = Constants.players_per_group
         vars_dict['steal_token_positions'] = Constants.steal_token_positions
 
         vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
+
+        # if the input is zero there is no delay after advance slowest is selected.
+        if self.round_number == 1:
+            vars_dict['advance_delay_milli'] = Constants.results_modal_seconds * 1000
+        else:
+            vars_dict['advance_delay_milli'] = 0
 
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
@@ -56,12 +62,7 @@ class Game(Page):
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
-        if Constants.num_rounds > 1 and self.round_number == 1:
-            timeout = True
-        else:
-            timeout = False
-
-        vars_dict['timeout'] = timeout
+        vars_dict['timeout'] = Constants.num_rounds > 1 and self.round_number == 1
         return vars_dict
 
 
@@ -81,30 +82,6 @@ class ResultsWaitPage(WaitPage):
             if self.round_number > 2 or Constants.num_rounds == 1:
                 for player in self.group.get_players():
                     player.participant.vars['balances'].append(math.floor(player.balance))
-
-
-class ResultsPage(Page):
-    timeout_seconds = 30
-    timer_text = 'Time remaining on results page'
-
-    def vars_for_template(self):
-        vars_dict = dict()
-        vars_dict['period'] = self.player.subsession.round_number
-        vars_dict['steal_total'] = self.player.steal_total
-        vars_dict['victim_total'] = self.player.victim_total
-        vars_dict['balance'] = math.floor(self.player.balance)
-        return vars_dict
-
-    def is_displayed(self):
-        if skip_period(self.session, self.round_number):
-            return False
-
-        if Constants.num_rounds == 1:
-            return True
-        elif self.round_number > 1:
-            return True
-        else:
-            return False
 
 
 class Intermission(Page):
@@ -139,9 +116,9 @@ class Intermission(Page):
 class AfterTrialAdvancePage(Page):
     def is_displayed(self):
         if skip_period(self.session, self.round_number) or self.round_number == 2:
-            return False
+            return True
 
-        return True
+        return False
 
 
 page_sequence = [Wait, Intermission, Game, ResultsWaitPage, AfterTrialAdvancePage]

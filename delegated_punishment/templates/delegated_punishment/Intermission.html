@@ -12,23 +12,19 @@
             display: none;
         }
     </style>
-    <p style="font-size: 30px;">
-        {{ info }}
-        <br>
-        <br>
+
+    <div style="font-size: 20px;">
+        <p>{{ info }}</p>
 
         {% if player.id_in_group > 1 %}
-            You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.
-            <br>
-            <br>
+            <p>You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.</p>
         {% endif %}
 
-        The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared <br>and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined)
-        <br>
-        <br>
+        <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared <br>and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined)</p>
 
-        These periods will be used to calculate your payoffs at the end of the game.
-    </p>
+        <p>These periods will be used to calculate your payoffs at the end of the game.</p>
+    </div>
+
     <p>{% next_button %}</p>
 
 {% endblock %}

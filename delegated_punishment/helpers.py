@@ -88,3 +88,4 @@ def average_harvest():
         total_time += t
 
     print(f'AVERAGE HARVEST TIME {total_time/total}')
+

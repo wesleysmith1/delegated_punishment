@@ -11,5 +11,5 @@ __pycache__/
 *.py[cod]
 .DS_Store
 data/*
-logs/debug/*
+logs/*
 .env

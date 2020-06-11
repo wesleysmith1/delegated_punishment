@@ -14,6 +14,7 @@
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
     <script src="{% static 'global/js/results-modal.js' %}"></script>
+    <script src="{% static 'global/js/grain-img.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}">
@@ -49,7 +50,7 @@
         var reprimandAmount = {{ officer_reprimand_amount }};
         var playerBalance = {{ player.balance }};
         var reviewProbability = {{ officer_review_probability }};
-        var stealTimeoutTime = {{ steal_timeout_duration }};
+        var stealTimeoutMilli = {{ steal_timeout_milli }};
         var gameDurationSeconds = {{ game_duration_seconds}};
 
         var resultsModalSeconds = {{ results_modal_seconds }}
@@ -107,7 +108,7 @@
                     :active-steal="activeSteal"
                     :active-steal-maps="activeStealMaps"
                     :fine-notification="fineNotification"
-                    :steal-timeout-time="stealTimeoutTime"
+                    :steal-timeout-milli="stealTimeoutMilli"
                     :steal-token-positions="stealTokenPositions"
                     @location-drag="locationDrag"
                     @location-update="locationUpdate"
@@ -119,7 +120,7 @@
         </div>
         <div class="panel game-status-container">
             <div class="balance-container">
-                <div class="balance-label">Balance (<img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;">)</div>
+                <div class="balance-label">Balance (<grain-image-component :size=20></grain-image-component>)</div>
                 <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
 
                 <div class="notification-label">
@@ -143,8 +144,10 @@
                     </div>
                 </div>
                 <br>
+                <br>
             </div>
             <div class="notifications-container">
+                <br>
                 <br>
                 <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
                 <br>
@@ -170,10 +173,20 @@
         data-redirect-url="{{ view.redirect_url|safe }}"
         data-is-browser-bot="False"
         data-is-debug="True"
+        data-advance-delay="{{ advance_delay_milli }}"
     ></script>
 
     {% verbatim %}
     <script>
+
+        // register vue filter
+        function integerFilter(x) {
+            if (!x) return 0
+
+            else return x.toFixed(0)
+        }
+
+        Vue.filter('integerFilter', integerFilter)
 
         let app = new Vue({
             el: '#app',
@@ -183,6 +196,7 @@
                 'officer-game-component': officerGameComponent,
                 'probability-bar-component': probabilityBarComponent,
                 'results-modal-component': resultsModalComponent,
+                'grain-image-component': grainImageComponent,
             },
             data: {
                 gameStarted: true,
@@ -229,7 +243,7 @@
                 falseArrestCount: 0,
                 reprimandAmount: reprimandAmount,
                 reviewProbability: reviewProbability,
-                stealTimeoutTime: stealTimeoutTime,
+                stealTimeoutMilli: stealTimeoutMilli,
                 stealTokenPositions: stealTokenPositions,
                 resultsModalDuration: resultsModalSeconds * 1000,
             },
@@ -342,11 +356,7 @@
                         } else if (data.investigation_update || data.investigation_update === 0) {
                             this.investigationCount = data.investigation_update
                         } else if (data.round_over) {
-                            // get results from api
-                            this.getPeriodResults()
-                            // open modal
-                            this.openResultsModal()
-
+                            this.endRound()
                         } else if (data.round_results) {
                             this.balance = data.round_results.balance
                         }
@@ -361,6 +371,12 @@
 
             },
             methods: {
+                endRound: function() {
+                    // get results from api
+                    this.getPeriodResults()
+                    // open modal
+                    this.openResultsModal()
+                },
                 getPeriodResults: function() {
                     // players individually pull results
                     let x = {
@@ -634,6 +650,11 @@
                 }
             },
         });
+
+        function activateResults() {
+            app.endRound()
+        }
+
     </script>
     {% endverbatim %}
 </html>

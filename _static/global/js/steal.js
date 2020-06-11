@@ -16,7 +16,7 @@ let stealGameComponent = {
         activeSteal: Number,
         activeStealMaps: Object,
         fineNotification: String,
-        stealTimeoutTime: Number,
+        stealTimeoutMilli: Number,
         stealTokenPositions: Number,
     },
     data: function () {
@@ -53,7 +53,7 @@ let stealGameComponent = {
             this.timeout = setTimeout(() => {
                 let num = this.randomLocation();
                 this.$emit('location-token-timeout', num);
-            }, this.stealTimeoutTime)
+            }, this.stealTimeoutMilli)
         },
         setStealLocation: function() {
             if (this.stealLocation === 1) {

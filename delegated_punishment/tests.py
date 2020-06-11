@@ -19,5 +19,3 @@ class PlayerBot(Bot):
         yield (pages.Intermission)
 
         yield Submission(pages.Game, dict(), timeout_happened=True)
-
-        yield (pages.ResultsPage)
