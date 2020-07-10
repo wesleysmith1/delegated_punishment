@@ -88,6 +88,11 @@ class Constants(BaseConstants):
     officer_start_balance = 1000
     civilian_start_balance = 0
 
+    # number of slots the steal tokens can be reset to
+    steal_token_positions = 20
+    # max tokens to display to officer when round starts.
+    defend_token_display_max = 15
+
     dt_range = 10
     dt_payment_max = 10
     big_n = 8
@@ -254,6 +259,24 @@ class Group(BaseGroup):
             me.officer_bonus_total += bonus
             me.civilian_fine_total += fine
             me.save()
+
+    def calculate_gl(self):
+        # calculate costs
+        survey_responses = SurveyResponse.objects.filter(group_id=self.id, participant=True)
+
+        print(f"SURVEY RESPONSES {survey_responses.values_list('total', flat=True)}")
+
+        costs, totals = SurveyResponse.calculate_ogl(survey_responses)
+
+        # SurveyResponse.objects.filter(player_id=player_id).update(total=updated_input, mechanism_cost=responses[player_id])
+        for p_id in costs:
+            p_cost = Decimal(costs[p_id])
+            log.info(f"value for player {p_id} is {p_cost}")
+            try:
+                response = SurveyResponse.objects.filter(player_id=p_id)
+                response.update(mechanism_cost=p_cost)
+            except Exception:
+                log.info(f"PLAYER {p_id} SPENT {p_cost} BUT WE COULD NOT UPDATE THE OBJECT")
 
     def check_game_status(self, time):
         if self.group_ready():

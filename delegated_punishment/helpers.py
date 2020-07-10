@@ -3,6 +3,7 @@ import os
 import math
 from decimal import *
 from random import randrange
+import json
 getcontext().prec = 17
 
 
@@ -100,3 +101,10 @@ def format_template_numbers(x):
 
 def safe_list_sum(arr):
     return sum([x for x in arr if x is not None])
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)

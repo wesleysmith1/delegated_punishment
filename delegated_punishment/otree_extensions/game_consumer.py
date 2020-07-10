@@ -711,14 +711,14 @@ class GameConsumer(WebsocketConsumer):
                     guilty_prob = Constants.beta
                 else:
                     # innocent_prob = 1 / 4 - num_investigators / 20
-                    innocent_prob = (6 - num_investigators) * (9/240)
+                    innocent_prob = (6 - num_investigators) * (9/240) # todo: make this dynamic. not hardcoded like this
                     # innocent_prob = probability_innocent(4, num_investigators)
 
                     # guilty_prob = 1 / 4 + num_investigators / 10
                     guilty_prob = (2+num_investigators) * (9/80)
                     # guilty_prob = probability_guilty(4, num_investigators)
 
-                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
+                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]  # todo: make this dynamic
 
                 # subtract 1 for 0 based index
                 multi[culprit - 1] = guilty_prob

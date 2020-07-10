@@ -5,7 +5,7 @@ from .models import Constants, DefendToken, Player
 from random import random
 from .models import Constants, DefendToken, Player, SurveyResponse
 import random
-from delegated_punishment.helpers import skip_round, write_session_dir, format_template_numbers, safe_list_sum
+from delegated_punishment.helpers import skip_round, write_session_dir, safe_list_sum, DecimalEncoder
 from delegated_punishment.models import Group
 from delegated_punishment.mechanism import MechCSVBuilder
 
@@ -32,35 +32,6 @@ class SurveyInit(WaitPage):
 
         for p in selected_players:
             SurveyResponse.objects.create(group=self.group, player=p, response=dict(), participant=True)
-
-
-class Intermission(Page):
-    timeout_seconds = 80
-    timer_text = 'Please wait for round to start'
-
-    def is_displayed(self):
-        if skip_round(self.session, self.round_number):
-            return False
-
-        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
-            return True
-        else:
-            return False
-
-    def vars_for_template(self):
-        vars_dict = dict(
-            steal_rate=Constants.civilian_steal_rate,
-            fine=Constants.civilian_fine_amount,
-            officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-            officer_reprimand=Constants.officer_reprimand_amount
-        )
-        if self.round_number == 2:
-            vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
-            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
-        else:
-            info = 'We are about to perform 4 periods sequentially.'
-        vars_dict['info'] = info
-        return vars_dict
 
 
 class DefendTokenSurvey(Page):
@@ -169,7 +140,7 @@ class DefendTokenWaitPage(WaitPage):
 
             log.info("defend tokens saved to group")
         elif Constants.dt_method == 1:
-            # individual results calculated in consumer
+            self.group.calculate_gl()
 
             values = survey_responses.values_list('total', flat=True)
             token_total = sum(values)
@@ -190,6 +161,8 @@ class DefendTokenWaitPage(WaitPage):
 
         elif Constants.dt_method == 2:
 
+            self.group.calculate_gl()
+
             token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
 
             if token_total < 0:
@@ -205,6 +178,8 @@ class DefendTokenWaitPage(WaitPage):
             self.group.calculate_other_tax(survey_responses)
 
         elif Constants.dt_method == 3:
+
+            self.group.calculate_gl()
 
             token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
 
@@ -234,15 +209,6 @@ class DefendTokenWaitPage(WaitPage):
 
 class Wait(WaitPage):
     pass
-
-class DecimalEncoder(json.JSONEncoder):
-    def _iterencode(self, o, markers=None):
-        if isinstance(o, Decimal):
-            # wanted a simple yield str(o) in the next line,
-            # but that would mean a yield on the line with super(...),
-            # which wouldn't work (see my comment below), so...
-            return (str(o) for o in [o])
-        return super(DecimalEncoder, self)._iterencode(o, markers)
 
 class Game(Page):
     # the template can be changed to GameTest.html to. Each tab sends up test data at intervals to the backend
@@ -306,6 +272,8 @@ class Game(Page):
         vars_dict['game_duration_seconds'] = Constants.game_duration_seconds
         vars_dict['players_per_group'] = Constants.players_per_group
         vars_dict['steal_token_slots'] = Constants.steal_token_slots
+        vars_dict['steal_token_positions'] = Constants.steal_token_positions
+        vars_dict['defend_token_display_max'] = Constants.defend_token_display_max
 
         vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
         vars_dict['start_modal_seconds'] = Constants.start_modal_seconds
@@ -364,7 +332,7 @@ class Intermission(Page):
         if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
             return True
         else:
-            return True
+            return False
 
     def vars_for_template(self):
         vars_dict = dict(

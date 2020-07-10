@@ -1,4 +1,7 @@
 let resultsModalComponent = {
+    components: {
+        'grain-image-component': grainImageComponent,
+    },
     props: {
         resultsObj: Object,
         roundNumber: Number,
@@ -23,32 +26,32 @@ let resultsModalComponent = {
                 <p>You obtained <strong>{{ balance | integerFilter}}</strong> grain</p>
             <!-- Modal content -->
             <div v-if="resultsObj" class="modal-content results-modal">
-                <h4 style="text-align: center;">Round {{ roundNumber }} results</h4>
+                <h4 style="text-align: center;">Round results</h4>
                 
                 <p style="text-align: center;">Earnings summary</p>
                 <div class="list-group" style="width: 350px; margin: auto;">
                      <div v-if="resultsObj.balance != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>Earnings <grain-image-component :size=20></grain-image-component></div>
                             <div>{{resultsObj.before_tax | integerFilter}}</div>
                         </div>
                     </div>
                     <div v-if="resultsObj.before_tax != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Taxes <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>Taxes <grain-image-component :size=20></grain-image-component></div>
                             <div>{{ resultsObj.your_tax | integerFilter }}</div>
                         </div>
                     </div>
                     <div v-if="resultsObj.rebate != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Rebate <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>Rebate <grain-image-component :size=20></grain-image-component></div>
                             <div>{{ resultsObj.rebate }}</div>
                         </div>
                     </div>    
                     
                     <div v-if="resultsObj.defend_token_cost != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Net Earnings <img src="https://i.imgur.com/BQXgE3F.png" alt="grain" style="height: 20px;"></div>
+                            <div>Net Earnings <grain-image-component :size=20></grain-image-component></div>
                             <div>{{ resultsObj.balance | integerFilter }}</div>
                         </div>
                     </div>      
@@ -56,7 +59,7 @@ let resultsModalComponent = {
                 </div>
                 <br>
                 
-                <p style="text-align: center;">Token summary</p>
+                <p style="text-align: center; margin-top: 15px;">Token summary</p>
                 <div class="list-group" style="width: 350px; margin: auto;">
                      <div v-if="resultsObj.your_tokens != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
@@ -66,7 +69,7 @@ let resultsModalComponent = {
                     </div>
                     <div v-if="resultsObj.your_tax != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
-                            <div><strong>Your cost:</strong></div>
+                            <div><strong>Your cost <grain-image-component :size=20></grain-image-component>:</strong></div>
                             <div><strong>{{ resultsObj.your_tax | integerFilter }}</strong></div>
                         </div>
                     </div>
@@ -78,7 +81,7 @@ let resultsModalComponent = {
                     </div>
                     <div v-if="resultsObj.defend_token_cost != null" class="list-group-item list-group-item-primary">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Total cost:</div>
+                            <div>Total cost <grain-image-component :size=20></grain-image-component>:</div>
                             <div>{{ resultsObj.defend_token_cost | integerFilter  }}</div>
                         </div>
                     </div>    

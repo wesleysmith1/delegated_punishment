@@ -46,10 +46,12 @@ let oglComponent = {
         },
         incrementTotal: function() {
             this.numberTokens += 1
+            this.inputPlaceholder = this.numberTokens
             this.inputChange()
         },
         decrementTotal: function() {
             this.numberTokens -= 1
+            this.inputPlaceholder = this.numberTokens
             this.inputChange()
         },
         validateOmega: function() {
@@ -57,14 +59,17 @@ let oglComponent = {
         },
         handleFormSubmission: function() {
             if (Number.isInteger(this.formInputNum) && this.validateOmega()) {
-                this.numberTokens = this.formInputNum
-                this.inputPlaceholder = this.formInputNum
-                this.formInputNum = null;
+                this.updatePlaceholder()
 
                 this.inputChange()
             } else {
                 this.formInputNum = null
             }
+        },
+        updatePlaceholder: function() {
+            this.numberTokens = this.formInputNum
+            this.inputPlaceholder = this.formInputNum
+            this.formInputNum = null;
         },
         cancelTimeout: function() {
             if (this.timeout)

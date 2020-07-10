@@ -1,4 +1,7 @@
 let startModalComponent = {
+    components: {
+        'grain-image-component': grainImageComponent,
+    },
     props: {
         startObject: Object,
     },
@@ -33,7 +36,7 @@ let startModalComponent = {
                             </div>
                             <div v-if="startObject.your_tax != null" class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div><strong>Your cost:</strong></div>
+                                    <div><strong>Your cost <grain-image-component :size=20></grain-image-component>:</strong></div>
                                     <div><strong>{{ startObject.your_tax | integerFilter }}</strong></div>
                                 </div>
                             </div>
@@ -45,7 +48,7 @@ let startModalComponent = {
                             </div>
                             <div v-if="startObject.defend_token_cost != null" class="list-group-item list-group-item-primary">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Total cost:</div>
+                                    <div>Total cost <grain-image-component :size=20></grain-image-component>:</div>
                                     <div>{{ startObject.defend_token_cost }}</div>
                                 </div>
                             </div>              

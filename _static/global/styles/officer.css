@@ -18,13 +18,13 @@
     opacity: .5;
 }
 .officer-units {
-    display: flex;
-    justify-content: space-between;
     border: 1px solid black;
     padding: 5px;
+    justify-content: space-between;
 }
 .officer-unit {
-    opacity: .25;
+    opacity:  .25;
+    color: white;
     background: #001485;
 }
 #officer-investigation-container {
@@ -50,5 +50,11 @@
     z-index: 900;
 }
 
-.officer-units .defend-location {
+.officer-units .defend-slot {
+}
+
+.overflowcontainer .overflow-slot {}
+
+#overflow-container {
+    display: flex;
 }

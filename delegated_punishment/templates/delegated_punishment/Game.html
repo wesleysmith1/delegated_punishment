@@ -13,8 +13,8 @@
     <script src="{% static 'global/js/officer.js' %}"></script>
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
-    <script src="{% static 'global/js/results-modal.js' %}"></script>
     <script src="{% static 'global/js/grain-img.js' %}"></script>
+    <script src="{% static 'global/js/results-modal.js' %}"></script>
     <script src="{% static 'global/js/start-modal.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
@@ -42,7 +42,12 @@
         var aMax = {{ a_max }};
         var beta = {{ beta }};
         var playersPerGroup = {{ players_per_group }};
+<<<<<<< HEAD
         var stealTokenSlots = {{ steal_token_slots }};
+=======
+        var stealTokenPositions = {{ steal_token_positions }};
+        var defendTokenDisplayMax = {{ defend_token_display_max }};
+>>>>>>> e1b21be... added overflow functionality, calculation file to test mechanism output.
 
         var civilianFine = {{ civilian_fine }};
         var mapSize = {{ civilian_map_size }};
@@ -83,6 +88,7 @@
             :officer-income="income"
             :investigation-count="investigationCount"
             :defend-token-total="defendTokenTotal"
+            :defend-token-display-max="defendTokenDisplayMax"
             :police-log-messages="policeLogMessages"
             :map-size="mapSize"
             :defend-token-size="defendTokenSize"
@@ -198,9 +204,12 @@
 
         // register vue filter
         function integerFilter(x) {
-            if (!x) return 0
-
-            else return x.toFixed(0)
+            x = parseFloat(x)
+            if (!x) {
+                return 0
+            } else {
+                return x.toFixed(0)
+            }
         }
 
         Vue.filter('integerFilter', integerFilter)
@@ -265,6 +274,7 @@
                 stealTimeoutMilli: stealTimeoutMilli,
                 stealTokenSlots: stealTokenSlots,
                 stealTokenPositions: stealTokenPositions,
+                defendTokenDisplayMax: defendTokenDisplayMax,
 
                 resultsModalDuration: resultsModalSeconds * 1000,
 
@@ -367,7 +377,7 @@
                                 this.openResultsModal(); // todo: this needs to be fixed brap brap
                             }, this.gameDuration + 3000); // todo: remove this milisecond offset that is in place so that players have a final balance triggered by the officer end game event
 
-                        }, this.startModalDuration);
+                        }, this.startModalDuration); //todo: this is where we want to wait until officer page is loaded and start modal closes
 
                     };
 
@@ -417,6 +427,9 @@
                     this.gameSocket.onclose = (e) => {
                         console.error('CHANNEL CLOSED UNEXPECTEDLY');
                     };
+                this.gameSocket.onclose = (e) => {
+                    console.error('GAME CHANNEL CLOSED UNEXPECTEDLY');
+                };
 
                     if (this.isOfficer)
                          this.subscribeToBalance()
