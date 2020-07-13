@@ -41,7 +41,7 @@
         var aMax = {{ a_max }};
         var beta = {{ beta }};
         var playersPerGroup = {{ players_per_group }};
-        var stealTokenPositions = {{ steal_token_positions }};
+        var stealTokenSlots = {{ steal_token_slots }};
 
         var civilianFine = {{ civilian_fine }};
         var mapSize = {{ civilian_map_size }};
@@ -109,7 +109,7 @@
                     :active-steal-maps="activeStealMaps"
                     :fine-notification="fineNotification"
                     :steal-timeout-milli="stealTimeoutMilli"
-                    :steal-token-positions="stealTokenPositions"
+                    :steal-token-slots="stealTokenSlots"
                     @location-drag="locationDrag"
                     @location-update="locationUpdate"
                     @location-token-reset="locationTokenReset"
@@ -244,7 +244,7 @@
                 reprimandAmount: reprimandAmount,
                 reviewProbability: reviewProbability,
                 stealTimeoutMilli: stealTimeoutMilli,
-                stealTokenPositions: stealTokenPositions,
+                stealTokenSlots: stealTokenSlots,
                 resultsModalDuration: resultsModalSeconds * 1000,
             },
             created: function () {
@@ -255,7 +255,6 @@
 
 
                 this.isOfficer = this.groupPlayerId == 1;
-                // this.harvestScreen = harvestScreen;
                 this.stealLocation = parseInt(stealStart);
 
                 this.gameDuration = gameDurationSeconds * 1000;
@@ -283,15 +282,6 @@
                         t.map = 0; // todo: make this loaded from the database
                     });
                 }
-                //    console.log(this.officerTokens);
-                    // todo
-                    // this.defendTokenSlots = new Array.fill(9).fill(0)
-                    // this.officerTokens.forEach(function(ot) {
-                    //     if (ot.slot) {
-                    //         this.defendTokenSlots[ot.number-1]
-                    //     }
-                    // })
-                //}
 
                 // player maps
                 this.maps = [];
@@ -322,7 +312,6 @@
                 //};
 
 
-                // todo look into routing questions
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
                         this.startTimer()

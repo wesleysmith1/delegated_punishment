@@ -45,7 +45,7 @@ class Game(Page):
         vars_dict['steal_timeout_milli'] = Constants.steal_timeout_milli
         vars_dict['game_duration_seconds'] = Constants.game_duration_seconds
         vars_dict['players_per_group'] = Constants.players_per_group
-        vars_dict['steal_token_positions'] = Constants.steal_token_positions
+        vars_dict['steal_token_slots'] = Constants.steal_token_slots
 
         vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
 

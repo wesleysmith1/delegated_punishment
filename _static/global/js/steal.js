@@ -17,7 +17,7 @@ let stealGameComponent = {
         activeStealMaps: Object,
         fineNotification: String,
         stealTimeoutMilli: Number,
-        stealTokenPositions: Number,
+        stealTokenSlots: Number,
     },
     data: function () {
         return {
@@ -112,7 +112,7 @@ let stealGameComponent = {
             }
         },
         randomLocation: function () {
-            return Math.floor(Math.random() * this.stealTokenPositions) + 1
+            return Math.floor(Math.random() * this.stealTokenSlots) + 1
         }
     },
     watch: {

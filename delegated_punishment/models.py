@@ -23,44 +23,61 @@ class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
     num_rounds = 10
-    # num_rounds = 1  # testing purposes
 
-    # officer_intersection_payout = 10  # b: how much officer makes for intersection
+    """Number of defend tokens officer starts with"""
     defend_token_total = 8
 
-    epoch = datetime.datetime.utcfromtimestamp(0)
-
-    civilian_start_balance = 0
-
-    # these variables will be subject to change the most
+    """Fine when convicted"""
     civilian_fine_amount = 120
-    civilian_steal_rate = 13  # S: amount of grain stolen per second (CONSTANT ACROSS GROUPS AND PERIODS)
+    """number of grain earned per second of stealing"""
+    civilian_steal_rate = 13
 
-    officer_review_probability = .33  # THETA: chance that an intersection result will be reviewed
-    officer_reprimand_amount = 600  # P punishment for officer if innocent civilian is punished
+    """Chance that an intersection outcome will be reviewed"""
+    officer_review_probability = .33
+    """P punishment for officer if innocent civilian is punished"""
+    officer_reprimand_amount = 600
 
+    """Civilian incomes for each group's players"""
     civilian_incomes_low = [38, 39, 40, 41, 43]
     civilian_incomes_high = [57, 41, 38, 34, 31]
+
+    """Officer incomes. One for each group"""
     # officer_incomes = [0, 10, 20]
     officer_incomes = [180, 180, 180]
     # officer_incomes = [0, 180, 600]
 
-    # also change in officer.css
-    defend_token_size = 68  # this is the size of the tokens that players with role of officer drag around
+    """ 
+    this is the size of the tokens is defined. 
+    When changing values also update officer.css file 
+    """
+    defend_token_size = 68
     civilian_map_size = 200
 
-    beta = .9
+    """Probability innocent and guilty are calculated when the number of investigation tokens is >= this number"""
     a_max = 6
+    """Guilty probability when """
+    beta = .9
 
+    """
+    Tutorial, game and results modal durations are defined here and passed to frontend
+    """
     tutorial_duration_seconds = 1800
     game_duration_seconds = 198
     results_modal_seconds = 30
 
-    officer_start_balance = 1000
-
+    """
+    this defines how long a steal token remains on a map before resetting to the 'steal home'
+    """
     steal_timeout_milli = 1000
 
-    steal_token_positions = 20
+    """
+    Steal tokens positions defines the number of slots inside the 'steal home' rectangle. Steal tokens can be loaded or 
+    reset to any of the slots 
+    """
+    steal_token_slots = 20
+
+    officer_start_balance = 1000
+    civilian_start_balance = 0
 
 
 class Subsession(BaseSubsession):
@@ -253,7 +270,7 @@ class Group(BaseGroup):
 
 
 def randomize_location():
-    return randrange(Constants.steal_token_positions)+1
+    return randrange(Constants.steal_token_slots)+1
 
 
 class Player(BasePlayer):
