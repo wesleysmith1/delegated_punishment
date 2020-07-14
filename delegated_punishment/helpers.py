@@ -28,8 +28,8 @@ def write_session_dir(session_identifier):
     return path
 
 
-def skip_period(session, round_number):
-    if session.config['skip_to_period'] > round_number:
+def skip_round(session, round_number):
+    if session.config['skip_to_round'] > round_number:
         return True
 
 

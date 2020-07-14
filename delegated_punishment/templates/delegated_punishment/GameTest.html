@@ -72,7 +72,7 @@
 
                 roundStart() {
                     if (this.idInGroup === 1)
-                        return {'period_update': {'period_start': true}};
+                        return {'round_update': {'round_start': true}};
                     else {
                         console.log('PERIOD START DID NOT WORK')
                         return null;
@@ -188,7 +188,7 @@
                 startTimer() {
                     setTimeout(() => {
                         if (this.player.idInGroup === 1) {
-                            this.send({'period_update': {'period_end': true}})
+                            this.send({'round_update': {'round_end': true}})
                         }
                         document.getElementById('form').submit()
                     }, gameDurationSeconds * 1000)

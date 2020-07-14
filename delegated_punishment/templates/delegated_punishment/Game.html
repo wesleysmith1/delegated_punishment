@@ -199,7 +199,7 @@
                 'grain-image-component': grainImageComponent,
             },
             data: {
-                gameStarted: true,
+                gameStarted: false,
                 player: {},
                 isOfficer: true,
                 playerId: playerId,
@@ -288,38 +288,38 @@
                 for (let i = 1; i < this.playersPerGroup; i++)
                     this.maps.push(i)
 
-                //this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
-                //this.gameSyncSocket.onopen = (e) => {
-                //    console.log('game sync connected')
-                //    data = {
-                //        'group_id': this.groupId,
-                //        'player_id': this.playerId,
-                //        'round_number': this.roundNumber,
-                //        'join': true,
-                //    };
-                //    this.gameSyncSocket.send(JSON.stringify(data))
-                //};
-                //
-                //this.gameSyncSocket.onmessage = (e) => {
-                //    let data = JSON.parse(e.data)
-                //    if (data.start_time) {
-                //        let t = data.start_time;
-                //        this.gameSyncSocket = data.start_time;
-                //        console.log('start_time', t)
-                //        this.gameStarted = true;
-                //        this.startTimer();
-                //    }
-                //};
+                this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
+                this.gameSyncSocket.onopen = (e) => {
+                   console.log('game sync connected')
+                   let data = {
+                       'group_id': this.groupId,
+                       'player_id': this.playerId,
+                       'round_number': this.roundNumber,
+                       'ready': true,
+                   };
+                   this.gameSyncSocket.send(JSON.stringify(data))
+                };
+
+                this.gameSyncSocket.onmessage = (e) => {
+                    let data = JSON.parse(e.data);
+                    console.log(data)
+                    // host (always p1) listens for signal that all players are ready
+                    if (data.players_ready) {
+                        this.signalPlayersReady()
+                    }
+                };
 
 
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
-                        this.startTimer()
+                        // this.startTimer()
+                        console.log('game socket opened')
                     };
 
                     this.gameSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
-                        if (data.balance) {
+                        console.log(data)
+                        if (data.balance) { // todo: make this its own channel brap
                             this.activeStealMaps = data.balance.active_maps;
                             let latestBalance = data.balance[this.groupPlayerId].balance;
                             let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count;
@@ -344,10 +344,14 @@
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
                             this.investigationCount = data.investigation_update
-                        } else if (data.round_over) {
+                        } else if (data.round_end) {
                             this.endRound()
                         } else if (data.round_results) {
                             this.balance = data.round_results.balance
+                        } else if (data.round_start) {
+                            console.log('Round Started')
+                            this.gameStarted = true;
+                            this.startTimer();
                         }
                     };
 
@@ -360,17 +364,25 @@
 
             },
             methods: {
+                isHost: function() {
+                    return this.groupPlayerId === 1;
+                },
+                signalPlayersReady: function() {
+                    if (this.isHost()) {
+                        this.gameUpdate({'round_update': {'players_ready': true}})
+                    }
+                },
                 endRound: function() {
-                    // get results from api
-                    this.getPeriodResults()
+                    // get results from backend
+                    this.getRoundResults()
                     // open modal
                     this.openResultsModal()
                 },
-                getPeriodResults: function() {
+                getRoundResults: function() {
                     // players individually pull results
                     let x = {
-                      'period_update': {
-                          'period_results': true
+                      'round_update': {
+                          'round_results': true
                       }
                     };
                     this.gameUpdate(x);
@@ -381,8 +393,7 @@
 
                     // settimeout to close modal
                     setTimeout(()=>{
-                            console.log('Closing Socket');
-                            this.gameSocket.close();
+                            this.closeGameSocket()
 
                             // submit game
                             document.getElementById('form').submit();
@@ -390,8 +401,9 @@
                         this.resultsModalDuration
                     )
                 },
-                gameReady: function() {
-                    console.log('game ready function')
+                closeGameSocket() {
+                    console.log('Closing game socket')
+                    this.gameSocket.close()
                 },
                 toggle: function() {
                     if (this.harvestScreen) { // toggle to steal
@@ -600,22 +612,22 @@
                     if (this.isOfficer) {
                         // set start time
                         this.gameUpdate({
-                            'period_update': {'period_start': true},
+                            'round_update': {'round_start': true},
                         });
                     }
 
                     setTimeout(() => {
-                        // officer records period end
-                        // todo: the period end event should originate from the api. schedule it when the game is started
+                        // officer records round end
+                        // todo: the round end event should originate from the api. schedule it when the game is started
                         if (this.isOfficer)
-                            this.periodEndEvent();
+                            this.roundEndEvent();
 
                     }, this.gameDuration);
 
                 },
-                periodEndEvent: function() {
+                roundEndEvent: function() {
                     this.gameUpdate({
-                        'period_update': { 'period_end': true },
+                        'round_update': { 'round_end': true },
                     });
                 }
             },
@@ -640,6 +652,7 @@
             },
         });
 
+        // this allows other scripts to call vue instance methods
         function activateResults() {
             app.endRound()
         }

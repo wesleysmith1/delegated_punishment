@@ -80,7 +80,7 @@ SESSION_CONFIGS = [
         showup_payment=7,
         participant_endowment=10,
         balance_update_rate=250,
-        skip_to_period=1,
+        skip_to_round=1,
     ),
     dict(
         name='survey',

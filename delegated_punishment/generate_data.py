@@ -38,7 +38,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
     # print("HERE IS THE ROUND NUMBER {}".format(round_number))
 
     # session_start is assigned to this
-    period_start = -1
+    round_start = -1
 
     defend_tokens = init_defend_tokens()
 
@@ -53,7 +53,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
     players = init_players(session_start, steal_starts, player_ids_in_session, tf)
 
-    print("THERE ARE {} EVENTS FOR THIS PERIOD".format(len(game_data)))
+    print("THERE ARE {} EVENTS FOR THIS ROUND".format(len(game_data)))
 
     for event in game_data:
         # get JSON data
@@ -404,9 +404,9 @@ def generate_csv(session=None, subsession=None, meta_data=None):
                 culprit.steal_token.x = steal_reset
 
 
-        elif event_type == 'period_start':
-            period_start = event_time
-            print(f'START TIME FOR EXPERIMENT:{period_start}')
+        elif event_type == 'round_start':
+            round_start = event_time
+            print(f'START TIME FOR EXPERIMENT:{round_start}')
             for i in range(1, Constants.players_per_group+1):
 
                 if i > 1:

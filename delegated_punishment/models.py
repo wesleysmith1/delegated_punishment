@@ -155,7 +155,6 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
-    players_ready = models.IntegerField(initial=0)
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
 
@@ -166,34 +165,6 @@ class Group(BaseGroup):
             me.officer_bonus_total += bonus
             me.civilian_fine_total += fine
             me.save()
-
-
-    def check_game_status(self, time):
-        if self.group_ready():
-            event_time = time
-            if self.game_start:
-                return Constants.game_duration_seconds*1000 - (time - self.game_start)
-            else:
-                game_data_dict = {
-                    'event_time': event_time,
-                    'event_type': 'period_start'
-                }
-                GameData.objects.create(
-                    event_time=event_time,
-                    p=self.get_players()[0].pk,
-                    g=self.id,
-                    s=self.session.id,
-                    round_number=self.round_number,
-                    jdata=game_data_dict
-                )
-                return Constants.game_duration_seconds
-        return False
-
-    def group_ready(self):
-        """Have all player pages loaded"""
-        if self.players_ready == Constants.players_per_group:
-            return True
-        return False
 
     def balance_update(self, time):
         players = self.get_players()
@@ -264,7 +235,7 @@ class Group(BaseGroup):
         generate_csv(self.session, self.subsession, meta_data)
 
         # try:
-        #     generate_csv(period_info)
+        #     generate_csv(round_info)
         # except:
         #     print('THERE WAS AN ERROR WITH CSV GENERATION FOR PERIOD: {}'.format(self.subsession.round_number))
 

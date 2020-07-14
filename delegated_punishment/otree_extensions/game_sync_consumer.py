@@ -11,8 +11,6 @@ class GameSyncConsumer(WebsocketConsumer):
         self.room_name = f"sync_{self.scope['url_route']['kwargs']['group_pk']}"
         self.room_group_name = self.room_name
 
-        print('CONNECTED')
-
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
@@ -30,7 +28,7 @@ class GameSyncConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         data_json = json.loads(text_data)
-        # print(data_json)
+        print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id']
@@ -38,43 +36,35 @@ class GameSyncConsumer(WebsocketConsumer):
         group = Group.objects.get(pk=group_id)
         round_number = data_json['round_number']
 
-        if data_json.get('join'):
+        if data_json.get('ready'):
             # player is now ready
 
-            if not player.ready:
-                print(f"PLAYER {player_id} IS NOW READY")
-                print(f"GROUP {group_id} NOW HAS {group.players_ready} READY")
-                player.ready = True
-                player.save()
-                group.players_ready = group.players_ready + 1
-                time = date_now_milli()
-                time_remaining = group.check_game_status(time)
+            player.ready = True
+            player.save()
 
-                if time_remaining:
-                    group.game_start = time
-                    print(f"GROUP {group_id} HAS ALL ARRIVED")
-                    async_to_sync(self.channel_layer.group_send)(
-                        self.room_group_name,
-                        {
-                            'type': 'start_game',
-                            'start_time': time_remaining
-                        }
-                    )
-                group.save()
+            print('how does this look')
 
-            else:
-                # game already started
-                time_remaining = group.check_game_status(date_now_milli())
-                if time_remaining:
-                    self.send(text_data=json.dumps({
-                        'start_time': time_remaining
-                    }))
+            ready_players = Player.objects.filter(group_id=group_id, ready=True)
 
-        elif data_json.get('period_end'):
+            print(f'NUMBER OF PLAYERS {len(ready_players)}')
+            print(f'CONSTANTS: {Constants.players_per_group}')
+
+
+
+            if len(ready_players) == Constants.players_per_group:
+                # inform host player that game needs to start
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'players_ready',
+                    }
+                )
+
+        elif data_json.get('round_end'):
             event_time = date_now_milli()
             game_data_dict = {
                 'event_time': event_time,
-                'event_type': 'period_end'
+                'event_type': 'round_end'
             }
             """Officer sends up period end"""
             GameData.objects.create(
@@ -85,10 +75,9 @@ class GameSyncConsumer(WebsocketConsumer):
             )
 
     # Receive message from room group
-    def start_game(self, event):
-        start_time = event['start_time']
+    def players_ready(self, event):
+        print('hi')
         # Start game after all players are synced
         self.send(text_data=json.dumps({
-            'start_game': True,
-            'start_time': start_time
+            'players_ready': True,
         }))

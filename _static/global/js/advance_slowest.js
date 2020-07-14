@@ -51,12 +51,13 @@ function initWebSocket() {
         var data = JSON.parse(e.data);
 
         if (data.error) {
-            console.log('Error receiving websocket message. Maybe the server was stopped.')
+            console.log('Error receiving message from advance slowest websocket. Maybe the server was stopped.')
         }
 
         if (data.auto_advanced) {
             console.log('Received redirect message', e.data);
 
+            // advanceDelay gives time for results modal to display before advancing to next page
             if (advanceDelay > 0) {
 
                 // activate results modal

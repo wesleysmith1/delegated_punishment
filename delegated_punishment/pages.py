@@ -3,7 +3,7 @@ import json, math
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
-from delegated_punishment.helpers import skip_period
+from delegated_punishment.helpers import skip_round
 
 
 class Game(Page):
@@ -13,7 +13,7 @@ class Game(Page):
     template_name = 'delegated_punishment/Game.html'
 
     def is_displayed(self):
-        if skip_period(self.session, self.round_number):
+        if skip_round(self.session, self.round_number):
             return False
         return True
 
@@ -89,7 +89,7 @@ class Intermission(Page):
     timer_text = 'Please wait for round to start'
 
     def is_displayed(self):
-        if skip_period(self.session, self.round_number):
+        if skip_round(self.session, self.round_number):
             return False
 
         if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
@@ -115,7 +115,7 @@ class Intermission(Page):
 
 class AfterTrialAdvancePage(Page):
     def is_displayed(self):
-        if skip_period(self.session, self.round_number) or self.round_number == 2:
+        if skip_round(self.session, self.round_number) or self.round_number == 2:
             return True
 
         return False

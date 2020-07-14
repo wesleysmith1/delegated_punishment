@@ -43,6 +43,9 @@ class GameConsumer(WebsocketConsumer):
 
         data_json = json.loads(text_data)
 
+        if not data_json.get('balance'):
+            print(data_json)
+
         group_id = data_json['group_id']
         player_id = data_json['player_id']
         session_id = data_json['session_id']
@@ -419,17 +422,17 @@ class GameConsumer(WebsocketConsumer):
                 }
             )
 
-        elif data_json.get('period_update'):
-            pu = data_json['period_update']
+        elif data_json.get('round_update'):
+            pu = data_json['round_update']
 
             game_data_dict = {
                 "player": player.id_in_group
             }
 
-            if pu.get('period_start'):
+            if pu.get('players_ready'):
                 game_data_dict.update({
                     'event_time': event_time,
-                    'event_type': 'period_start'
+                    'event_type': 'round_start'
                 })
 
                 GameData.objects.create(
@@ -440,14 +443,21 @@ class GameConsumer(WebsocketConsumer):
                     round_number=round_number,
                     jdata=game_data_dict
                 )
-            elif pu.get('period_end'):
-                # todo: period end will likely be a scheduled event that lets a players know the round is over
+                # inform players round has started
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'round_start',
+                        'round_end': None,
+                    }
+                )
+            elif pu.get('round_end'):
 
                 end_time = date_now_milli()
 
                 game_data_dict.update({
                     'event_time': end_time,
-                    'event_type': 'period_end'
+                    'event_type': 'round_end'
                 })
 
                 # final calculation of player balances for results page
@@ -470,12 +480,12 @@ class GameConsumer(WebsocketConsumer):
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
-                        'type': 'round_over',
-                        'round_over': None,
+                        'type': 'round_end',
+                        'round_end': None,
                     }
                 )
 
-            elif pu.get('period_results'):
+            elif pu.get('round_results'):
                 round_results = dict(balance=player.balance)
 
                 # send token count to group
@@ -828,7 +838,12 @@ class GameConsumer(WebsocketConsumer):
             'balance': balance_update
         }))
 
-    def round_over(self, event):
+    def round_end(self, event):
         self.send(text_data=json.dumps({
-            'round_over': True
+            'round_end': True
+        }))
+
+    def round_start(self, event):
+        self.send(text_data=json.dumps({
+            'round_start': True
         }))
