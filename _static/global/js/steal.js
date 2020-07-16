@@ -43,6 +43,10 @@ let stealGameComponent = {
 
     },
     methods: {
+        roundEnd() {
+            // disable tokens at end of round
+            Draggable.get('#location').disable()
+        },
         cancelTimeout: function() {
             if (this.timeout)
                 clearTimeout(this.timeout);

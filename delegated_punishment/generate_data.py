@@ -19,7 +19,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         group_pk = None
         round_number = 9
         session_id = 9
-        session_start = Constants.epoch
+        session_start = 0
         session_date = "1992_0414"
         officer_bonus = -1
         income_distribution = [-1, -1, -1, -1]
@@ -414,7 +414,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
                 else:
                     players[i].officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens))
 
-        elif event_type == 'period_end':
+        elif event_type == 'round_end':
             for i in range(1, Constants.players_per_group+1):
 
                 # add end time to csv
@@ -448,7 +448,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             if Constants.num_rounds == 1 or round_number == 3:
                 writer.writerow(csv_header())
             for row in players[i].rows:
-                writer.writerow(format_row(i, row, period_start, meta_data, players[i].id_in_session))
+                writer.writerow(format_row(i, row, round_start, meta_data, players[i].id_in_session))
 
 
 def csv_header():
@@ -477,7 +477,7 @@ def csv_header():
     return labels
 
 
-def format_row(pid, r, period_start, meta_data, id_in_session):
+def format_row(pid, r, round_start, meta_data, id_in_session):
 
     return [
         r['event_type'],

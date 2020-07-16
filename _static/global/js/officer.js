@@ -93,6 +93,12 @@ let officerGameComponent = {
                 dragToken.enable()
             }, 1000)
         },
+        disableAllTokens() {
+            // disable all tokens
+            for (let i=1; i <= this.mutableDefendTokens.length; i++) {
+                Draggable.get('unit' + i).disable()
+            }
+        },
         tokenDragStart: function (that, token) {
             this.$emit('token-drag', token);
         },

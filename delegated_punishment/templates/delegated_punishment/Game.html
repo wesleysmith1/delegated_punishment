@@ -70,6 +70,7 @@
             id="officerGame"
             class="game-container"
             v-if="isOfficer"
+            ref="officercomponent"
             :maps="maps"
             :initial-defend-tokens="officerTokens"
             :officer-income="income"
@@ -302,7 +303,7 @@
 
                 this.gameSyncSocket.onmessage = (e) => {
                     let data = JSON.parse(e.data);
-                    console.log(data)
+
                     // host (always p1) listens for signal that all players are ready
                     if (data.players_ready) {
                         this.signalPlayersReady()
@@ -318,8 +319,8 @@
 
                     this.gameSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
-                        console.log(data)
-                        if (data.balance) { // todo: make this its own channel brap
+
+                        if (data.balance) { // todo: make this its own channel
                             this.activeStealMaps = data.balance.active_maps;
                             let latestBalance = data.balance[this.groupPlayerId].balance;
                             let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count;
@@ -337,7 +338,6 @@
                             this.balance = latestBalance;
                             this.roi = data.roi
                         } else if (data.intersections) {
-                            // console.log(data.intersections);
                             this.messageIndex++;
                             data.intersections.forEach((i) => {
                                 this.showIntersection(i);
@@ -622,10 +622,20 @@
                         if (this.isOfficer)
                             this.roundEndEvent();
 
+                        this.disableTokens()
                     }, this.gameDuration);
 
                 },
+                disableTokens: function() {
+                    if (this.isOfficer) {
+                        this.$refs.officercomponent.disableAllTokens()
+                    } else {
+                        this.$refs.stealcomponent.roundEnd()
+                    }
+                },
                 roundEndEvent: function() {
+
+
                     this.gameUpdate({
                         'round_update': { 'round_end': true },
                     });

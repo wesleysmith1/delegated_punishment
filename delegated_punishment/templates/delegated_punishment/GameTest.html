@@ -74,7 +74,6 @@
                     if (this.idInGroup === 1)
                         return {'round_update': {'round_start': true}};
                     else {
-                        console.log('PERIOD START DID NOT WORK')
                         return null;
                     }
                 }
@@ -103,7 +102,6 @@
 
                     this.gameSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
-                        console.log('data from server: ', data);
                     };
 
                     this.gameSocket.onclose = (e) => {
@@ -209,8 +207,6 @@
                         console.log('data_object empty in send')
                         return;
                     }
-
-                    console.log('sending data to server', data_obj)
 
                     data_obj['group_id'] = player.groupId;
                     data_obj['player_id'] = player.playerId;

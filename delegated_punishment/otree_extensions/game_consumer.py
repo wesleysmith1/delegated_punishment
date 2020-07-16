@@ -43,9 +43,6 @@ class GameConsumer(WebsocketConsumer):
 
         data_json = json.loads(text_data)
 
-        if not data_json.get('balance'):
-            print(data_json)
-
         group_id = data_json['group_id']
         player_id = data_json['player_id']
         session_id = data_json['session_id']

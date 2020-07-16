@@ -19,7 +19,7 @@ let resultsModalComponent = {
           <!-- Modal content -->
           <div class="modal-content results-modal">
             <div class="results-modal-content">
-                <p>You obtained <strong>{{ balance }}</strong> grain</p>
+                <p>You obtained <strong>{{ balance | integerFilter}}</strong> grain</p>
             </div>
           </div>
         

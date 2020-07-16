@@ -28,7 +28,6 @@ class GameSyncConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         data_json = json.loads(text_data)
-        print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id']
@@ -42,14 +41,7 @@ class GameSyncConsumer(WebsocketConsumer):
             player.ready = True
             player.save()
 
-            print('how does this look')
-
             ready_players = Player.objects.filter(group_id=group_id, ready=True)
-
-            print(f'NUMBER OF PLAYERS {len(ready_players)}')
-            print(f'CONSTANTS: {Constants.players_per_group}')
-
-
 
             if len(ready_players) == Constants.players_per_group:
                 # inform host player that game needs to start
@@ -76,7 +68,6 @@ class GameSyncConsumer(WebsocketConsumer):
 
     # Receive message from room group
     def players_ready(self, event):
-        print('hi')
         # Start game after all players are synced
         self.send(text_data=json.dumps({
             'players_ready': True,
