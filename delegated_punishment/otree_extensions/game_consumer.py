@@ -698,12 +698,14 @@ class GameConsumer(WebsocketConsumer):
                     guilty_prob = Constants.beta
                 else:
                     # innocent_prob = 1 / 4 - num_investigators / 20
-                    innocent_prob = (6 - num_investigators) * (9/240)
+                    # innocent_prob = (6 - num_investigators) * (9/240)
                     # innocent_prob = probability_innocent(4, num_investigators)
+                    innocent_prob = Constants.beta * ((1/(Constants.civilians_per_group -1) - (1/(Constants.civilians_per_group -1)) * (num_investigators/Constants.a_max)))
 
                     # guilty_prob = 1 / 4 + num_investigators / 10
-                    guilty_prob = (2+num_investigators) * (9/80)
+                    # guilty_prob = (2+num_investigators) * (9/80)
                     # guilty_prob = probability_guilty(4, num_investigators)
+                    guilty_prob = Constants.beta * (1/(Constants.civilians_per_group - 1) + ((Constants.civilians_per_group - 2) / (Constants.civilians_per_group - 1) * (num_investigators/Constants.a_max)))
 
                 multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
 

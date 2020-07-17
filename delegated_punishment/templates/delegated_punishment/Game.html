@@ -247,6 +247,9 @@
                 stealTimeoutMilli: stealTimeoutMilli,
                 stealTokenSlots: stealTokenSlots,
                 resultsModalDuration: resultsModalSeconds * 1000,
+
+                // todo: add this to constatns on both projects
+                civiliansPerGroup: 5,
             },
             created: function () {
 
@@ -646,14 +649,18 @@
                     if (this.investigationCount > this.aMax)
                         return this.beta * 100;
                     else {
-                        return Math.round((2 + this.investigationCount) * (9/80)*10000) / 100
+                        let guilty = this.beta * (1/(this.civiliansPerGroup - 1) + ((this.civiliansPerGroup - 2) / (this.civiliansPerGroup - 1) * (this.investigationCount/this.aMax)))
+                        return Math.round(guilty*10000) / 100
+                        // return Math.round((2 + this.investigationCount) * (9/80)*10000) / 100
                     }
                 },
                 probabilityInnocent() {
                     if (this.investigationCount > this.aMax)
                         return 0;
                     else {
-                        return Math.round((6 - this.investigationCount) * (9/240)*10000) / 100
+                        let innocent = this.beta * ((1/(this.civiliansPerGroup -1) - (1/(this.civiliansPerGroup -1)) * (this.investigationCount/this.aMax)))
+                        return Math.round(innocent*10000) / 100
+                        // return Math.round((6 - this.investigationCount) * (9/240)*10000) / 100
                     }
                 },
                 probabilityReprimand() {

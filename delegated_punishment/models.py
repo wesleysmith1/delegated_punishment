@@ -22,6 +22,7 @@ doc = """
 class Constants(BaseConstants):
     name_in_url = 'delegated_punishment'
     players_per_group = 6
+    civilians_per_group = 5
     num_rounds = 10
 
     """Number of defend tokens officer starts with"""
