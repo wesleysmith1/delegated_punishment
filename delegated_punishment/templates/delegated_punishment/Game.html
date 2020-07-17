@@ -73,7 +73,7 @@
 
     {% verbatim %}
     <!--fix this v-show at some point-->
-    <div id="app" v-show="true">
+    <div id="app" v-show="gameStarted">
         <officer-game-component
             id="officerGame"
             ref="officercomponent"
@@ -288,7 +288,6 @@
             created: function () {
 
                 // todo we need to add way to make sure page was not refreshed or way to get timmer of actualy game instead of starting the timmer again.
-
                 this.player = JSON.parse(player);
 
                 this.isOfficer = this.groupPlayerId == 1;
@@ -347,6 +346,7 @@
 
                     // host (always p1) listens for signal that all players are ready
                     if (data.players_ready) {
+                        this.gameStarted = true;
                         this.signalPlayersReady()
                     }
                 };
@@ -355,28 +355,16 @@
                 this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                 this.gameSocket.onopen = (e) => {
 
-                        if (!this.game_started) {
+                    // todo: this needs to be fixed when game flow has updated structure.
+                    // Start Modal
+                    setTimeout(() => {
+                        this.showStartModal(false);
 
-                        // todo: this needs to be fixed when game flow has updated structure.
-                        // Start Modal
-                        setTimeout(() => {
-                            this.showStartModal(false);
+                        // only officer
+                        this.startTimer();
 
-                            // only officer
-                            this.startTimer();
+                    }, this.startModalDuration); //todo: this is where we want to wait until officer page is loaded and start modal closes
 
-                            // todo: the period end will be a message from the server in final version
-                            // Results Modal
-                            setTimeout(()=> {
-                                this.disableStealTokens(); // todo: this should be done more elegantly
-
-                                this.getPeriodResults();
-                                this.openResultsModal(); // todo: this needs to be fixed brap brap
-                            }, this.gameDuration + 3000); // todo: remove this milisecond offset that is in place so that players have a final balance triggered by the officer end game event
-
-                        }, this.startModalDuration); //todo: this is where we want to wait until officer page is loaded and start modal closes
-
-                    };
 
                     this.gameSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
@@ -411,21 +399,13 @@
                             this.resultsObj = data.round_results;
                         } else if (data.round_start) {
                             console.log('Round Started')
-                            this.gameStarted = true;
-                            this.hideModal()
-                            this.startTimer()
-                            console.warn("This needs to trigger start modal closing")
-                            // this.showStartModal(false)
-                            // this.startTimer()
+                            // console.warn("This needs to trigger start modal closing")
                         }
                     };
 
                     this.gameSocket.onclose = (e) => {
-                        console.error('CHANNEL CLOSED UNEXPECTEDLY');
+                        console.error('GAME CHANNEL CLOSED UNEXPECTEDLY');
                     };
-                this.gameSocket.onclose = (e) => {
-                    console.error('GAME CHANNEL CLOSED UNEXPECTEDLY');
-                };
 
                     if (this.isOfficer)
                          this.subscribeToBalance()
@@ -437,6 +417,7 @@
             },
             methods: {
                 isHost: function() {
+                    // only player 1 in group is host.
                     return this.groupPlayerId === 1;
                 },
                 signalPlayersReady: function() {
@@ -445,10 +426,16 @@
                     }
                 },
                 endRound: function() {
+                    // remove the balance thingy here
+                    this.cancelBalanceInterval();
                     // get results from backend
                     this.getRoundResults()
                     // open modal
                     this.openResultsModal()
+
+                    // hide all tokens
+                    this.disableStealTokens();
+                    this.disableTokens()
                 },
                 disableStealTokens: function() {
                     if (this.isOfficer) {
@@ -464,11 +451,9 @@
                 getRoundResults: function() {
                     // players individually pull results
                     let x = {
-                      'round_update': {
-                          'period_update': {
-                              'round_results': true
-                          }
-                      }
+                    'round_update': {
+                        'round_results': true
+                    }
                     };
                     this.gameUpdate(x);
                 },
@@ -497,7 +482,7 @@
                         return
                     }
                     this.gameUpdate({
-                        'period_update': {'period_start': true},
+                        'round_update': {'round_start': true},
                     });
                 },
                 showStartModal: function(b) {
@@ -714,40 +699,27 @@
 
                 },
                 startTimer: function() {
+
                     if (this.isOfficer) {
                         // set start time
                         this.gameUpdate({
                             'round_update': {'round_start': true},
                         });
-                    }
 
-                    setTimeout(() => {
-                        // officer records round end
-                        // todo: the round end event should originate from the api. schedule it when the game is started
-                        if (this.isOfficer)
-                            this.roundEndEvent();
-
-                        this.disableTokens()
-                    }, this.gameDuration);
-
-                        // schedule period end
-                        // todo: this should be udpated to be sent down form api please and thankyou
                         setTimeout(() => {
-                                // officer records period end
-                                this.periodEndEvent();
+                            // officer records round end
+                            // todo: the round end event should originate from the api. schedule it when the game is started
+                            if (this.isOfficer)
+                                this.roundEndEvent();
 
-                                // stop balance from being calculated
-                                this.cancelBalanceInterval();
-                            },
-                            this.gameDuration
-                        );
-                    },
+                            this.disableTokens()
+                        }, this.gameDuration);
+                    }
+                },
                 cancelBalanceInterval: function() {
                     // officer cancel balance stream
-                    if (!this.isOfficer)
-                        return
-
-                    clearInterval(this.balanceInterval)
+                    if (this.isOfficer)
+                        clearInterval(this.balanceInterval)
                 },
                 disableTokens: function() {
                     if (this.isOfficer) {

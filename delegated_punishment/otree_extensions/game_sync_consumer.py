@@ -58,7 +58,7 @@ class GameSyncConsumer(WebsocketConsumer):
                 'event_time': event_time,
                 'event_type': 'round_end'
             }
-            """Officer sends up period end"""
+            """Officer sends up round end"""
             GameData.objects.create(
                 event_time=event_time,
                 g=group_id,

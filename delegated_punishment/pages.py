@@ -290,13 +290,13 @@ class ResultsWaitPage(WaitPage):
         self.group.apply_taxes()
 
         if Constants.num_rounds > 1 and self.round_number < 3:
-            # dont generate results for the tutorial and trial period
+            # dont generate results for the tutorial and trial round
             pass
         else:
             # generate csv for round
             self.group.generate_results()
 
-            # only for periods 3-10
+            # only for rounds 3-10
             if self.round_number > 2 or Constants.num_rounds == 1:
                 for player in self.group.get_players():
                     player.participant.vars['balances'].append(math.floor(player.balance))
@@ -324,9 +324,9 @@ class Intermission(Page):
         )
         if self.round_number == 2:
             vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
-            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
+            info = 'We are about to perform a practice round to ensure everyone is familiar with the computer interface.'
         else:
-            info = 'We are about to perform 4 periods sequentially.'
+            info = 'We are about to perform 4 rounds sequentially.'
         vars_dict['info'] = info
         return vars_dict
 

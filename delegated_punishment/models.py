@@ -198,7 +198,7 @@ class Subsession(BaseSubsession):
                 # demo session does not need further configuration
                 if Constants.num_rounds != 1:
 
-                    # check if round is tutorial or trial period
+                    # check if round is tutorial or trial round
                     if self.round_number < 3:
                         if p.id_in_group > 1:
                             p.income = self.session.config['tutorial_civilian_income']
@@ -287,7 +287,7 @@ class Group(BaseGroup):
             else:
                 game_data_dict = {
                     'event_time': event_time,
-                    'event_type': 'period_start'
+                    'event_type': 'round_start'
                 }
                 GameData.objects.create(
                     event_time=event_time,

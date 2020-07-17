@@ -22,8 +22,6 @@ let resultsModalComponent = {
 
           <!-- Modal content -->
           <div class="modal-content results-modal">
-            <div class="results-modal-content">
-                <p>You obtained <strong>{{ balance | integerFilter}}</strong> grain</p>
             <!-- Modal content -->
             <div v-if="resultsObj" class="modal-content results-modal">
                 <h4 style="text-align: center;">Round results</h4>
@@ -100,7 +98,7 @@ let resultsModalComponent = {
                     </div>              
                 </div>
             </div>
-            </div>
+           </div>  
                 
         
         </div>

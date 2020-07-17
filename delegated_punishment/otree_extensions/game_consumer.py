@@ -449,7 +449,6 @@ class GameConsumer(WebsocketConsumer):
                     self.room_group_name,
                     {
                         'type': 'round_start',
-                        'round_end': None,
                     }
                 )
             elif pu.get('round_end'):
@@ -482,7 +481,6 @@ class GameConsumer(WebsocketConsumer):
                     self.room_group_name,
                     {
                         'type': 'round_end',
-                        'round_end': None,
                     }
                 )
 
