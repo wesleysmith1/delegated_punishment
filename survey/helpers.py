@@ -63,7 +63,7 @@ def generate_survey_csv(group):
     session_id = group.subsession.session_id
     session_start = math.floor(group.session.vars['session_start'])
     session_date = group.session.vars['session_date']
-    file_name = "{}results{}__{}_{}.csv".format(path, session_id, session_date, session_start)
+    file_name = "{}survey_results{}__{}_{}.csv".format(path, session_id, session_date, session_start)
 
     f = open(file_name, 'w', newline='')
     with f:

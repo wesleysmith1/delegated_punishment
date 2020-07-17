@@ -2,6 +2,7 @@ import datetime
 import json
 
 from django.contrib.postgres.fields import JSONField
+from django.core.validators import MaxValueValidator
 from django.db import transaction
 from otree.api import (
     models,
@@ -224,11 +225,11 @@ class Group(BaseGroup):
     game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
     players_ready = models.IntegerField(initial=0)
-    defend_token_total = models.IntegerField(initial=0)
-    defend_token_cost = models.DecimalField(initial=0, max_digits=10, decimal_places=5) # maybe this hsould be moved over to tha mechanism table
+    defend_token_total = models.IntegerField(initial=0, validators=[MaxValueValidator(0)])
+    defend_token_cost = models.DecimalField(initial=0, max_digits=10, decimal_places=5)
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
-    big_c = models.DecimalField(blank=True, default=None, max_digits=10, decimal_places=5) # maybe this hsould be moved over to tha mechanism table
+    big_c = models.DecimalField(blank=True, default=None, max_digits=10, decimal_places=5)
 
     # todo: turn this into a proper factory or part of a generator. :)
     @classmethod
@@ -367,6 +368,7 @@ class Group(BaseGroup):
         return balance_update
 
     def generate_results(self):
+        """append to or generate csv"""
         players = self.get_players()
 
         # Initial civilian steal locations for csv
@@ -401,7 +403,8 @@ class Group(BaseGroup):
             group_id=group_id,
             officer_bonus=officer_bonus,
             income_distribution=income_distribution,
-            player_ids_in_session=player_ids_in_session
+            player_ids_in_session=player_ids_in_session,
+            defend_token_total=self.defend_token_total,
         )
 
         # todo: this is here to prevent import error because Constants cannot be loaded.
@@ -791,16 +794,16 @@ class SurveyResponse(Model):
 
 class MechanismInput(Model):
     player = ForeignKey(Player, on_delete='CASCADE')
-    participant_id = models.IntegerField()
     group = ForeignKey(Group, on_delete='CASCADE')
-    value = models.IntegerField(initial=0)
+    input = models.IntegerField(initial=0)
     created_at = models.FloatField()
 
     @classmethod
-    def record(cls, value, player_id, group_id):
+    def record(cls, input, player_id, group_id):
         creation_time = date_now_milli()
-        MechanismInput.objects.create(value=value, player_id=player_id, group_id=group_id, created_at=creation_time)
+        # update this os it is more accurate and gives player and participant information
+        MechanismInput.objects.create(player_id=player_id, group_id=group_id, input=input, created_at=creation_time)
 
     def gl_row(self):
-        row = f"{self.group_id},{self.participant_id},{self.player_id},{self.value},{self.created_at}"
+        row = f"{self.group.id},{self.player.id},{self.input},{self.created_at}"
         return [row]

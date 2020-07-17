@@ -58,6 +58,11 @@ let oglComponent = {
             return (this.formInputNum < this.omega && this.formInputNum > (-1* this.omega))
         },
         handleFormSubmission: function() {
+            debugger;
+
+            // remove focus from form
+            this.$refs.glinput.blur()
+
             if (Number.isInteger(this.formInputNum) && this.validateOmega()) {
                 this.updatePlaceholder()
 
@@ -213,7 +218,7 @@ let oglComponent = {
                 <form class="form-inline" @submit.prevent="handleFormSubmission()">
                   <button type="submit" class="btn btn-primary" :disabled="!formInputNum">Update tokens</button>
                   <div class="form-group" style="max-width: 250px;">
-                    <input type="number" step="1" class="form-control" v-on:keyup.enter="handleFormSubmission()" @keypress="isNumber($event)" :placeholder="inputPlaceholder" style="max-width: 250px;" v-model.number="formInputNum">
+                    <input ref="glinput" type="number" step="1" class="form-control" v-on:keyup.enter="handleFormSubmission()" @keypress="isNumber($event)" :placeholder="inputPlaceholder" style="max-width: 250px;" v-model.number="formInputNum">
                   </div>
                 </form>
             </div>

@@ -3,7 +3,7 @@ import json, math, csv
 from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player
 from random import random
-from .models import Constants, DefendToken, Player, SurveyResponse
+from .models import Constants, DefendToken, Player, SurveyResponse, MechanismInput
 import random
 from delegated_punishment.helpers import skip_round, write_session_dir, safe_list_sum, DecimalEncoder
 from delegated_punishment.models import Group
@@ -65,31 +65,35 @@ class DefendTokenSurvey(Page):
 class DefendTokenWaitPage(WaitPage):
 
     def after_all_players_arrive(self):
-        """calculate how many defend tokens are going to be used"""
+        """calculate how many defend tokens are going to be used, costs and tax.
+        Individual survey tax is saved to survey objects here, but not applied
+        until after round, when tax is recalculated to include costs accrued during round"""
 
+        # get survey responses for players who participated in group
         survey_responses = SurveyResponse.objects.filter(group=self.group)
-        print("THAT WAS THE SURVEY RESULTS")
-        print(survey_responses)
 
+        # csv file and path
         file_path = write_session_dir(self.session.config['session_identifier'])
         file_name = f"{file_path}Session_{self.group.session_id}_Group_{self.group.id}_{self.session.vars['session_date']}_{self.session.vars['session_start']}.csv"
-
-        MechCSVBuilder(Constants.dt_method, survey_responses, file_name, input_range=Constants.dt_range)
 
         # method specific code
         if Constants.dt_method == 0:
 
+            # write csv
+            MechCSVBuilder(Constants.dt_method, survey_responses, file_name, input_range=Constants.dt_range).write()
+
             results = dict()
+            # loop over all token options that appeared on survey
             for i in range(1, Constants.dt_range + 1):
                 count = 0
                 total = 0
 
                 token_index = str(i)
 
+                # for each option calculate the count and sum of responses
                 for r in survey_responses:
-                    print('HERE IS A SURVEY RESULT')
-                    print(r)
 
+                    # check if participant has response for i tokens
                     if r.response.get(token_index):
                         if r.response[token_index].get('wtp'):
                             log.info(f"HERE IT IS THE RESPONSE FOR THIS PLAYER IS {r.response[token_index]['wtp']}")
@@ -103,19 +107,17 @@ class DefendTokenWaitPage(WaitPage):
                             except:
                                 log.info(f"COULD NOT INCREMENT TOTAL. TOTAL IS CURRENTLY AT {total}. Here was the value of response: {response}")
 
-                            log.error(f'ROW {i}, RESPONSE {response} COUNT {count} TOTAL {total}')
-                        pass
                     else:
-                        print("THERE WAS AN ERROR COLLECTING DATA FROM RESPONSE BELOW...")
-                        print(r.response)
+                        log.error("THERE WAS AN ERROR COLLECTING DATA FROM RESPONSE BELOW...")
+
+                # calculate result for this i tokens
                 try:
                     results[i] = total * Constants.big_n / count
                 except ZeroDivisionError:
                     # there were no responses
                     results[i] = 0
 
-            log.info('survey results generated')
-
+            # determine number of tokens for group
             number_tokens = 0
             for i in range(Constants.dt_range, 0, -1):
                 print(f"token count {i}, average {results[i]}")
@@ -123,84 +125,62 @@ class DefendTokenWaitPage(WaitPage):
                     number_tokens = i
                     break
 
+            # apply cost to survey participants
             for sr in survey_responses:
                 if sr.response.get(number_tokens):
                     sr.mechanism_cost = Decimal(sr.response[number_tokens]['total'])
                     sr.save()
 
-            log.info(f"number tokens for next round {number_tokens}")
-
-            log.info(f"group updated")
-
+            # update group tokens, cost and taxes
             self.group.defend_token_total = int(number_tokens)
             self.group.defend_token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
             self.group.save()
-            # payments calculation
+            # tax calculation
             self.group.calculate_survey_tax(survey_responses)
 
-            log.info("defend tokens saved to group")
-        elif Constants.dt_method == 1:
-            self.group.calculate_gl()
-
-            values = survey_responses.values_list('total', flat=True)
-            token_total = sum(values)
-            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
-            log.info(f'number of tokens for period {self.group.round_number} is {token_total} from values: {values}')
-
-            if token_total < 0:
-                log.info(f'number of tokens is {token_total}. changing to 0')
-                token_total = 0
-
-            # Group.objectsm.filter(id=self.group.id).update(defend_token_total=token_total)
-            self.group.defend_token_total = token_total
-            self.group.defend_token_cost = token_cost
-            self.group.save()
-
-            # civilian payment
-            self.group.calculate_ogl_tax(survey_responses)
-
-        elif Constants.dt_method == 2:
-
-            self.group.calculate_gl()
-
-            token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
-
-            if token_total < 0:
-                log.info(f'number of tokens is {token_total}. changing to 0')
-                token_total = 0
-
-            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
-
-            self.group.defend_token_total = token_total
-            self.group.defend_token_cost = token_cost
-            self.group.save()
-
-            self.group.calculate_other_tax(survey_responses)
-
-        elif Constants.dt_method == 3:
-
-            self.group.calculate_gl()
-
-            token_total = safe_list_sum(survey_responses.values_list('total', flat=True)) + Constants.dt_e0
-
-            if token_total < 0:
-                log.info(f'number of tokens is {token_total}. changing to 0')
-                token_total = 0
-
-            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
-
-            self.group.defend_token_total = token_total
-            self.group.defend_token_cost = token_cost
-            self.group.save()
-
-            Group.objects.filter(id=self.group.id).update(defend_token_total=token_total, defend_token_cost=token_cost)
-
-            self.group.calculate_other_tax(survey_responses)
+            log.info(f"{self.group.defend_token_total} defend tokens saved to group {self.group.id} with cost {self.group.defend_token_cost}")
 
         else:
-            log.error(f"RESULTS CANNOT BE GENERATED CORRECTLY FOR THIS METHOD {Constants.dt_method}")
+            # write csv
+            mechanism_responses = MechanismInput.objects.filter(group_id=self.group.id)
+            MechCSVBuilder(Constants.dt_method, mechanism_responses, file_name, input_range=Constants.dt_range).write()
+
+            # calculate costs, totals, taxes for gl mechanism
+            self.group.calculate_gl()
+
+            # sum of mechanism inputs, and token cost
+            token_total = safe_list_sum(survey_responses.values_list('total', flat=True))
+            token_cost = Decimal(safe_list_sum(survey_responses.values_list('mechanism_cost', flat=True)))
+
+            # save tokens. must be > 0
+            self.group.defend_token_total = token_total + Constants.dt_e0
+            if token_total < 0:
+                log.info(f'number of tokens is {token_total}. Updated to 0')
+                token_total = 0
+
+            self.group.defend_token_cost = token_cost
+
+            self.group.save()
+
+            if Constants.dt_method == 1:
+                # civilian payment
+                self.group.calculate_ogl_tax(survey_responses)
+
+            elif Constants.dt_method == 2:
+
+                self.group.calculate_other_tax(survey_responses)
+
+            elif Constants.dt_method == 3:
+
+                self.group.calculate_other_tax(survey_responses)
+
+            else:
+                log.error(f"RESULTS CANNOT BE GENERATED CORRECTLY FOR THIS METHOD {Constants.dt_method}")
+                raise ValueError
 
         log.info(f"THERE ARE {self.group.defend_token_total} TOKENS FOR GROUP {self.group.id}")
+
+        # create defend tokens
         for i in range(self.group.defend_token_total):
             DefendToken.objects.create(number=i + 1, group=self.group,)
 
@@ -313,6 +293,7 @@ class ResultsWaitPage(WaitPage):
             # dont generate results for the tutorial and trial period
             pass
         else:
+            # generate csv for round
             self.group.generate_results()
 
             # only for periods 3-10

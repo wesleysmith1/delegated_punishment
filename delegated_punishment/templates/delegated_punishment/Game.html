@@ -42,12 +42,9 @@
         var aMax = {{ a_max }};
         var beta = {{ beta }};
         var playersPerGroup = {{ players_per_group }};
-<<<<<<< HEAD
         var stealTokenSlots = {{ steal_token_slots }};
-=======
         var stealTokenPositions = {{ steal_token_positions }};
         var defendTokenDisplayMax = {{ defend_token_display_max }};
->>>>>>> e1b21be... added overflow functionality, calculation file to test mechanism output.
 
         var civilianFine = {{ civilian_fine }};
         var mapSize = {{ civilian_map_size }};
@@ -411,7 +408,6 @@
                         } else if (data.round_end) {
                             this.endRound()
                         } else if (data.round_results) {
-                            console.log(data.round_results);
                             this.resultsObj = data.round_results;
                         } else if (data.round_start) {
                             console.log('Round Started')

@@ -53,10 +53,9 @@ class DefendTokenConsumer(WebsocketConsumer):
 
             survey_response.response = data_json['survey']
             survey_response.save()
-            print("SURVEY RESPONSE ADDED. HERE IT IS BELOW")
-            print(survey_response.response)
 
         elif data_json.get('ogl'):
+            """all 3 gl mechanisms"""
 
             updated_input = data_json['ogl']['data']
 

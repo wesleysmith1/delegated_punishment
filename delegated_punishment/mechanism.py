@@ -44,11 +44,8 @@ class SurveyMechanism:
             writer = csv.writer(f)
             # write header
 
-            #todo update this logic to determine if we need to write the first header or not
-            # if self.round_number == 1:
             writer.writerow(self.csv_header(input_range))
 
-            # determine if players received 50 grain
             for r in survey_responses:
                 row = r.survey_row()
                 writer.writerow(row)
@@ -93,7 +90,7 @@ class SurveyMechanism:
 class OglMechanism:
 
     def csv_header(self):
-        header = f"Group_Id, Participant_Id, Player_Id, Integer, Value, Created_At"
+        header = f"Group_Id, Player_Id, Input, Created_At"
 
         return [header]
 
@@ -102,14 +99,11 @@ class OglMechanism:
         # csv file output per player
         f = open(filename, 'a', newline='')
         with f:
-            writer = csv.writer(f)
             # write header
+            writer = csv.writer(f)
 
-            #todo update this logic to determine if we need to write the first header or not
-            # if self.round_number == 1:
             writer.writerow(self.csv_header())
 
-            # determine if players received 50 grain
             for r in responses:
                 row = r.gl_row()
                 writer.writerow(row)
@@ -156,7 +150,7 @@ class OglMechanism:
 class OtherMechanism:
 
     def csv_header(self):
-        header = f"Group_Id, Participant_Id, Player_Id, Integer, Value, Created_At"
+        header = f"Group_Id, Player_Id, Input, Created_At"
 
         return [header]
 
@@ -167,8 +161,6 @@ class OtherMechanism:
             writer = csv.writer(f)
             # write header
 
-            #todo update this logic to determine if we need to write the first header or not
-            # if self.round_number == 1:
             writer.writerow(self.csv_header())
 
             # determine if players received 50 grain
@@ -226,13 +218,12 @@ class OtherMechanism:
 
 class MechCSVBuilder:
 
-    def __init__(self, method, responses, filename, input_range=None, participant_id=None):
+    def __init__(self, method, responses, filename, input_range=None):
         self.method = method
         self.responses = responses
         self.filename = filename
 
         self.input_range = input_range
-        self.participant_id=participant_id
 
     def write(self):
         if self.method == 0:
