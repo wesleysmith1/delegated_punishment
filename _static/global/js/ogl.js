@@ -58,8 +58,6 @@ let oglComponent = {
             return (this.formInputNum < this.omega && this.formInputNum > (-1* this.omega))
         },
         handleFormSubmission: function() {
-            debugger;
-
             // remove focus from form
             this.$refs.glinput.blur()
 
