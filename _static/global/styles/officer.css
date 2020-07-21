@@ -33,6 +33,7 @@
     background: rgba(240,189,39,.5);
     border: 1px solid black;
     opacity: .5;
+    z-index: -1;
 }
 
 .intersection-label {
