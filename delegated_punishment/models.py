@@ -64,7 +64,7 @@ class Constants(BaseConstants):
     """
     tutorial_duration_seconds = 1800
     game_duration_seconds = 198
-    results_modal_seconds = 30000
+    results_modal_seconds = 30
 
     """
     this defines how long a steal token remains on a map before resetting to the 'steal home'
