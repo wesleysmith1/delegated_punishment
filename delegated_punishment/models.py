@@ -51,8 +51,8 @@ class Constants(BaseConstants):
     this is the size of the tokens is defined. 
     When changing values also update officer.css file 
     """
-    defend_token_size = 68
-    civilian_map_size = 200
+    defend_token_size = 68 * 1.5
+    civilian_map_size = 200 * 1.5
 
     """Probability innocent and guilty are calculated when the number of investigation tokens is >= this number"""
     a_max = 6
@@ -64,7 +64,7 @@ class Constants(BaseConstants):
     """
     tutorial_duration_seconds = 1800
     game_duration_seconds = 198
-    results_modal_seconds = 30
+    results_modal_seconds = 30000
 
     """
     this defines how long a steal token remains on a map before resetting to the 'steal home'
@@ -85,6 +85,13 @@ class Subsession(BaseSubsession):
 
     def creating_session(self):
         """This is called once for each round"""
+
+        # validate constants model
+        try:
+            assert Constants.civilians_per_group+1 == Constants.players_per_group
+        except AssertionError:
+            log.error("Civilians must be 1 less than players per group in the Constants model")
+            return
 
         # set session start time
         from delegated_punishment.helpers import date_now_milli
@@ -166,6 +173,9 @@ class Group(BaseGroup):
             me.officer_bonus_total += bonus
             me.civilian_fine_total += fine
             me.save()
+
+    def is_tutorial(self):
+        return self.round_number == 1
 
     def balance_update(self, time):
         players = self.get_players()

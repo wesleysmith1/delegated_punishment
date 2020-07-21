@@ -53,13 +53,13 @@ let harvestItemsComponent = {
   
       <div id="harvest-container" class="game">
         <div class="upper-harvest">
-            <div class="title" style="position: absolute; font-weight: bold; width: 100%; text-align: center;">
+            <div class="title harvest-earnings">
                 Each harvest earns {{ income }} grain
             </div>
             <div class='harvest-items'>
               <div v-for='(i, index) in items' :id='i' :index='index' :ref='i' class='harvest-item'>
                 {{i}}
-                <img :src="dragmages[i]" style="width: 50%; height: 50%"/>
+                <img :src="dragmages[i]" class='harvest-item-image'/>
               </div>
             </div>
         </div>
@@ -67,12 +67,12 @@ let harvestItemsComponent = {
             <div class="harvest-complete-items">
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" style="width: 50%; height: 50%"/>
+                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" class='harvest-item-image'/>
                 </div>
               </div>
               <div class="harvest-complete-container">
                 <div class='harvest-complete-item' v-for='(i, index) in 3'>
-                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" style="width: 50%; height: 50%"/>
+                  <img v-if="harvestStatus > 0" :src="statusImages[harvestStatus]" class='harvest-item-image'/>
                 </div>
               </div>  
             </div>

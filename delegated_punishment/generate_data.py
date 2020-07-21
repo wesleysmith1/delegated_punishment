@@ -5,6 +5,9 @@ import os
 from delegated_punishment.models import Constants, GameData
 from delegated_punishment.helpers import write_session_dir, TimeFormatter
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def generate_csv(session=None, subsession=None, meta_data=None):
 
@@ -35,7 +38,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         officer_bonus = meta_data['officer_bonus']
         income_distribution = meta_data['income_distribution']
 
-    # print("HERE IS THE ROUND NUMBER {}".format(round_number))
+    # log.info("HERE IS THE ROUND NUMBER {}".format(round_number))
 
     # session_start is assigned to this
     round_start = -1
@@ -47,13 +50,13 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
     try:
         tf = TimeFormatter(game_data.first().event_time)
-        print(f'START TIME FOR TIME FORMATTER:{game_data.first().event_time}')
+        log.info(f'START TIME FOR TIME FORMATTER:{game_data.first().event_time}')
     except:
         tf = None
 
     players = init_players(session_start, steal_starts, player_ids_in_session, tf)
 
-    print("THERE ARE {} EVENTS FOR THIS ROUND".format(len(game_data)))
+    log.info("THERE ARE {} EVENTS FOR THIS ROUND".format(len(game_data)))
 
     for event in game_data:
         # get JSON data
@@ -280,7 +283,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
                     else:
                         i = format_intersection(token_number, culprit_id, steal_token_id, defend_map, 'NA', 0, 0)
 
-                    # print("CULPRIT_ID: {}".format(culprit_id))
+                    # log.info("CULPRIT_ID: {}".format(culprit_id))
 
                     # end of intersection code
                     intersection_data.append(i)
@@ -406,7 +409,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
         elif event_type == 'round_start':
             round_start = event_time
-            print(f'START TIME FOR EXPERIMENT:{round_start}')
+            log.info(f'START TIME FOR EXPERIMENT:{round_start}')
             for i in range(1, Constants.players_per_group+1):
 
                 if i > 1:
@@ -427,7 +430,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             break
 
         else:
-            print('ERROR: EVENT TYPE NOT RECOGNIZED')
+            log.info('ERROR: EVENT TYPE NOT RECOGNIZED')
 
     # generate file directory
     if 'session_identifier' in session.config:
@@ -435,7 +438,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
     else:
         file_path = 'data/'
 
-        # print out csv files
+        # log out csv files
     for i in range(1, Constants.players_per_group+1):
         start = math.floor(session_start)
         file_name = "{}Session_{}_Group_{}_Player_{}_{}_{}.csv".format(file_path, session_id, meta_data['group_id'], i, session_date, start)
@@ -606,7 +609,7 @@ class CPlayer:
         if self.roi == 0:
             return self.balance
         elif not event_time or not self.last_updated:
-            print('ERROR: START DATE OR END DATE MISSING WHEN CALCULATING')
+            log.error('ERROR: START DATE OR END DATE MISSING WHEN CALCULATING')
             return -99
         else:
             return self.balance + self.roi * (event_time - self.last_updated)

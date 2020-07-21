@@ -106,10 +106,10 @@ Click the tab for `Config Session` and specify game parameters
 
 ### Launch Game on Client PCs
 
-On admin PC, open ESI Launcher and specify 
-
- * Location: `C:/.../chrome.exe --kiosk --force-device-scale-factor=1.00`
- * Arguments: http://34.215.160.83/room/delegated_punishment/
+On admin PC, open Lanschool and specify 
+ 
+*Launch software with the following command:*
+ C:\Program Files (x86)\Google\Chrome\Application\chrome.exe --kiosk --force-device-scale-factor=1.00 http://34.215.160.83/room/delegated_punishment/
 
 *Launch one row (five participants) at a time so they are automatically grouped.*
 

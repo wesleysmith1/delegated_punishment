@@ -1,28 +1,5 @@
-let probabilityBarComponent = {
-    props: {
-        label: String,
-        percent: Number,
-    },
-    data: function () {
-        return {
-            defenseTokens: []
-        }
-    },
-    template:
-        `
-        <div>
-            <div class="title-small">{{ label }}: <strong>{{percent}}%</strong></div>
-            <div class='bar'>
-                <div class="innocent" :style="{'width':(percent+'%')}">
-                </div>
-            </div>
-        </div>
-        `
-}
-
 let officerGameComponent = {
     components: {
-        'probability-bar-component': probabilityBarComponent,
     },
     props: {
         maps: Array,
@@ -189,11 +166,12 @@ let officerGameComponent = {
                             <div v-for="player_id in 5" class="intersection-label" :id="'intersection-label-' + (map+1) + '-' + (player_id + 1)" >
                                 -1
                             </div>
-                            <svg v-for="player_id in maps" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="6" height="6">
-                                <circle cx="3" cy="3" r="2" fill="black" />
+                            <svg v-for="player_id in maps" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="16" height="16">
+                                <circle :id="'indicator-' + (map+1) + '-' + (player_id + 1) + '-circle'" cx="8" cy="8" r="4" fill="black" />
                             </svg>
                       </div>
                       <div class="map-label">
+                        Player {{map+1}}
                       </div>
                     </div>
                 </div>
@@ -202,12 +180,12 @@ let officerGameComponent = {
                         <div class="title-small officer-info-container">
                             <div class="title-small data-row">
                                 <div class="left">Amount earned per arrest: </div>
-                                <div class="right" style="color: green; font-weight: bold;"><div class="number-right-align">{{officerIncome}}</div></div>
+                                <div class="right green-txt bold-txt"><div class="number-right-align">{{officerIncome}}</div></div>
                             </div>
                         </div>
                         <div style="clear: both;"></div>
                     </div>
-                    <div class="officer-units" style="display:flex;" v-bind:style="{ minHeight: defendTokenSize + 'px', }">
+                    <div class="officer-units" v-bind:style="{ minHeight: defendTokenSize + 'px', }">
                         <div 
                             v-for="(unit, index) in mutableDefendTokens" 
                             :ref="'defendlocation'+(unit.number)"
@@ -228,12 +206,12 @@ let officerGameComponent = {
                     <div class="officer-info-container">
                         <div class="title-small data-row">
                             <div class="left">Amount lost per reprimand: </div>
-                            <div class="right" style="color: red; font-weight: bold;"><div class="number-right-align">{{reprimandAmount}}</div></div>
+                            <div class="right red-txt bold-txt"><div class="number-right-align">{{reprimandAmount}}</div></div>
                         </div>
                         <div style="clear: both;"></div>
                         <div class="title-small data-row">
                             <div class="left">Probability of reprimand: </div>
-                            <div class="right" style="color: red; font-weight: bold;"><div class="number-right-align">{{probabilityReprimand}}%</div></div>
+                            <div class="right red-txt bold-txt"><div class="number-right-align">{{probabilityReprimand}}%</div></div>
                         </div>
                     </div>
                 </div>

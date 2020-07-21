@@ -9,3 +9,13 @@
     height: 21px;
     width: 21px;
 }
+#home-fine-notification {
+    text-align: center;
+    font-size: 50px;
+    padding-top: 40px;
+}
+
+.steal-token-line {
+    stroke:red;
+    stroke-width:3;
+}

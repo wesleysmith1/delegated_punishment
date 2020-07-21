@@ -36,8 +36,8 @@
 }
 
 .intersection-label {
-    width: 31px;
-    height:30px;
+    width: 100px;
+    height: 30px;
     text-align: center;
     color: black;
     position: absolute;

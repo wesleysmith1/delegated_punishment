@@ -22,7 +22,7 @@ DATABASES = {
         'PORT': '5432'
     }
 }
-
+"""
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -63,7 +63,7 @@ LOGGING = {
             'level': 'DEBUG',
         },
     }
-}
+}"""
 
 SESSION_CONFIGS = [
     dict(

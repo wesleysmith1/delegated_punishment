@@ -14,10 +14,12 @@
     align-items: center;
     background: white;
     border: 1px solid black;
-    width: 100px;
-    height: 100px;
-    max-width: 100px;
-    max-height: 100px;
+    width: 150px;
+    height: 150px;
+}
+.harvest-item-image {
+    width: 50%;
+    height: 50%
 }
 .harvest-complete-items {
     display: flex;
@@ -44,4 +46,10 @@
     height: 100px;
     width: 100px;
     background: green;
+}
+.harvest-earnings {
+    position: absolute;
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
 }

@@ -383,7 +383,7 @@ class GameConsumer(WebsocketConsumer):
             try:
                 token = DefendToken.objects.get(group_id=group_id, number=token_num)
             except DefendToken.DoesNotExist:
-                print('ERROR INVESTIGATION=: token not found')
+                log.error('ERROR INVESTIGATION=: token not found')
                 token = None
 
             token.x = token.y = token.x2 = token.y2 = -1
@@ -483,7 +483,23 @@ class GameConsumer(WebsocketConsumer):
                 )
 
             elif pu.get('round_results'):
-                round_results = dict(balance=player.balance)
+
+                # get title for results modal
+                group = Group.objects.get(pk=group_id)
+                title = 'Round Results'
+                if group.is_tutorial():
+                    title = "Tutorial results"
+
+                round_results = dict(balance=player.balance, title=title)
+
+                if player.is_officer():
+
+                    officer_results = dict(
+                        bonus_total=group.officer_bonus_total,
+                        fine_total=group.civilian_fine_total,
+                    )
+
+                    round_results.update(officer_results)
 
                 # send token count to group
                 self.send(text_data=json.dumps({
@@ -513,7 +529,7 @@ class GameConsumer(WebsocketConsumer):
                     token = DefendToken.objects.get(group_id=group_id, number=token_num)
                 except DefendToken.DoesNotExist:
                     token = None
-                    # print('ERROR: NO TOKEN WAS FOUND')
+                    log.error('ERROR: NO TOKEN WAS FOUND')
 
                 token.map = map
                 token.x = x

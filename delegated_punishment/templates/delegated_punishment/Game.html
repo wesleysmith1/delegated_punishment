@@ -10,11 +10,13 @@
     <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap-reboot.min.css">
     <link rel="stylesheet" href="/static/otree/css/theme.css">
 
+    <script src="{% static 'global/js/grain-img.js' %}"></script>
+    <script src="{% static 'global/js/probability-bar.js' %}"></script>
     <script src="{% static 'global/js/officer.js' %}"></script>
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
+    <script src="{% static 'global/js/game-status.js' %}"></script>
     <script src="{% static 'global/js/results-modal.js' %}"></script>
-    <script src="{% static 'global/js/grain-img.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}">
@@ -26,34 +28,20 @@
         // data is rendered on api here, then later read by vue instance
         var player = {{ pjson|json }};
         var dtokens = {{ dtokens|json }};
-        var frameSize = {{ balance_update_rate }};
+        var raw_config = {{ config|json }};
+        var config = JSON.parse(raw_config);
+
         var playerId = {{ player.id }};
         var groupPlayerId = {{ player.id_in_group }};
         var groupId = {{ player.group_id }};
-        var harvestScreen = '{{ timeout }}' === 'True';
         var income = {{ player.income }};
+
         var stealStart = {{ player.steal_start }};
+        var harvestScreen = '{{ timeout }}' === 'True';
+        var timeout = '{{ timeout }}' === 'True';
+
         var roundNumber = {{ subsession.round_number }};
         var sessionId = {{ subsession.session_id }};
-        var defendTokenTotal = {{ defend_token_total }};
-        var timeout = '{{ timeout }}' === 'True';
-        var tutorialDurationSeconds = {{ tutorial_duration_seconds }};
-        var aMax = {{ a_max }};
-        var beta = {{ beta }};
-        var playersPerGroup = {{ players_per_group }};
-        var stealTokenSlots = {{ steal_token_slots }};
-
-        var civilianFine = {{ civilian_fine }};
-        var mapSize = {{ civilian_map_size }};
-        var defendTokenSize = {{ defend_token_size }};
-
-        var reprimandAmount = {{ officer_reprimand_amount }};
-        var playerBalance = {{ player.balance }};
-        var reviewProbability = {{ officer_review_probability }};
-        var stealTimeoutMilli = {{ steal_timeout_milli }};
-        var gameDurationSeconds = {{ game_duration_seconds}};
-
-        var resultsModalSeconds = {{ results_modal_seconds }}
 
     </script>
 </header>
@@ -90,7 +78,6 @@
             <harvest-items-component
                     v-if="harvestScreen"
                     class="harvest"
-                    style="display:flex;"
                     :harvest-status="harvestStatus"
                     :income="income"
                     @harvest-update="harvestUpdate">
@@ -119,51 +106,23 @@
             </steal-game-component>
             <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
         </div>
-        <div class="panel game-status-container">
-            <div class="balance-container">
-                <div class="balance-label">Balance (<grain-image-component :size=20></grain-image-component>)</div>
-                <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
-
-                <div class="notification-label">
-                    <div class="steal-notification">{{stealNotification}}</div>
-                </div>
-
-                <div class="count-container">
-                    <div class="title-small data-row">
-                        <div class="left"># Intercepts: </div>
-                        <div class="right"><strong>{{ interceptCount }}</strong></div>
-                    </div>
-                    <div style="clear: both"></div>
-                    <div class="title-small data-row">
-                        <div class="left"># Fines: </div>
-                        <div class="right"><strong>{{ arrestsCount }}</strong></div>
-                    </div>
-                    <div style="clear: both"></div>
-                    <div class="title-small data-row">
-                        <div class="left"># Reprimands: </div>
-                        <div class="right"><strong>{{ falseArrestCount }}</strong></div>
-                    </div>
-                </div>
-                <br>
-                <br>
-            </div>
-            <div class="notifications-container">
-                <br>
-                <br>
-                <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
-                <br>
-                <probability-bar-component
-                        :label="isOfficer ? 'Probability you fine the innocent' : 'Probability fined if you are innocent'"
-                        :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
-                </probability-bar-component>
-                <br>
-                <probability-bar-component
-                        :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
-                        :percent=probabilityCulprit
-                ></probability-bar-component>
-            </div>
-        </div>
-        <results-modal-component ref="resultsmodal" :balance="balance"></results-modal-component>
+        <game-status-component
+            :civilians-per-group="civiliansPerGroup"
+            :balance="balance"
+            :balance-color="balanceColor"
+            :steal-notification="stealNotification"
+            :intercept-count="interceptCount"
+            :arrests-count="arrestsCount"
+            :false-arrest-count="falseArrestCount"
+            :investigation-count="investigationCount"
+            :defend-token-total="defendTokenTotal"
+            :is-officer="isOfficer"
+            :a-max="aMax"
+            :beta="beta"
+            :review-probability="reviewProbability"
+            @update-probability-reprimand="updateProbabilityReprimand"
+        ></game-status-component>
+        <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer"></results-modal-component>
     </div>
     {% endverbatim %}
 
@@ -195,6 +154,7 @@
                 'harvest-items-component': harvestItemsComponent,
                 'steal-game-component': stealGameComponent,
                 'officer-game-component': officerGameComponent,
+                'game-status-component': gameStatusComponent,
                 'probability-bar-component': probabilityBarComponent,
                 'results-modal-component': resultsModalComponent,
                 'grain-image-component': grainImageComponent,
@@ -206,7 +166,7 @@
                 playerId: playerId,
                 groupPlayerId: groupPlayerId,
                 groupId: groupId,
-                playersPerGroup: playersPerGroup,
+                playersPerGroup: config.players_per_group,
                 roundNumber: roundNumber,
                 sessionId: sessionId,
                 playerLocation: {},
@@ -215,70 +175,58 @@
                 messages: [],
                 singleMessage: null,
                 maps: [],
-                balance: playerBalance,
+                balance: 0,
                 balanceColor: 'black',
                 roi: 0,
-                income: null,
+                income: parseInt(income),
                 harvestItems: [],
                 harvestStatus: 0,
                 harvestScreen: true,
                 officerTokens: [],
                 investigationCount: 0,
-                defendTokenTotal: defendTokenTotal,
+                defendTokenTotal: config.defend_token_total,
                 stealNotification: "",
-                defendTokenSize: defendTokenSize,
-                mapSize: mapSize,
-                gameDuration: 240000,  // milliseconds
-                balanceFrequency: frameSize,
+                defendTokenSize: config.defend_token_size,
+                mapSize: config.civilian_map_size,
+                gameDuration: config.game_duration_seconds * 1000,
+                balanceFrequency: config.balance_update_rate,
                 activeSteal: 0,
                 activeStealMaps: {1:0, 2:0, 3:0, 4:0, 5:0},
-                beta: beta,
-                aMax: aMax,
+                beta: config.beta,
+                aMax: config.a_max,
                 fineNotification: "",
-                civilianFine: civilianFine,
+                civilianFine: config.civilian_fine,
                 messageIndex: 0,
                 timeout: timeout,
-                tutorialDuration: null,
+                tutorialDuration: config.tutorial_duration_seconds * 1000,
                 interceptCount: 0,
                 arrestsCount: 0,
                 falseArrestCount: 0,
-                reprimandAmount: reprimandAmount,
-                reviewProbability: reviewProbability,
-                stealTimeoutMilli: stealTimeoutMilli,
-                stealTokenSlots: stealTokenSlots,
-                resultsModalDuration: resultsModalSeconds * 1000,
+                reprimandAmount: config.officer_reprimand_amount,
+                reviewProbability: config.officer_review_probability,
+                stealTimeoutMilli: config.steal_timeout_milli,
+                stealTokenSlots: config.steal_token_slots,
+                resultsModalDuration: config.results_modal_seconds * 1000,
+                probabilityReprimand: 0,
+                config: config,
 
-                // todo: add this to constatns on both projects
                 civiliansPerGroup: 5,
+                resultsObj: {},
             },
             created: function () {
+
 
                 // todo we need to add way to make sure page was not refreshed or way to get timmer of actualy game instead of starting the timmer again.
 
                 this.player = JSON.parse(player);
 
-
-                this.isOfficer = this.groupPlayerId == 1;
+                this.isOfficer = this.groupPlayerId === 1;
                 this.stealLocation = parseInt(stealStart);
 
-                this.gameDuration = gameDurationSeconds * 1000;
-
                 if (this.timeout) {
-                    this.tutorialDuration = tutorialDurationSeconds * 1000;
                     this.gameDuration = this.tutorialDuration;
                 }
-                // debug
-                this.income = parseInt(income);
 
-                // this code is for handling page refreshes
-                //if (!this.isOfficer) {
-                //    this.playerLocation = {
-                //        'player': this.groupPlayerId,
-                //        'map': this.player.map,
-                //        'x': this.player.x,
-                //        'y': this.player.y
-                //    }; // todo integrate this into app
-                //} else
                 if (this.isOfficer) {
                     this.officerTokens = JSON.parse(dtokens);
                     this.officerTokens.forEach((t) => {
@@ -350,7 +298,8 @@
                         } else if (data.round_end) {
                             this.endRound()
                         } else if (data.round_results) {
-                            this.balance = data.round_results.balance
+                            this.resultsObj = data.round_results
+                            this.balance = this.resultsObj.balance
                         } else if (data.round_start) {
                             console.log('Round Started')
                             this.gameStarted = true;
@@ -420,7 +369,6 @@
                         this.positionStealToken();
 
                     } else { // toggle to harvest
-                        // reset steal location
 
                         // reset harvest status and send toggle event to db
                         this.harvestScreen = !this.harvestScreen;
@@ -457,7 +405,7 @@
                     });
 
                     // reset harvest cycle
-                    if (this.harvestStatus == 4) {
+                    if (this.harvestStatus === 4) {
                         this.harvestStatus = 0;
                         // reset harvest items
                         gsap.to('#seed, #water, #plow, #harvest', 0, {autoAlpha: 1});
@@ -465,7 +413,7 @@
                 },
                 subscribeToBalance: function () {
                     setInterval(() => {
-                        if (this.gameSocket.readyState == WebSocket.OPEN) {
+                        if (this.gameSocket.readyState === WebSocket.OPEN) {
                             this.gameUpdate({
                                 'balance': true,
                             });
@@ -572,25 +520,35 @@
 
                         let intersectionSelector = '#indicator-' + i.map + '-' + i.culprit;
                         let labelSelector = '#intersection-label-' + i.map + '-' + i.culprit;
+                        let circleSelector = '#indicator-' + i.map + '-' + i.culprit + '-circle';
+
+                        let x = i.culprit_x - 10;
+                        let y = i.culprit_y - 10;
+
                         let tl = gsap.timeline();
-                        let x = i.culprit_x - 3;
-                        let y = i.culprit_y - 3;
 
                         tl.to(intersectionSelector, 0, {left: x+1, top: y+1});
-                        tl.to(labelSelector, 0, {left: x-13, top: y-30});
+                        tl.to(labelSelector, 0, {left: x-42, top: y-35});
                         tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'visible'});
-                        tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'hidden', delay: 2})
+
+                        // indicator pulse
+                        tl.to(circleSelector, {duration: 1, r: 8})
+
+                        tl.to(intersectionSelector + ',' + labelSelector, {visibility: 'hidden'})
+
+                        // reset circle
+                        tl.to(circleSelector, {r: 4});
 
 
                     } else {
                         // was player the culprit
-                        if (i.culprit == this.groupPlayerId) {
+                        if (i.culprit === this.groupPlayerId) {
                             this.stealLocation = i.steal_reset;
                             this.$refs.stealcomponent.cancelTimeout()
                             this.positionStealToken()
                         }
 
-                        if (i.guilty == this.groupPlayerId) {
+                        if (i.guilty === this.groupPlayerId) {
                             this.fineNotification = "Fined -" + this.civilianFine;
 
                             this.stealNotification = "You were fined!";
@@ -601,13 +559,25 @@
                         }
 
                         let selector = '#indicator-' + i.map + '-' + i.culprit;
+                        let circleSelector = '#indicator-' + i.map + '-' + i.culprit + '-circle';
+                        let x = i.culprit_x - 10;
+                        let y = i.culprit_y - 10;
+
                         let tl = gsap.timeline();
-                        let x = i.culprit_x - 3;
-                        let y = i.culprit_y - 3;
 
                         tl.to(selector, 0, {left: x+1, top: y+1});
-                        tl.to(selector, {visibility: 'visible'});
-                        tl.to(selector, {visibility: 'hidden', delay: 2})
+
+                        // display
+                        tl.to(selector, 0, {visibility: 'visible'});
+
+                        // indicator pulse
+                        tl.to(circleSelector, {duration: 1, r: 8})
+
+                        // hide indicator
+                        tl.to(selector, 0, {visibility: 'hidden'});
+
+                        // reset circle
+                        tl.to(circleSelector, {r: 4});
                     }
 
                 },
@@ -637,39 +607,19 @@
                     }
                 },
                 roundEndEvent: function() {
-
-
                     this.gameUpdate({
                         'round_update': { 'round_end': true },
                     });
-                }
+                },
+                updateProbabilityReprimand: function(value) {
+                    this.probabilityReprimand = value
+                },
             },
             computed: {
-                probabilityCulprit() {
-                    if (this.investigationCount > this.aMax)
-                        return this.beta * 100;
-                    else {
-                        let guilty = this.beta * (1/(this.civiliansPerGroup - 1) + ((this.civiliansPerGroup - 2) / (this.civiliansPerGroup - 1) * (this.investigationCount/this.aMax)))
-                        return Math.round(guilty*10000) / 100
-                        // return Math.round((2 + this.investigationCount) * (9/80)*10000) / 100
-                    }
-                },
-                probabilityInnocent() {
-                    if (this.investigationCount > this.aMax)
-                        return 0;
-                    else {
-                        let innocent = this.beta * ((1/(this.civiliansPerGroup -1) - (1/(this.civiliansPerGroup -1)) * (this.investigationCount/this.aMax)))
-                        return Math.round(innocent*10000) / 100
-                        // return Math.round((6 - this.investigationCount) * (9/240)*10000) / 100
-                    }
-                },
-                probabilityReprimand() {
-                    return Math.round(this.reviewProbability * 3 * this.probabilityInnocent);
-                }
             },
         });
 
-        // this allows other scripts to call vue instance methods
+        // allow other scripts to call vue instance methods
         function activateResults() {
             app.endRound()
         }

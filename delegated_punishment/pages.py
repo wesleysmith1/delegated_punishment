@@ -7,7 +7,6 @@ from delegated_punishment.helpers import skip_round
 
 
 class Game(Page):
-
     # the template can be changed to GameTest.html to. Each tab sends up test data at intervals to the backend
     # template_name = 'delegated_punishment/GameTest.html'
     template_name = 'delegated_punishment/Game.html'
@@ -31,23 +30,8 @@ class Game(Page):
 
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
-        vars_dict['balance_update_rate'] = self.session.config['balance_update_rate']
-        vars_dict['defend_token_total'] = Constants.defend_token_total
-        vars_dict['a_max'] = Constants.a_max
-        vars_dict['beta'] = Constants.beta
 
-        vars_dict['civilian_fine'] = Constants.civilian_fine_amount
-        vars_dict['civilian_map_size'] = Constants.civilian_map_size
-        vars_dict['defend_token_size'] = Constants.defend_token_size
-        vars_dict['tutorial_duration_seconds'] = Constants.tutorial_duration_seconds
-        vars_dict['officer_reprimand_amount'] = Constants.officer_reprimand_amount
-        vars_dict['officer_review_probability'] = Constants.officer_review_probability
-        vars_dict['steal_timeout_milli'] = Constants.steal_timeout_milli
-        vars_dict['game_duration_seconds'] = Constants.game_duration_seconds
-        vars_dict['players_per_group'] = Constants.players_per_group
-        vars_dict['steal_token_slots'] = Constants.steal_token_slots
-
-        vars_dict['results_modal_seconds'] = Constants.results_modal_seconds
+        vars_dict['timeout'] = Constants.num_rounds > 1 and self.round_number == 1
 
         # if the input is zero there is no delay after advance slowest is selected.
         if self.round_number == 1:
@@ -58,11 +42,30 @@ class Game(Page):
         if self.player.id_in_group == 1:
             officer_tokens = DefendToken.objects.filter(group=self.group)
             # for o in officer_tokens:
-                # print("TOKEN {} - MAP  {} - X {:6.2f} - Y {:6.2f}".format(o.number, str(o.map), o.x, o.y)) #todo: these values are correct. Why are they not getting passed down to client?
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
-        vars_dict['timeout'] = Constants.num_rounds > 1 and self.round_number == 1
+        config = dict(
+            balance_update_rate=self.session.config['balance_update_rate'],
+            defend_token_total=Constants.defend_token_total,
+            a_max=Constants.a_max,
+            beta=Constants.beta,
+            civilian_fine=Constants.civilian_fine_amount,
+            civilian_map_size=Constants.civilian_map_size,
+            defend_token_size=Constants.defend_token_size,
+            tutorial_duration_seconds=Constants.tutorial_duration_seconds,
+            officer_reprimand_amount=Constants.officer_reprimand_amount,
+            officer_review_probability=Constants.officer_review_probability,
+            steal_timeout_milli=Constants.steal_timeout_milli,
+            game_duration_seconds=Constants.game_duration_seconds,
+            players_per_group=Constants.players_per_group,
+            civilians_per_group=Constants.civilians_per_group,
+            steal_token_slots=Constants.steal_token_slots,
+            results_modal_seconds=Constants.results_modal_seconds,
+        )
+
+        vars_dict['config'] = json.dumps(config)
+
         return vars_dict
 
 

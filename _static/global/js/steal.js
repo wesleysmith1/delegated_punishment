@@ -1,6 +1,5 @@
 let stealGameComponent = {
     components: {
-        'probability-bar-component': probabilityBarComponent,
     },
     props: {
         maps: Array,
@@ -79,7 +78,7 @@ let stealGameComponent = {
         checkLocation: function (that) {
 
             if (that.hitTest(this.$refs.htarget, '10%')) {
-                //location-centerde
+                //location-centered
                 for (let i in this.maps) {
                     let id = parseInt(this.maps[i]) + 1;
                     if (that.hitTest(this.$refs['prop' + id], '.000001')) {
@@ -128,7 +127,7 @@ let stealGameComponent = {
     },
     template:
         `
-      <div class="steal" style="display:flex; flex-wrap: wrap">
+      <div class="steal">
         <div class="game">
             <div id="steal-container" class="upper" ref="stealcontainer">
                 <div class='title'>Civilian Maps</div> 
@@ -140,12 +139,12 @@ let stealGameComponent = {
                                 v-bind:player-id="(map+1)" 
                                 :id='"prop" + (map+1)' 
                                 :ref='"prop" + (map+1)'>
-                                <div id="fine-notification" v-if="groupPlayerId==map+1" style="text-align: center; font-size: 50px; padding-top: 40px;">
+                                <div id="home-fine-notification" v-if="groupPlayerId==map+1" style="text-align: center; font-size: 50px; padding-top: 40px;">
                                     {{fineNotification}}
                                 </div>
                                 <!-- svg indicator id format: map-player-->
-                                <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="4" height="4">
-                                  <circle cx="2" cy="2" r="2" :fill="indicatorColor(player_id+1)" />
+                                <svg v-for="player_id in 5" :key="player_id" :id="'indicator-' + (map+1) + '-' + (player_id + 1)" class="indicator" width="16" height="16">
+                                  <circle :id="'indicator-' + (map+1) + '-' + (player_id + 1) + '-circle'" cx="8" cy="8" r="4" :fill="indicatorColor(player_id+1)" />
                                 </svg>
                             </div>
                             <div class="map-label">{{map+1 == groupPlayerId ? 'You' : 'Civilian ' + (map+1)}}</div>
@@ -155,8 +154,8 @@ let stealGameComponent = {
                         <div class="steal-locations-container">
                             <div class="steal-location" ref="steallocation1" id="steallocation1">
                                 <svg id="location" height="21" width="21">
-                                    <line x1="0" y1="0" x2="21" y2="21" style="stroke:red;stroke-width:3;"/>       
-                                    <line x1="21" y1="0" x2="0" y2="21" style="stroke:red;stroke-width:3;"/>       
+                                    <line x1="0" y1="0" x2="21" y2="21" class="steal-token-line"/>       
+                                    <line x1="21" y1="0" x2="0" y2="21" class="steal-token-line"/>       
                                         
                                     <circle ref="location" cx="10.5" cy="10.5" r="2" fill="black" />
                                     Sorry, your browser does not support inline SVG.  
