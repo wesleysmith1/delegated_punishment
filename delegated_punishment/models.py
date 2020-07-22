@@ -48,8 +48,7 @@ class Constants(BaseConstants):
     # officer_incomes = [0, 180, 600]
 
     """ 
-    this is the size of the tokens is defined. 
-    When changing values also update officer.css file 
+    this is the size of the tokens and maps are defined. 
     """
     defend_token_size = 68 * 1.5
     civilian_map_size = 200 * 1.5

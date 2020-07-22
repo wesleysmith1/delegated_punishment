@@ -54,7 +54,7 @@ let harvestItemsComponent = {
       <div id="harvest-container" class="game">
         <div class="upper-harvest">
             <div class="title harvest-earnings">
-                Each harvest earns {{ income }} grain
+                Each harvest earns <strong>{{ income }}</strong> grain
             </div>
             <div class='harvest-items'>
               <div v-for='(i, index) in items' :id='i' :index='index' :ref='i' class='harvest-item'>

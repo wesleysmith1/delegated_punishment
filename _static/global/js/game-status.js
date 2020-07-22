@@ -63,7 +63,7 @@ let gameStatusComponent = {
             <div class="game-status-container">
                 <div class="balance-container">
                     <div class="balance-label">Balance (<grain-image-component :size=20></grain-image-component>)</div>
-                    <div class="balance" :style="{ color: balanceColor }"> {{Math.floor(balance)}}</div>
+                    <div class="balance" :style="{ color: balanceColor }"> {{balance | integerFilter}}</div>
             
                     <div class="notification-label">
                         <div class="steal-notification">{{stealNotification}}</div>
@@ -91,17 +91,23 @@ let gameStatusComponent = {
                 <div class="probability-container">
                     <br>
                     <br>
-                    <div class="title-small">Officer tokens on investigate: <strong>{{investigationCount}}/{{defendTokenTotal}}</strong></div>
-                    <br>
-                    <probability-bar-component
-                            :label="isOfficer ? 'Probability you fine an innocent' : 'Probability fined if you are innocent'"
-                            :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
-                    </probability-bar-component>
-                    <br>
-                    <probability-bar-component
-                            :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
-                            :percent=probabilityCulprit
-                    ></probability-bar-component>
+                    <div class="inner">
+                        <div class="title-small data-row">
+                            <div class="left">Officer tokens on investigate:</div>
+                            <div class="right bold-txt"><div class="number-right-align">{{investigationCount}}/{{defendTokenTotal}}</div></div>
+                        </div>
+                        <br>
+                        <div style="clear: both;"></div>
+                        <probability-bar-component
+                                :label="isOfficer ? 'Probability you fine an innocent' : 'Probability fined if you are innocent'"
+                                :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
+                        </probability-bar-component>
+                        <br>
+                        <probability-bar-component
+                                :label="isOfficer ? 'Probability you fine the culprit' : 'Probability fined if you are the culprit'"
+                                :percent=probabilityCulprit
+                        ></probability-bar-component>
+                    </div>
                 </div>
             </div>
         `

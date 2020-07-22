@@ -80,6 +80,12 @@ let stealGameComponent = {
             if (that.hitTest(this.$refs.htarget, '10%')) {
                 //location-centered
                 for (let i in this.maps) {
+
+                    // cannot steal from own map
+                    debugger;
+                    if (this.maps[i]+1 === this.groupPlayerId)
+                        continue
+
                     let id = parseInt(this.maps[i]) + 1;
                     if (that.hitTest(this.$refs['prop' + id], '.000001')) {
                         let map = this.$refs['prop' + id][0].getBoundingClientRect();

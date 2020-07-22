@@ -53,76 +53,79 @@
     </form>
 
     {% verbatim %}
-    <div id="app" v-show="gameStarted">
-        <officer-game-component
-            id="officerGame"
-            class="game-container"
-            v-if="isOfficer"
-            ref="officercomponent"
-            :maps="maps"
-            :initial-defend-tokens="officerTokens"
-            :officer-income="income"
-            :investigation-count="investigationCount"
-            :defend-token-total="defendTokenTotal"
-            :police-log-messages="policeLogMessages"
-            :map-size="mapSize"
-            :defend-token-size="defendTokenSize"
-            :probability-reprimand="probabilityReprimand"
-            :reprimand-amount="reprimandAmount"
-            @token-drag="tokenDrag"
-            @token-update="tokenUpdate"
-            @investigation-update="investigationUpdate"
-            @defense-token-reset="defenseTokenReset">
-        </officer-game-component>
-        <div id="harvestGame" class="game-container" v-else>
-            <harvest-items-component
-                    v-if="harvestScreen"
-                    class="harvest"
-                    :harvest-status="harvestStatus"
-                    :income="income"
-                    @harvest-update="harvestUpdate">
-            </harvest-items-component>
-            <steal-game-component
-                    v-show="!harvestScreen"
-                    ref="stealcomponent"
-                    :maps="maps"
-                    :group-player-id="groupPlayerId"
-                    :player-location="playerLocation"
-                    :investigation-count="investigationCount"
-                    :defend-token-total="defendTokenTotal"
-                    :police-log-messages="policeLogMessages"
-                    :map-size="mapSize"
-                    :steal-location="stealLocation"
-                    :active-steal="activeSteal"
-                    :active-steal-maps="activeStealMaps"
-                    :fine-notification="fineNotification"
-                    :steal-timeout-milli="stealTimeoutMilli"
-                    :steal-token-slots="stealTokenSlots"
-                    @location-drag="locationDrag"
-                    @location-update="locationUpdate"
-                    @location-token-reset="locationTokenReset"
-                    @location-token-timeout="locationTokenTimeout"
-            >
-            </steal-game-component>
-            <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
+    <div id="app">
+        <div class="outer-container" v-show="gameStarted">
+            <officer-game-component
+                id="officerGame"
+                class="game-container"
+                v-if="isOfficer"
+                ref="officercomponent"
+                :maps="maps"
+                :initial-defend-tokens="officerTokens"
+                :officer-income="income"
+                :investigation-count="investigationCount"
+                :defend-token-total="defendTokenTotal"
+                :police-log-messages="policeLogMessages"
+                :map-size="mapSize"
+                :defend-token-size="defendTokenSize"
+                :probability-reprimand="probabilityReprimand"
+                :reprimand-amount="reprimandAmount"
+                @token-drag="tokenDrag"
+                @token-update="tokenUpdate"
+                @investigation-update="investigationUpdate"
+                @defense-token-reset="defenseTokenReset">
+            </officer-game-component>
+            <div id="harvestGame" class="game-container" v-else>
+                <harvest-items-component
+                        v-if="harvestScreen"
+                        class="harvest"
+                        :harvest-status="harvestStatus"
+                        :income="income"
+                        @harvest-update="harvestUpdate">
+                </harvest-items-component>
+                <steal-game-component
+                        v-show="!harvestScreen"
+                        ref="stealcomponent"
+                        :maps="maps"
+                        :group-player-id="groupPlayerId"
+                        :player-location="playerLocation"
+                        :investigation-count="investigationCount"
+                        :defend-token-total="defendTokenTotal"
+                        :police-log-messages="policeLogMessages"
+                        :map-size="mapSize"
+                        :steal-location="stealLocation"
+                        :active-steal="activeSteal"
+                        :active-steal-maps="activeStealMaps"
+                        :fine-notification="fineNotification"
+                        :steal-timeout-milli="stealTimeoutMilli"
+                        :steal-token-slots="stealTokenSlots"
+                        @location-drag="locationDrag"
+                        @location-update="locationUpdate"
+                        @location-token-reset="locationTokenReset"
+                        @location-token-timeout="locationTokenTimeout"
+                >
+                </steal-game-component>
+                <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
+            </div>
+            <game-status-component
+                :civilians-per-group="civiliansPerGroup"
+                :balance="balance"
+                :balance-color="balanceColor"
+                :steal-notification="stealNotification"
+                :intercept-count="interceptCount"
+                :arrests-count="arrestsCount"
+                :false-arrest-count="falseArrestCount"
+                :investigation-count="investigationCount"
+                :defend-token-total="defendTokenTotal"
+                :is-officer="isOfficer"
+                :a-max="aMax"
+                :beta="beta"
+                :review-probability="reviewProbability"
+                @update-probability-reprimand="updateProbabilityReprimand"
+            ></game-status-component>
+            <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer"></results-modal-component>
         </div>
-        <game-status-component
-            :civilians-per-group="civiliansPerGroup"
-            :balance="balance"
-            :balance-color="balanceColor"
-            :steal-notification="stealNotification"
-            :intercept-count="interceptCount"
-            :arrests-count="arrestsCount"
-            :false-arrest-count="falseArrestCount"
-            :investigation-count="investigationCount"
-            :defend-token-total="defendTokenTotal"
-            :is-officer="isOfficer"
-            :a-max="aMax"
-            :beta="beta"
-            :review-probability="reviewProbability"
-            @update-probability-reprimand="updateProbabilityReprimand"
-        ></game-status-component>
-        <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer"></results-modal-component>
+        <div v-show="!gameStarted" class="title">Loading...</div>
     </div>
     {% endverbatim %}
 
