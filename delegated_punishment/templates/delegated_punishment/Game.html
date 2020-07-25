@@ -5,7 +5,6 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.0.4/dist/Draggable.min.js"></script>
 
-    <!-- TODO: reformat this to be like the others -->
     <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/bootstrap4/css/bootstrap-reboot.min.css">
     <link rel="stylesheet" href="/static/otree/css/theme.css">
@@ -18,6 +17,7 @@
     <script src="{% static 'global/js/game-status.js' %}"></script>
     <script src="{% static 'global/js/results-modal.js' %}"></script>
 
+    <link rel="stylesheet" type="text/css" href="{% static 'global/styles/game-status.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/harvest.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/steal.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/officer.css' %}">
@@ -37,8 +37,7 @@
         var income = {{ player.income }};
 
         var stealStart = {{ player.steal_start }};
-        var harvestScreen = '{{ timeout }}' === 'True';
-        var timeout = '{{ timeout }}' === 'True';
+        var tutorial = '{{ tutorial }}' === 'True';
 
         var roundNumber = {{ subsession.round_number }};
         var sessionId = {{ subsession.session_id }};
@@ -169,7 +168,6 @@
                 playerId: playerId,
                 groupPlayerId: groupPlayerId,
                 groupId: groupId,
-                playersPerGroup: config.players_per_group,
                 roundNumber: roundNumber,
                 sessionId: sessionId,
                 playerLocation: {},
@@ -187,97 +185,99 @@
                 harvestScreen: true,
                 officerTokens: [],
                 investigationCount: 0,
-                defendTokenTotal: config.defend_token_total,
                 stealNotification: "",
-                defendTokenSize: config.defend_token_size,
-                mapSize: config.civilian_map_size,
-                gameDuration: config.game_duration_seconds * 1000,
-                balanceFrequency: config.balance_update_rate,
                 activeSteal: 0,
-                activeStealMaps: {1:0, 2:0, 3:0, 4:0, 5:0},
-                beta: config.beta,
-                aMax: config.a_max,
+                activeStealMaps: {},
                 fineNotification: "",
-                civilianFine: config.civilian_fine,
-                messageIndex: 0,
-                timeout: timeout,
-                tutorialDuration: config.tutorial_duration_seconds * 1000,
+                tutorial: tutorial,
                 interceptCount: 0,
                 arrestsCount: 0,
                 falseArrestCount: 0,
+                playersPerGroup: config.players_per_group,
+                civilianFine: config.civilian_fine,
+                tutorialDuration: config.tutorial_duration_seconds * 1000,
                 reprimandAmount: config.officer_reprimand_amount,
                 reviewProbability: config.officer_review_probability,
                 stealTimeoutMilli: config.steal_timeout_milli,
                 stealTokenSlots: config.steal_token_slots,
                 resultsModalDuration: config.results_modal_seconds * 1000,
+                defendTokenSize: config.defend_token_size,
+                mapSize: config.civilian_map_size,
+                gameDuration: config.game_duration_seconds * 1000,
+                balanceFrequency: config.balance_update_rate,
+                defendTokenTotal: config.defend_token_total,
+                beta: config.beta,
+                aMax: config.a_max,
                 probabilityReprimand: 0,
                 config: config,
+                balanceInterval: null,
 
                 civiliansPerGroup: 5,
                 resultsObj: {},
+                roundOver: false
             },
             created: function () {
 
+                this.initializeVariables();
 
-                // todo we need to add way to make sure page was not refreshed or way to get timmer of actualy game instead of starting the timmer again.
+                this.configureOfficerTokens();
 
-                this.player = JSON.parse(player);
+                this.configureCivilianMaps();
 
-                this.isOfficer = this.groupPlayerId === 1;
-                this.stealLocation = parseInt(stealStart);
+                // connect and listen to sync web socket
+                this.configureGameSync();
 
-                if (this.timeout) {
-                    this.gameDuration = this.tutorialDuration;
-                }
+                this.configureGame();
 
-                if (this.isOfficer) {
-                    this.officerTokens = JSON.parse(dtokens);
-                    this.officerTokens.forEach((t) => {
-                        t.slot = t.number;
-                        t.map = 0; // todo: make this loaded from the database
-                    });
-                }
+                this.subscribeToBalance();
 
-                // player maps
-                this.maps = [];
-                for (let i = 1; i < this.playersPerGroup; i++)
-                    this.maps.push(i)
+            },
+            methods: {
+                configureGameSync: function() {
+                    this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
+                    this.gameSyncSocket.onopen = (e) => {
+                       console.log('game sync connected')
+                       let data = {
+                           'group_id': this.groupId,
+                           'player_id': this.playerId,
+                           'round_number': this.roundNumber,
+                           'ready': true,
+                       };
+                       this.gameSyncSocket.send(JSON.stringify(data))
+                    };
 
-                this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
-                this.gameSyncSocket.onopen = (e) => {
-                   console.log('game sync connected')
-                   let data = {
-                       'group_id': this.groupId,
-                       'player_id': this.playerId,
-                       'round_number': this.roundNumber,
-                       'ready': true,
-                   };
-                   this.gameSyncSocket.send(JSON.stringify(data))
-                };
+                    this.gameSyncSocket.onmessage = (e) => {
+                        let data = JSON.parse(e.data);
 
-                this.gameSyncSocket.onmessage = (e) => {
-                    let data = JSON.parse(e.data);
-
-                    // host (always p1) listens for signal that all players are ready
-                    if (data.players_ready) {
-                        this.signalPlayersReady()
-                    }
-                };
-
-
-                this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
+                        // host (always p1) listens for signal that all players are ready
+                        if (data.players_ready) {
+                            this.signalPlayersReady()
+                        }
+                    };
+                },
+                configureGame: function() {
+                    this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
                         // this.startTimer()
                         console.log('game socket opened')
                     };
 
                     this.gameSocket.onmessage = (e) => {
+
                         let data = JSON.parse(e.data);
 
-                        if (data.balance) { // todo: make this its own channel
+                        // check if the game has already ended
+                        if (this.roundOver) {
+                             if (data.round_results) {
+                                this.resultsObj = data.round_results
+                                this.balance = this.resultsObj.balance
+                            }
+                             return
+                        }
+
+                        if (data.balance) {
                             this.activeStealMaps = data.balance.active_maps;
                             let latestBalance = data.balance[this.groupPlayerId].balance;
-                            let stealingFromPlayer = data.balance[this.groupPlayerId].victim_count;
                             this.activeSteal = data.balance[this.groupPlayerId].map;
 
                             if (latestBalance === this.balance) { // balance has not changed
@@ -290,9 +290,8 @@
                             }
 
                             this.balance = latestBalance;
-                            this.roi = data.roi
+
                         } else if (data.intersections) {
-                            this.messageIndex++;
                             data.intersections.forEach((i) => {
                                 this.showIntersection(i);
                             })
@@ -300,9 +299,6 @@
                             this.investigationCount = data.investigation_update
                         } else if (data.round_end) {
                             this.endRound()
-                        } else if (data.round_results) {
-                            this.resultsObj = data.round_results
-                            this.balance = this.resultsObj.balance
                         } else if (data.round_start) {
                             console.log('Round Started')
                             this.gameStarted = true;
@@ -310,15 +306,33 @@
                         }
                     };
 
-                this.gameSocket.onclose = (e) => {
-                    console.error('CHANNEL CLOSED UNEXPECTEDLY');
-                };
+                    this.gameSocket.onclose = (e) => {
+                        console.log('GAME SOCKET HAS CLOSED');
+                    };
+                },
+                configureOfficerTokens: function() {
+                    if (this.isOfficer) {
+                        this.officerTokens = JSON.parse(dtokens);
+                        this.officerTokens.forEach((t) => {
+                            t.slot = t.number;
+                            t.map = 0;
+                        });
+                    }
+                },
+                configureCivilianMaps: function() {
+                    // player maps
+                    this.maps = [];
+                    for (let i = 1; i < this.playersPerGroup; i++) {
+                        this.activeStealMaps[i] = 0;
+                        this.maps.push(i);
+                    }
+                },
+                initializeVariables: function() {
+                    this.player = JSON.parse(player);
 
-                if (this.isOfficer)
-                     this.subscribeToBalance()
-
-            },
-            methods: {
+                    this.isOfficer = this.groupPlayerId === 1;
+                    this.stealLocation = parseInt(stealStart);
+                },
                 isHost: function() {
                     return this.groupPlayerId === 1;
                 },
@@ -328,6 +342,7 @@
                     }
                 },
                 endRound: function() {
+                    this.roundOver = true
                     // get results from backend
                     this.getRoundResults()
                     // open modal
@@ -380,7 +395,11 @@
                 },
                 gameUpdate: function(data) {
 
-                    // todo can we merge objects here like we do with update() on the backend
+                    if (this.gameSocket.readyState !== WebSocket.OPEN) {
+                        console.log('Round has ended. Cannot send data to event hub', data);
+                        return
+                    }
+
                     data.player_id = this.playerId
                     data.group_id = this.groupId
                     data.round_number = this.roundNumber
@@ -415,7 +434,10 @@
                     }
                 },
                 subscribeToBalance: function () {
-                    setInterval(() => {
+                    if (!this.isOfficer)
+                        return
+
+                    this.balanceInterval = setInterval(() => {
                         if (this.gameSocket.readyState === WebSocket.OPEN) {
                             this.gameUpdate({
                                 'balance': true,
@@ -425,6 +447,9 @@
                         }
                     }, this.balanceFrequency);
                 },
+                unsubscribeBalance: function() {
+                    clearInterval(this.balanceInterval);
+                },
                 positionStealToken: function() {
                     if (this.harvestScreen) // update this so we dont check multiple times
                         return;
@@ -432,57 +457,10 @@
                          this.$refs.stealcomponent.setStealLocation();
                     });
                 },
-                tokenDrag: function(token) {
-                    this.gameUpdate({
-                        'defend_token_drag': token,
-                    });
-                },
-                tokenUpdate: function (token) {
-                    this.gameUpdate({
-                        'defend_token_update': token,
-                    });
-                },
                 investigationUpdate: function(item) {
                     // inform the api that the item is being dragged
                     this.gameUpdate({
                         'investigation_update': item,
-                    });
-                },
-                locationDrag: function(location) {
-                    this.gameUpdate({
-                        'steal_token_drag': location,
-                    });
-                },
-                locationUpdate: function (location) {
-                    this.gameUpdate({
-                        'steal_token_update': location,
-                    });
-                },
-                locationTokenReset: function(x) {
-                    // this function informs the api that the token has reset
-
-                    if (x === this.stealLocation) {
-                        // watch won't be triggered here so we need to trigger the function manually
-                        this.$refs.stealcomponent.setStealLocation();
-                    }
-                    this.stealLocation = x
-                    this.gameUpdate({
-                        'steal_token_reset': {'steal_location': x,},
-                    });
-                },
-                locationTokenTimeout: function(x) {
-                    this.stealLocation = x;
-                    if (x === this.stealLocation) {
-                        // watch won't be triggered here so we need to trigger the function manually
-                        this.$refs.stealcomponent.setStealLocation();
-                    }
-                    this.gameUpdate({
-                        'steal_token_timeout': {'steal_location': x,}
-                    })
-                },
-                defenseTokenReset: function(token) {
-                    this.gameUpdate({
-                        'defend_token_reset': {'number': token.number, 'slot': token.slot},
                     });
                 },
                 showIntersection: function (i) {
@@ -517,7 +495,7 @@
                             labelText = '0';
                             labelColor = 'black';
                         }
-                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit); // todo fix this stuff
+                        let labelElement = document.getElementById('intersection-label-' + i.map + "-" + i.culprit);
                         labelElement.style.color = labelColor;
                         labelElement.innerText = labelText;
 
@@ -595,11 +573,13 @@
                     setTimeout(() => {
                         // officer records round end
                         // todo: the round end event should originate from the api. schedule it when the game is started
-                        if (this.isOfficer)
+                        if (this.isOfficer) {
+                            this.unsubscribeBalance();
                             this.roundEndEvent();
+                        }
 
                         this.disableTokens()
-                    }, this.gameDuration);
+                    }, this.tutorial? this.tutorialDuration : this.gameDuration );
 
                 },
                 disableTokens: function() {
@@ -616,6 +596,53 @@
                 },
                 updateProbabilityReprimand: function(value) {
                     this.probabilityReprimand = value
+                },
+                locationDrag: function(location) {
+                    this.gameUpdate({
+                        'steal_token_drag': location,
+                    });
+                },
+                locationUpdate: function (location) {
+                    this.gameUpdate({
+                        'steal_token_update': location,
+                    });
+                },
+                locationTokenReset: function(x) {
+                    // this function informs the api that the token has reset
+
+                    if (x === this.stealLocation) {
+                        // watch won't be triggered here so we need to trigger the function manually
+                        this.$refs.stealcomponent.setStealLocation();
+                    }
+                    this.stealLocation = x
+                    this.gameUpdate({
+                        'steal_token_reset': {'steal_location': x,},
+                    });
+                },
+                locationTokenTimeout: function(x) {
+                    this.stealLocation = x;
+                    if (x === this.stealLocation) {
+                        // watch won't be triggered here so we need to trigger the function manually
+                        this.$refs.stealcomponent.setStealLocation();
+                    }
+                    this.gameUpdate({
+                        'steal_token_timeout': {'steal_location': x,}
+                    })
+                },
+                defenseTokenReset: function(token) {
+                    this.gameUpdate({
+                        'defend_token_reset': {'number': token.number, 'slot': token.slot},
+                    });
+                },
+                tokenDrag: function(token) {
+                    this.gameUpdate({
+                        'defend_token_drag': token,
+                    });
+                },
+                tokenUpdate: function (token) {
+                    this.gameUpdate({
+                        'defend_token_update': token,
+                    });
                 },
             },
             computed: {

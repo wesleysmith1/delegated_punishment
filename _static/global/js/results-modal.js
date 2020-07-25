@@ -1,4 +1,7 @@
 let resultsModalComponent = {
+    components: {
+        'grain-image-component': grainImageComponent,
+    },
     props: {
         resultsObj: Object,
         isOfficer: Boolean,
@@ -22,7 +25,7 @@ let resultsModalComponent = {
             <div v-if="resultsObj" class="modal-content results-modal">
                 <h4 style="text-align: center;">{{ resultsObj.title }}</h4>
                 
-                <p style="text-align: center;">Earnings summary</p>
+                <p style="text-align: center;">Balance</p>
                 
                 <div class="list-group" style="width: 350px; margin: auto;">
                     

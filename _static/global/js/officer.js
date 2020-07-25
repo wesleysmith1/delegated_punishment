@@ -72,7 +72,7 @@ let officerGameComponent = {
         },
         disableAllTokens() {
             // disable all tokens
-            for (let i=1; i <= this.mutableDefendTokens.length; i++) {
+            for (let i; i < this.mutableDefendTokens.length; i++) {
                 Draggable.get('unit' + i).disable()
             }
         },
@@ -171,7 +171,7 @@ let officerGameComponent = {
                             </svg>
                       </div>
                       <div class="map-label">
-                        Player {{map+1}}
+                        Civilian {{map+1}}
                       </div>
                     </div>
                 </div>

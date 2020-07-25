@@ -31,7 +31,7 @@ class Game(Page):
         vars_dict = dict()
         vars_dict['pjson'] = json.dumps(pjson)
 
-        vars_dict['timeout'] = Constants.num_rounds > 1 and self.round_number == 1
+        vars_dict['tutorial'] = Constants.num_rounds > 1 and self.round_number == 1
 
         # if the input is zero there is no delay after advance slowest is selected.
         if self.round_number == 1:
@@ -102,6 +102,7 @@ class Intermission(Page):
 
     def vars_for_template(self):
         vars_dict = dict(
+            civilian_incomes=Constants.civilian_incomes_low,
             steal_rate=Constants.civilian_steal_rate,
             fine=Constants.civilian_fine_amount,
             officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],

@@ -17,12 +17,27 @@
         <p>{{ info }}</p>
 
         {% if player.id_in_group > 1 %}
-            <p>You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.</p>
+        <p>You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.</p>
+
+            <p>
+                <span>Civilian incomes in your group:</span>&emsp;
+
+                {% for income in civilian_incomes %}
+                    {% if income == player.income %}
+                        <strong>{{ income }}</strong>
+                    {% else %}
+                        {{income}}
+                    {% endif %}
+                    &emsp;
+                {% endfor %}
+
+            </p>
+
         {% endif %}
 
-        <p>The fine for convicted civilians is <strong>{{fine}}</strong></p>
+        <p>The fine for convicted civilians is <strong>{{fine}}</strong>.</p>
 
-        <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared <br>and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined)</p>
+        <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined).</p>
 
         <p>These periods will be used to calculate your payoffs at the end of the game.</p>
     </div>

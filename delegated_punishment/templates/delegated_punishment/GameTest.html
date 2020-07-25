@@ -56,17 +56,14 @@
                 }
 
                 dragDefend(info) {
-                    console.log('DRAG DEFEND');
                     return {'defend_token_drag': {'number': info.tokenNumber, 'map': 0, 'x': 0, 'y': 0}}
                 }
 
                 updateDefend(info) {
-                    console.log('UPDATE DRAG');
                     return {'defend_token_update': {'number': info.tokenNumber, 'map': info.map, 'x': info.x, 'y': info.y}}
                 }
 
                 updateInvestigation(info) {
-                    // this.dragDefend(info);
                     return {'investigation_update': {'number': info.tokenNumber, 'map': 0, 'x':0, 'y':0}}
                 }
 
@@ -88,7 +85,7 @@
                     this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.player.groupId + '/');
 
                     this.gameSocket.onopen = (e) => {
-                        console.log('socket opened');
+                        console.log('game socket opened');
 
                         this.startTimer();
                         if (this.player.idInGroup === 1) {

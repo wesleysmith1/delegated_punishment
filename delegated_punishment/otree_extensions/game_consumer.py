@@ -27,7 +27,6 @@ class GameConsumer(WebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
-        # print("DISCONNECTING")
         # async_to_sync(self.channel_layer.group_discard)(
         #     self.room_group_name,
         #     self.channel_name
@@ -78,9 +77,6 @@ class GameConsumer(WebsocketConsumer):
                 player.civilian_harvest()
                 player.harvest_status = 0
 
-            # print("PLAYER {} UPDATED HARVEST STATUS TO {}".format(player.pk, player.harvest_status))
-            # print("PLAYER BALANCE: {}".format(player.balance))
-
             player.save()
 
             game_data_dict.update({
@@ -130,7 +126,6 @@ class GameConsumer(WebsocketConsumer):
                         "victim_roi": victim.roi,
                         "victim_balance": victim.balance,
                     })
-                    # print("victim" + str(victim.id_in_group))
 
                     player.decrease_roi(event_time, True)
                 else:
@@ -138,8 +133,6 @@ class GameConsumer(WebsocketConsumer):
                 player.map = 0
 
             player.save()
-
-            # print("player harvest screen value: {}".format(player.harvest_screen))
 
             game_data_dict.update({
                 "event_type": "toggle",
@@ -149,7 +142,7 @@ class GameConsumer(WebsocketConsumer):
                 "player_roi": player.roi,
                 "player_balance": player.balance,
             })
-            # print(str(game_data_dict))
+
             GameData.objects.create(
                 event_time=event_time,
                 p=player.id,
@@ -158,8 +151,6 @@ class GameConsumer(WebsocketConsumer):
                 round_number=round_number,
                 jdata=game_data_dict
             )
-
-            # print("PLAYER TOGGLED HARVEST {}".format(toggle_status['harvest']))
 
         elif data_json.get('defend_token_drag'):
             # format
@@ -178,7 +169,6 @@ class GameConsumer(WebsocketConsumer):
                 token = DefendToken.objects.get(group_id=group_id, number=token_num)
             except DefendToken.DoesNotExist:
                 token = None
-                # print('ERROR: NO TOKEN WAS FOUND')
 
             # check if token was removed from investigations
             investigation_change = False
@@ -205,12 +195,9 @@ class GameConsumer(WebsocketConsumer):
                 jdata=game_data_dict
             )
 
-            # print('TOKEN WAS DRAGGED AND PROP SET TO ' + str(token.map))
-
             # update users with investigation token count
             if investigation_change:
                 token_count = DefendToken.objects.filter(group_id=group_id, map=11).count()
-                # print('TOTAL TOKEN COUNT ' + str(token_count))
 
                 # send token count to group
                 async_to_sync(self.channel_layer.group_send)(
@@ -240,9 +227,8 @@ class GameConsumer(WebsocketConsumer):
 
             # update roi for stealing player and victim of the theft.
             # update victim roi
-            victim = Player.objects.get(group_id=group_id, id_in_group=player.map) #todo add try catch here
+            victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
 
-            # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
             victim.increase_roi(event_time, False)
             victim.save()
 
@@ -279,7 +265,6 @@ class GameConsumer(WebsocketConsumer):
             #     y: o,
             #     map: 0
             # }
-            # print('LOCATION TOKEN WAS DRAGGED')
             #get token and save it's location as 0
 
             game_data_dict = {
@@ -293,7 +278,6 @@ class GameConsumer(WebsocketConsumer):
             if player.map > 0:
                 # update victim roi
                 victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
-                # print('PLAYER WAS STEALING FROM PLAYER ' + str(victim.pk))
                 victim.increase_roi(event_time, False)
                 victim.save()
 
@@ -312,7 +296,6 @@ class GameConsumer(WebsocketConsumer):
 
             else:
                 pass
-                # print('PLAYER WAS NOT STEALING BEFORE')
 
             player.x = player.y = player.map = 0
             player.save()
@@ -324,8 +307,6 @@ class GameConsumer(WebsocketConsumer):
                 round_number=round_number,
                 jdata=game_data_dict
             )
-
-            # print('LOCATION DRAG TRANSCATION COMPLETE AND map SET TO ' + str(player.map))
 
         elif data_json.get('defend_token_reset'):
             token_number = data_json['defend_token_reset']['number']
@@ -392,7 +373,6 @@ class GameConsumer(WebsocketConsumer):
             token.save()
             # get investigation token count
             token_count = DefendToken.objects.filter(group_id=group_id, map=11).count()
-            # print('TOTAL TOKEN COUNT ' + str(token_count))
 
             game_data_dict = {
                 "event_type": "investigation_update",
@@ -552,18 +532,11 @@ class GameConsumer(WebsocketConsumer):
 
                 players_in_prop = Player.objects.filter(group_id=group_id, map=token.map, id_in_group__gt=1)  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
 
-                # print("{} --{}-- map: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(print_padding), token_num, token.map, token.x, token.y))
-                # print("THERE ARE {} PLAYERS IN map {}".format(len(players_in_prop), token.map))
-
                 if players_in_prop:
                     for p in players_in_prop:
 
-                        # print("{} --{}-- map: {} X: {:6.2f} Y: {:6.2f}".format('PLAYER'.ljust(print_padding), p.pk, p.map, p.x, p.y))
-
                         if token.x <= p.x <= token.x2 and \
                                 token.y <= p.y <= token.y2:
-
-                            # print('{} {} AND PLAYER {}'.format('INTERSECTION BETWEEN TOKEN'.ljust(print_padding), token.number, p.pk))
 
                             # update culprit
                             p.decrease_roi(event_time, True)
@@ -599,7 +572,6 @@ class GameConsumer(WebsocketConsumer):
                             p.map = 0
                             p.x = p.y = -1
                             p.save()
-                            # print("PLAYER {} UPDATED AT {:6.2f}".format(p.pk, p.last_updated))
 
                             intersections.append(data)
 
@@ -625,18 +597,12 @@ class GameConsumer(WebsocketConsumer):
                     "token_y": y,
                 })
 
-                # print("{} -- {} -- map: {} X: {:6.2f} Y: {:6.2f}".format('CIVILIAN LOCATION UPDATE'.ljust(print_padding), player.pk, player.map, player.x, player.y))
-
                 # check for intersections
                 tokens = DefendToken.objects.filter(group_id=group_id, map=player.map).order_by('last_updated')
-                # print('THERE ARE ' + str(len(tokens)) + ' TOKENS IN THIS map')
-                # print("THERE ARE {} TOKENS IN map {}".format(len(tokens), player.map))
 
                 if tokens:
                     for token in tokens:
-                        # print("{} -- {}-- map: {} X: {:6.2f} Y: {:6.2f}".format('TOKEN'.ljust(print_padding), token.number, token.map, token.x, token.y))
                         if token.x <= player.x <= token.x2 and token.y <= player.y <= token.y2:
-                            # print('\t\tINTERSECTION')
 
                             # create intersection data
                             data = {
@@ -686,14 +652,10 @@ class GameConsumer(WebsocketConsumer):
                         "victim_roi": victim.roi,
                         "victim_balance": victim.balance,
                     })
-                # else:
-                    # player.last_updated = event_time
 
-                # print("PLAYER {} UPDATED AT {:6.2f}".format(player.pk, player.last_updated))
                 player.save()
 
             num_investigators = DefendToken.objects.filter(group_id=group_id, map=11).count()
-            # print('INVESTIGATION TOKEN COUNT: ' + str(num_investigators))
 
             # intersection objects for Game Data
             game_data_intersections = []
@@ -703,9 +665,7 @@ class GameConsumer(WebsocketConsumer):
             civilian_fine = 0
 
             for inter in intersections:
-                # print(inter)
 
-                # print('\t\tSTARTING NUMPY CALCULATIONS')
                 culprit = inter["culprit"]
                 innocent = inter["map"]  # also victim
 
@@ -728,7 +688,6 @@ class GameConsumer(WebsocketConsumer):
                 # subtract 1 for 0 based index
                 multi[culprit - 1] = guilty_prob
                 multi[innocent - 1] = 0
-                # print('\t\tMULTI' + str(multi))
 
                 result = np.random.multinomial(1, multi, 1)[0]
 
@@ -744,7 +703,6 @@ class GameConsumer(WebsocketConsumer):
                             convicted_pid = int(index + 1)
                         break
 
-                # print('CONVICTED PLAYER: ' + str(convicted_pid))
                 if convicted_pid:
                     convicted_player = Player.objects.get(group_id=group_id, id_in_group=convicted_pid)
                     convicted_player.civilian_fine()
@@ -756,11 +714,9 @@ class GameConsumer(WebsocketConsumer):
                     # check if guilty player was convicted
                     wrongful_conviction = True
                     if convicted_pid == culprit:
-                        # print('THE CORRECT PLAYER WAS CONVICTED')
                         wrongful_conviction = False
                     else:
                         pass
-                        # print('THE WRONG PLAYER WAS CONVICTED')
 
                     # UPDATE OFFICER BALANCE
                     if player.id_in_group == 1:
@@ -773,7 +729,6 @@ class GameConsumer(WebsocketConsumer):
                     officer_bonus += 1
 
                     audit = np.random.binomial(1, Constants.officer_review_probability)
-                    # print('HERE IS THE AUDIT RESULT: ' + str(audit))
 
                     officer_reprimand = 0
 
