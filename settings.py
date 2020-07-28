@@ -63,7 +63,8 @@ LOGGING = {
             'level': 'DEBUG',
         },
     }
-}"""
+}
+"""
 
 SESSION_CONFIGS = [
     dict(

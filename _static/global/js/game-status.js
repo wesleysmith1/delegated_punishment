@@ -8,9 +8,9 @@ let gameStatusComponent = {
         balance: Number,
         balanceColor: String,
         stealNotification: String,
-        interceptCount: Number,
-        arrestsCount: Number,
-        falseArrestCount: Number,
+        interceptsCount: Number,
+        finesCount: Number,
+        reprimandsCount: Number,
         investigationCount: Number,
         defendTokenTotal: Number,
         isOfficer: Boolean,
@@ -76,17 +76,17 @@ let gameStatusComponent = {
                     <div class="count-container">
                         <div class="title-small data-row">
                             <div class="left"># Intercepts: </div>
-                            <div class="right"><strong>{{ interceptCount }}</strong></div>
+                            <div class="right"><strong>{{ interceptsCount }}</strong></div>
                         </div>
                         <div style="clear: both"></div>
                         <div class="title-small data-row">
                             <div class="left"># Fines: </div>
-                            <div class="right"><strong>{{ arrestsCount }}</strong></div>
+                            <div class="right"><strong>{{ finesCount }}</strong></div>
                         </div>
                         <div style="clear: both"></div>
                         <div class="title-small data-row">
                             <div class="left"># Reprimands: </div>
-                            <div class="right"><strong>{{ falseArrestCount }}</strong></div>
+                            <div class="right"><strong>{{ reprimandsCount }}</strong></div>
                         </div>
                     </div>
                 </div>

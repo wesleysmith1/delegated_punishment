@@ -1,9 +1,13 @@
 from ._builtin import Page, WaitPage
 import json, math
 from otree.api import Currency as c, currency_range
-from .models import Constants, DefendToken, Player
+
+from .models import Constants, DefendToken, Player, Group, GameStatus
 from random import random
 from delegated_punishment.helpers import skip_round
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class Game(Page):
@@ -45,6 +49,11 @@ class Game(Page):
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
+        # group object must be retreived otherwide it is not updated with recent values
+        group = Group.objects.get(id=self.group.id)
+
+        log.info(f'loading template var for player {self.player.id}. group game status {group.game_status}')
+
         config = dict(
             balance_update_rate=self.session.config['balance_update_rate'],
             defend_token_total=Constants.defend_token_total,
@@ -62,6 +71,7 @@ class Game(Page):
             civilians_per_group=Constants.civilians_per_group,
             steal_token_slots=Constants.steal_token_slots,
             results_modal_seconds=Constants.results_modal_seconds,
+            game_status=group.game_status,
         )
 
         vars_dict['config'] = json.dumps(config)

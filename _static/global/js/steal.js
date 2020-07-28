@@ -82,7 +82,6 @@ let stealGameComponent = {
                 for (let i in this.maps) {
 
                     // cannot steal from own map
-                    debugger;
                     if (this.maps[i]+1 === this.groupPlayerId)
                         continue
 

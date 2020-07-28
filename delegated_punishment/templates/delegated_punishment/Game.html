@@ -111,9 +111,9 @@
                 :balance="balance"
                 :balance-color="balanceColor"
                 :steal-notification="stealNotification"
-                :intercept-count="interceptCount"
-                :arrests-count="arrestsCount"
-                :false-arrest-count="falseArrestCount"
+                :intercepts-count="interceptsCount"
+                :fines-count="finesCount"
+                :reprimands-count="reprimandsCount"
                 :investigation-count="investigationCount"
                 :defend-token-total="defendTokenTotal"
                 :is-officer="isOfficer"
@@ -190,85 +190,182 @@
                 activeStealMaps: {},
                 fineNotification: "",
                 tutorial: tutorial,
-                interceptCount: 0,
-                arrestsCount: 0,
-                falseArrestCount: 0,
-                playersPerGroup: config.players_per_group,
-                civilianFine: config.civilian_fine,
-                tutorialDuration: config.tutorial_duration_seconds * 1000,
-                reprimandAmount: config.officer_reprimand_amount,
-                reviewProbability: config.officer_review_probability,
-                stealTimeoutMilli: config.steal_timeout_milli,
-                stealTokenSlots: config.steal_token_slots,
-                resultsModalDuration: config.results_modal_seconds * 1000,
-                defendTokenSize: config.defend_token_size,
-                mapSize: config.civilian_map_size,
-                gameDuration: config.game_duration_seconds * 1000,
-                balanceFrequency: config.balance_update_rate,
-                defendTokenTotal: config.defend_token_total,
-                beta: config.beta,
-                aMax: config.a_max,
+                interceptsCount: 0,
+                finesCount: 0,
+                reprimandsCount: 0,
                 probabilityReprimand: 0,
                 config: config,
                 balanceInterval: null,
 
                 civiliansPerGroup: 5,
                 resultsObj: {},
-                roundOver: false
+                roundOver: false,
+
+                hostSyncPoll: null, // an interval for host to check if all players are ready
+
+                tutorialDuration: config.tutorial_duration_seconds * 1000,
+                resultsModalDuration: config.results_modal_seconds * 1000,
+                gameDuration: config.game_duration_seconds * 1000,
             },
             created: function () {
 
+                // initialize
                 this.initializeVariables();
-
                 this.configureOfficerTokens();
-
                 this.configureCivilianMaps();
 
-                // connect and listen to sync web socket
+                // connect and listen web sockets
                 this.configureGameSync();
-
                 this.configureGame();
-
-                this.subscribeToBalance();
 
             },
             methods: {
+                setStartMilliseconds: function() {
+
+                    if (this.gameStatus === 0) {
+                        // SYNC: set game start time
+                        window.localStorage.setItem(this.gameStartKey, Date.now());
+                    } else if (this.gameStatus === 1) {
+                        // ACTIVE: game has already started. Get start time and calculate remaining time in round
+
+                        let val = window.localStorage.getItem(this.gameStartKey)
+
+                        if (val === null) {
+                            console.error('Unable to find game start timer in localstorage')
+                            return
+                            // todo: reload here?
+                        }
+
+                        let startMilliseconds = parseInt(val);
+
+                        let timeSinceStart = Date.now() - startMilliseconds;
+                        this.gameDuration -= timeSinceStart;
+
+                        this.gameStarted = true;
+
+                        console.log("Remaining time in the round is: ", this.gameDuration);
+                    } else if (this.gameStatus === 2) {
+                        // RESULTS: game has ended and results stage started. Set remaining game time to 0, and calculate the remaining time results modal is displayed
+
+                        this.gameDuration = 0;
+                        this.tutorialDuration = 0;
+
+                        // is there a value in the storage?
+                        let val = window.localStorage.getItem(this.resultsStartKey);
+
+                        // no value found in storage
+                        if (val === null) {
+                            // there is no value so we must display it or check the status of the game via event_hub
+                            console.error('No start time for results modal in localStorage');
+
+                            this.submit();
+                        }
+
+                        // assign updated value for results modal
+                        let timeSinceResults = Date.now() - parseInt(val);
+
+                        this.resultsModalDuration -= timeSinceResults;
+
+                        this.gameStarted = true;
+
+                        if (this.resultsModalDuration < 0) {
+                            console.log("Time remaining for results modal is negative. Advancing to next page...")
+                            this.submit();
+                        } else {
+                            console.log('opening results modal')
+                            this.endRound()
+                        }
+
+                    } else {
+                        // something went wrong: game status not recognized. Advance to next page
+                        console.error("something went wrong. invalid gameStatus variable");
+                        this.submit();
+                    }
+
+                },
+                submit: function() {
+                    // submit the hidden form to advance to next page
+                    document.getElementById('form').submit();
+                },
                 configureGameSync: function() {
                     this.gameSyncSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/sync/' + this.groupId + '/')
                     this.gameSyncSocket.onopen = (e) => {
+
                        console.log('game sync connected')
-                       let data = {
-                           'group_id': this.groupId,
-                           'player_id': this.playerId,
-                           'round_number': this.roundNumber,
-                           'ready': true,
-                       };
-                       this.gameSyncSocket.send(JSON.stringify(data))
+                        // if game is in SYNCING stage signal that players are ready
+                        if (this.gameStatus === 0) {
+                            this.playerReady()
+
+                            // host polls backend
+                            if (this.isHost) {
+                                this.hostSyncPoll = setInterval(() => {
+                                    this.checkSyncStatus()
+                                }, 2000);
+                            }
+                        }
                     };
 
                     this.gameSyncSocket.onmessage = (e) => {
                         let data = JSON.parse(e.data);
 
                         // host (always p1) listens for signal that all players are ready
-                        if (data.players_ready) {
-                            this.signalPlayersReady()
+                        if (data.sync_status && this.isHost) {
+                            if (this.hostSyncPoll) {
+                                // stop host polling
+                                clearInterval(this.hostSyncPoll);
+                            }
+
+                            // prevent duplicate start events
+                            if (!this.gameStarted) {
+
+                                console.log('round start called by host')
+
+                                // inform event hub that game can start. This notifies all players the game has started
+                                this.gameUpdate({
+                                    'round_update': {'round_start': true},
+                                });
+                            }
                         }
                     };
+                },
+                checkSyncStatus: function() {
+                    let data = {
+                        'group_id': this.groupId,
+                        'player_id': this.playerId,
+                        'round_number': this.roundNumber,
+                        'sync_status': true,
+                    }
+                    this.gameSyncSocket.send(JSON.stringify(data));
+                },
+                playerReady: function() {
+                    let data = {
+                        'group_id': this.groupId,
+                        'player_id': this.playerId,
+                        'round_number': this.roundNumber,
+                        'ready': true,
+                    };
+                    this.gameSyncSocket.send(JSON.stringify(data));
                 },
                 configureGame: function() {
                     this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
-                        // this.startTimer()
                         console.log('game socket opened')
+
+                        if (this.gameStatus !== 0) {
+                            // the page was reloaded
+                            this.startGame()
+                        }
+
                     };
 
                     this.gameSocket.onmessage = (e) => {
 
                         let data = JSON.parse(e.data);
 
-                        // check if the game has already ended
+                        // prevent sending events if round is over
                         if (this.roundOver) {
                              if (data.round_results) {
+                                 console.log('round results')
                                 this.resultsObj = data.round_results
                                 this.balance = this.resultsObj.balance
                             }
@@ -292,17 +389,25 @@
                             this.balance = latestBalance;
 
                         } else if (data.intersections) {
+                            // update officer history
+                            this.updateOfficerHistory(data.officer_history);
+
                             data.intersections.forEach((i) => {
                                 this.showIntersection(i);
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
+
                             this.investigationCount = data.investigation_update
+
                         } else if (data.round_end) {
+
                             this.endRound()
+
                         } else if (data.round_start) {
+                            // this occurs when host informs players game has started
                             console.log('Round Started')
-                            this.gameStarted = true;
-                            this.startTimer();
+
+                            this.startGame();
                         }
                     };
 
@@ -333,18 +438,10 @@
                     this.isOfficer = this.groupPlayerId === 1;
                     this.stealLocation = parseInt(stealStart);
                 },
-                isHost: function() {
-                    return this.groupPlayerId === 1;
-                },
-                signalPlayersReady: function() {
-                    if (this.isHost()) {
-                        this.gameUpdate({'round_update': {'players_ready': true}})
-                    }
-                },
                 endRound: function() {
-                    this.roundOver = true
                     // get results from backend
                     this.getRoundResults()
+                    this.roundOver = true
                     // open modal
                     this.openResultsModal()
                 },
@@ -358,15 +455,26 @@
                     this.gameUpdate(x);
                 },
                 openResultsModal: function() {
-                    // open modal
-                    this.$refs.resultsmodal.openModal();
+
+                    // record when results modal opens in case of reload
+                    if (!window.localStorage.getItem(this.resultsStartKey)) {
+                        window.localStorage.setItem(this.resultsStartKey, Date.now())
+                    }
+
+                    // todo: this was changed from setTimeout and needs to be tested
+                    this.$nextTick(() => {
+                         this.$refs.resultsmodal.openModal();
+                    });
+
+                    console.log('Opening results modal for ' + this.resultsModalDuration + ' milliseconds')
 
                     // settimeout to close modal
                     setTimeout(()=>{
                             this.closeGameSocket()
 
                             // submit game
-                            document.getElementById('form').submit();
+                            console.log('results modal has timed out. Advancing to next page.')
+                            this.submit();
                         },
                         this.resultsModalDuration
                     )
@@ -396,7 +504,7 @@
                 gameUpdate: function(data) {
 
                     if (this.gameSocket.readyState !== WebSocket.OPEN) {
-                        console.log('Round has ended. Cannot send data to event hub', data);
+                        console.log('Game socket is closed. Cannot send data to event hub', data);
                         return
                     }
 
@@ -434,7 +542,7 @@
                     }
                 },
                 subscribeToBalance: function () {
-                    if (!this.isOfficer)
+                    if (!this.isHost)
                         return
 
                     this.balanceInterval = setInterval(() => {
@@ -448,7 +556,8 @@
                     }, this.balanceFrequency);
                 },
                 unsubscribeBalance: function() {
-                    clearInterval(this.balanceInterval);
+                    if (this.balanceInterval)
+                        clearInterval(this.balanceInterval);
                 },
                 positionStealToken: function() {
                     if (this.harvestScreen) // update this so we dont check multiple times
@@ -463,15 +572,13 @@
                         'investigation_update': item,
                     });
                 },
-                showIntersection: function (i) {
-
-                    this.interceptCount += 1;
-
-                    if (i.officer_reprimand > 0)
-                        this.falseArrestCount++;
-
-                    if (i.guilty)
-                        this.arrestsCount++;
+                updateOfficerHistory: function(officerHistory) {
+                    // update officer_history
+                    this.interceptsCount = officerHistory.intercept;
+                    this.finesCount = officerHistory.fine;
+                    this.reprimandsCount = officerHistory.reprimand;
+                },
+                showIntersection: function (i, officerHistory) {
 
                     if (this.isOfficer) {
                         // intersection-label-' + (map+1) + '-' + (player_id + 1)
@@ -562,18 +669,18 @@
                     }
 
                 },
-                startTimer: function() {
-                    if (this.isOfficer) {
-                        // set start time
-                        this.gameUpdate({
-                            'round_update': {'round_start': true},
-                        });
-                    }
+                startGame: function() {
+
+                    this.setStartMilliseconds();
+
+                    this.gameStarted = true;
+
+                    this.subscribeToBalance();
 
                     setTimeout(() => {
                         // officer records round end
                         // todo: the round end event should originate from the api. schedule it when the game is started
-                        if (this.isOfficer) {
+                        if (this.isHost) {
                             this.unsubscribeBalance();
                             this.roundEndEvent();
                         }
@@ -590,6 +697,10 @@
                     }
                 },
                 roundEndEvent: function() {
+                    if (this.gameStatus === 2) { // other players have already been notified
+                        console.log('other players have already been notified of end round.');
+                        return;
+                    }
                     this.gameUpdate({
                         'round_update': { 'round_end': true },
                     });
@@ -646,6 +757,22 @@
                 },
             },
             computed: {
+                aMax() { return config.a_max },
+                beta() { return config.beta },
+                balanceFrequency() { return config.balance_update_rate },
+                civilianFine() { return config.civilian_fine },
+                defendTokenSize() { return config.defend_token_size },
+                defendTokenTotal() { return config.defend_token_total },
+                gameStartKey() { return 'round' + this.roundNumber + 'group' + this.groupId },
+                gameStatus() { return config.game_status },
+                isHost() { return this.groupPlayerId === 1 },
+                mapSize() { return config.civilian_map_size },
+                playersPerGroup() { return config.players_per_group },
+                reprimandAmount() { return config.officer_reprimand_amount },
+                resultsStartKey() { return this.gameStartKey + 'results' },
+                reviewProbability() { return config.officer_review_probability },
+                stealTimeoutMilli() { return config.steal_timeout_milli },
+                stealTokenSlots() { return config.steal_token_slots },
             },
         });
 

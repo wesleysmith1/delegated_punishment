@@ -1,6 +1,9 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 import json
+import logging
+log = logging.getLogger(__name__)
+
 from delegated_punishment.helpers import date_now_milli
 
 from delegated_punishment.models import Player, Group, GameData, Constants
@@ -32,43 +35,30 @@ class GameSyncConsumer(WebsocketConsumer):
         group_id = data_json['group_id']
         player_id = data_json['player_id']
         player = Player.objects.get(pk=player_id)
-        group = Group.objects.get(pk=group_id)
-        round_number = data_json['round_number']
 
         if data_json.get('ready'):
-            # player is now ready
-
+            # mark player as ready
             player.ready = True
             player.save()
 
-            ready_players = Player.objects.filter(group_id=group_id, ready=True)
+            log.info(f"player {player_id} ready")
 
-            if len(ready_players) == Constants.players_per_group:
-                # inform host player that game needs to start
+        elif data_json.get('sync_status'):
+
+            # host polls to check if all players are ready
+            ready_players = len(Player.objects.filter(group_id=group_id, ready=True))
+            log.info(f"host {player_id} is checking sync status. status is {ready_players}")
+
+            if ready_players == Constants.players_per_group:
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
-                        'type': 'players_ready',
+                        'type': 'sync_status',
                     }
                 )
 
-        elif data_json.get('round_end'):
-            event_time = date_now_milli()
-            game_data_dict = {
-                'event_time': event_time,
-                'event_type': 'round_end'
-            }
-            """Officer sends up period end"""
-            GameData.objects.create(
-                event_time=event_time,
-                g=group_id,
-                r=round_number,
-                jdata=game_data_dict
-            )
-
-    # Receive message from room group
-    def players_ready(self, event):
-        # Start game after all players are synced
+    # Inform players that players have arrived so host can signal game start
+    def sync_status(self, event):
         self.send(text_data=json.dumps({
-            'players_ready': True,
+            'sync_status': True,
         }))

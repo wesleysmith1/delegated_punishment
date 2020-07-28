@@ -12,11 +12,6 @@ def get_path(group):
     return path
 
 
-def split_list(a_list):
-    half = len(a_list)//2
-    return a_list[:half], a_list[half:]
-
-
 def calculate_payout(balance, showup_payment, endowment):
     payout = balance + endowment
     if balance < 0:
@@ -26,9 +21,9 @@ def calculate_payout(balance, showup_payment, endowment):
 
     return math.ceil(payout)
 
+
 def grain_to_dollars(group, grain):
     return grain * group.subsession.session.config['grain_conversion']
-
 
 
 def generate_payouts(group):
@@ -69,6 +64,7 @@ def generate_survey_csv(group):
     with f:
         writer = csv.writer(f)
         header = ['participant', 'payout', 'race_ethnicity', 'gender', 'strategy', 'feedback']
+
         writer.writerow(header)
 
         for p in group.get_players():

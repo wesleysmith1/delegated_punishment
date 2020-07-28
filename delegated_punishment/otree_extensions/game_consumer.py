@@ -9,7 +9,7 @@ from django.db import transaction
 import logging
 log = logging.getLogger(__name__)
 
-from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, randomize_location
+from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, randomize_location, GameStatus
 
 
 class GameConsumer(WebsocketConsumer):
@@ -406,11 +406,17 @@ class GameConsumer(WebsocketConsumer):
                 "player": player.id_in_group
             }
 
-            if pu.get('players_ready'):
+            if pu.get('round_start'):
                 game_data_dict.update({
                     'event_time': event_time,
                     'event_type': 'round_start'
                 })
+
+                # set game status to active
+                group = Group.objects.get(id=group_id)
+                group.game_status = GameStatus.ACTIVE
+                group.save()
+                log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
 
                 GameData.objects.create(
                     event_time=event_time,
@@ -425,7 +431,6 @@ class GameConsumer(WebsocketConsumer):
                     self.room_group_name,
                     {
                         'type': 'round_start',
-                        'round_end': None,
                     }
                 )
             elif pu.get('round_end'):
@@ -436,6 +441,21 @@ class GameConsumer(WebsocketConsumer):
                     'event_time': end_time,
                     'event_type': 'round_end'
                 })
+
+                # set game status to results
+                group = Group.objects.get(id=group_id)
+                group.game_status = GameStatus.RESULTS
+                group.save()
+                log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
+
+                # inform players that round is over
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'round_end',
+                        'round_end': None,
+                    }
+                )
 
                 # final calculation of player balances for results page
                 group = Group.objects.get(pk=group_id)
@@ -451,15 +471,6 @@ class GameConsumer(WebsocketConsumer):
                     s=session_id,
                     round_number=round_number,
                     jdata=game_data_dict
-                )
-
-                # inform players that round is over
-                async_to_sync(self.channel_layer.group_send)(
-                    self.room_group_name,
-                    {
-                        'type': 'round_end',
-                        'round_end': None,
-                    }
                 )
 
             elif pu.get('round_results'):
@@ -556,11 +567,10 @@ class GameConsumer(WebsocketConsumer):
                                 'culprit_y': p.y,
                                 'culprit_x': p.x,
                                 'culprit_balance': p.balance,
-                                'map': p.map, #?
+                                'map': p.map,
                                 'victim': victim.id_in_group,
                                 'victim_roi': victim.roi,
                                 'victim_balance': victim.balance,
-                                # 'token_number': token.number,
                                 'token_x': token.x,
                                 'token_y': token.y,
                                 'token_x2': token.x2,
@@ -663,6 +673,7 @@ class GameConsumer(WebsocketConsumer):
             # increased for each investigated intersection and civilian fine
             officer_bonus = 0
             civilian_fine = 0
+            total_reprimand = 0
 
             for inter in intersections:
 
@@ -683,6 +694,7 @@ class GameConsumer(WebsocketConsumer):
                     # guilty_prob = probability_guilty(4, num_investigators)
                     guilty_prob = Constants.beta * (1/(Constants.civilians_per_group - 1) + ((Constants.civilians_per_group - 2) / (Constants.civilians_per_group - 1) * (num_investigators/Constants.a_max)))
 
+                # todo: this should be dynamic or documented that it is tied to num_civilians
                 multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
 
                 # subtract 1 for 0 based index
@@ -736,6 +748,7 @@ class GameConsumer(WebsocketConsumer):
                         if wrongful_conviction:
                             officer.officer_reprimand()
                             officer_reprimand = Constants.officer_reprimand_amount
+                            total_reprimand += 1
 
                     officer.save()
 
@@ -759,10 +772,11 @@ class GameConsumer(WebsocketConsumer):
                     game_data_intersections.append(inter)
 
             # send down intersections
-            if len(game_data_intersections) > 0:
+            total_inter = len(game_data_intersections)
+            if total_inter > 0:
 
                 # update group counters
-                Group.intersection_update(group_id, officer_bonus, civilian_fine)
+                officer_history = Group.intersection_update(group_id, officer_bonus, civilian_fine, total_reprimand, total_inter)
 
                 game_data_dict["intersections"] = game_data_intersections
 
@@ -771,6 +785,7 @@ class GameConsumer(WebsocketConsumer):
                     {
                         'type': 'intersections_update',
                         'intersections': intersections,
+                        'officer_history': officer_history,
                     }
                 )
 
@@ -786,10 +801,12 @@ class GameConsumer(WebsocketConsumer):
     # Receive message from room group
     def intersections_update(self, event):
         intersections = event['intersections']
+        officer_history = event['officer_history']
 
         # Send message to WebSocket
         self.send(text_data=json.dumps({
             'intersections': intersections,
+            'officer_history': officer_history,
         }))
 
     # Receive message from room group

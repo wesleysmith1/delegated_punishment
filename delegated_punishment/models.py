@@ -1,5 +1,4 @@
 import datetime
-
 from django.contrib.postgres.fields import JSONField
 from django.db import transaction
 from otree.api import (
@@ -159,19 +158,38 @@ class Subsession(BaseSubsession):
                 DefendToken.objects.create(number=i+1, group=g,)
 
 
+class GameStatus:
+    SYNC = 0
+    ACTIVE = 1
+    RESULTS = 2
+    CHOICES = (
+        (SYNC, 'Sync'),
+        (ACTIVE, 'Active'),
+        (RESULTS, 'Results'),
+    )
+
+
 class Group(BaseGroup):
     game_start = models.FloatField(blank=True)
     officer_bonus = models.IntegerField(initial=0)
+    # counters
     officer_bonus_total = models.IntegerField(initial=0)
     civilian_fine_total = models.IntegerField(initial=0)
+    officer_reprimand_total = models.IntegerField(initial=0)
+    intercept_total = models.IntegerField(initial=0)
+
+    game_status = models.IntegerField(choices=GameStatus.CHOICES, default=GameStatus.SYNC)
 
     @classmethod
-    def intersection_update(cls, group_id, bonus, fine):
+    def intersection_update(cls, group_id, bonus, fine, reprimand, intercept):
         with transaction.atomic():
             me = Group.objects.select_for_update().get(id=group_id)
             me.officer_bonus_total += bonus
             me.civilian_fine_total += fine
+            me.officer_reprimand_total += reprimand
+            me.intercept_total += intercept
             me.save()
+            return dict(bonus=me.officer_bonus_total, fine=me.civilian_fine_total, reprimand=me.officer_reprimand_total, intercept=me.intercept_total)
 
     def is_tutorial(self):
         return self.round_number == 1
