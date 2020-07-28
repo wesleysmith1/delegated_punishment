@@ -10,9 +10,9 @@
 
 
 
-
+# Setup / Install
 <details>
-  <summary># Setup / Install</summary>
+  <summary>click to expand</summary>
       
   ### Setup O-Tree Server on AWS
 
@@ -143,51 +143,52 @@ scp -r -i LightsailDefaultKey.pem ubuntu@34.215.160.83:~/delegated_punishment/da
 ```
 
 ---
+# Server Statistics (Primarily for Debugging)
 <details>
-  <summary># Server Statistics (Primarily for Debugging)</summary>
+  <summary>click to expand</summary>
 
-    To start recording statistics for 90 mins (every 10 seconds, for 540 times)
-    ```bash
-    SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S".log)"
-    sar -o $SERVERLOG 10 540 >/dev/null 2>&1 &
-    ```
+  To start recording statistics for 90 mins (every 10 seconds, for 540 times)
+  ```bash
+  SERVERLOG=$HOME/delegated_punishment/logs/SERVERLOG"_$(date "+%d%m%Y_%H%M%S".log)"
+  sar -o $SERVERLOG 10 540 >/dev/null 2>&1 &
+  ```
 
-    Create analyze mem-usage statistics
-    ```bash
-    sar -r -f SERVERLOG_03032020_093004.log | sed \$d > mem_summary.log
-    ## Note %memused includes cached memory
-    ## to generate cpu stats, use `sar -u`
-    ## to generate other stats, use `man sar`
-    ```
-    Open R in current directory 
-    <!-- `R -e "#code here" `-->
-    ```R
-    DF <- read.table("mem_summary.log", skip=2, header=T)
-    DF$Time <- as.POSIXct( paste0( format(Sys.time(), "%d-%m-%y"), DF[,1] ) )
-    DF$MemTot <- DF$kbmemused / (DF$X.memused/100)
-    DF$MemUsed <- ((DF$MemTot - DF$kbavail) / DF$MemTot)*100
-    plot(MemUsed ~Time , DF, type="l", ylab="% Mem Used")
-    q(save="no")'
-    ```
-    Manually Download `Rplots.pdf`
+  Create analyze mem-usage statistics
+  ```bash
+  sar -r -f SERVERLOG_03032020_093004.log | sed \$d > mem_summary.log
+  ## Note %memused includes cached memory
+  ## to generate cpu stats, use `sar -u`
+  ## to generate other stats, use `man sar`
+  ```
+  Open R in current directory 
+  <!-- `R -e "#code here" `-->
+  ```R
+  DF <- read.table("mem_summary.log", skip=2, header=T)
+  DF$Time <- as.POSIXct( paste0( format(Sys.time(), "%d-%m-%y"), DF[,1] ) )
+  DF$MemTot <- DF$kbmemused / (DF$X.memused/100)
+  DF$MemUsed <- ((DF$MemTot - DF$kbavail) / DF$MemTot)*100
+  plot(MemUsed ~Time , DF, type="l", ylab="% Mem Used")
+  q(save="no")'
+  ```
+  Manually Download `Rplots.pdf`
 
-    <!-- ## Other Statistics
-    ```    
-        ## top -bd 1  | grep 'MiB Mem' 
-        ## `cat /proc/meminfo | grep Active: | sed 's/Active: //g'` 
-        ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem: | sed 's/Mem://g')"
-        ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem | awk '{print (1-$7/$2) * 100.0}')"
-    ```
-    To stop recording statistics, `ctrl+C` 
-    -->
+  <!-- ## Other Statistics
+  ```    
+      ## top -bd 1  | grep 'MiB Mem' 
+      ## `cat /proc/meminfo | grep Active: | sed 's/Active: //g'` 
+      ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem: | sed 's/Mem://g')"
+      ##  echo "$(date '+%Y-%m-%d %H:%M:%S') $(free -m | grep Mem | awk '{print (1-$7/$2) * 100.0}')"
+  ```
+  To stop recording statistics, `ctrl+C` 
+  -->
 
+  <!-- ## Other Statistics
+      If CloudWatch (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html) is is setup, then edit the crontab file `crontab -e` with
+      ```
+      ## Post Server Metrics Every 5 Minutes
+       */5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron 
+      ```
+      and open the CloudWatch console at https://console.aws.amazon.com/cloudwatch/
+  -->
 
-    <!-- ## Other Statistics
-        If CloudWatch (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html) is is setup, then edit the crontab file `crontab -e` with
-        ```
-        ## Post Server Metrics Every 5 Minutes
-         */5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron 
-        ```
-        and open the CloudWatch console at https://console.aws.amazon.com/cloudwatch/
-    -->
 </details>
