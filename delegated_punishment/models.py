@@ -10,6 +10,7 @@ from otree.api import (
 )
 from otree.db.models import Model, ForeignKey
 from random import randrange
+from delegated_punishment.income_distributions import IncomeDistributions
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,10 +37,6 @@ class Constants(BaseConstants):
     officer_review_probability = .33
     """P punishment for officer if innocent civilian is punished"""
     officer_reprimand_amount = 600
-
-    """Civilian incomes for each group's players"""
-    civilian_incomes_low = [38, 39, 40, 41, 43]
-    civilian_incomes_high = [57, 41, 38, 34, 31]
 
     """Officer incomes. One for each group"""
     # officer_incomes = [0, 10, 20]
@@ -99,6 +96,9 @@ class Subsession(BaseSubsession):
 
         groups = self.get_groups()
 
+        config_key = self.session.config['civilian_income_config']
+        round_incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
+
         # this code is the terrible way that officer income is determined for session
         if self.round_number == 1:
             index = 0
@@ -141,10 +141,8 @@ class Subsession(BaseSubsession):
                     else:
                         # set harvest amount for civilians
                         if p.id_in_group > 1:
-                            incomes = Constants.civilian_incomes_low if self.round_number < 7 \
-                                else Constants.civilian_incomes_high
-                            i = incomes[p.id_in_group-2]
-                            p.income = i
+                            income_index = p.id_in_group-2
+                            p.income = round_incomes[income_index]
                         else:
                             # is officer
                             p.income = p.participant.vars['officer_bonus']
@@ -234,16 +232,8 @@ class Group(BaseGroup):
         officer_bonus = officer_participant.vars['officer_bonus']
         group_id = officer_participant.vars['group_id']
 
-        if self.session.config['low_to_high']:
-            if self.subsession.round_number < 7:
-                income_distribution = Constants.civilian_incomes_low
-            else:
-                income_distribution = Constants.civilian_incomes_high
-        else:
-            if self.subsession.round_number < 7:
-                income_distribution = Constants.civilian_incomes_high
-            else:
-                income_distribution = Constants.civilian_incomes_low
+        config_key = self.session.config['civilian_income_config']
+        incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
 
         meta_data = dict(
             round_number=self.subsession.round_number,
@@ -254,18 +244,13 @@ class Group(BaseGroup):
             group_pk=self.pk,
             group_id=group_id,
             officer_bonus=officer_bonus,
-            income_distribution=income_distribution,
+            income_distribution=incomes,  # todo: this needs to reflect values not keys
             player_ids_in_session=player_ids_in_session
         )
 
         # todo: this is here to prevent import error because Constants cannot be loaded.
         from delegated_punishment.generate_data import generate_csv
         generate_csv(self.session, self.subsession, meta_data)
-
-        # try:
-        #     generate_csv(round_info)
-        # except:
-        #     print('THERE WAS AN ERROR WITH CSV GENERATION FOR PERIOD: {}'.format(self.subsession.round_number))
 
 
 def randomize_location():

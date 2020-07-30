@@ -5,6 +5,9 @@ from decimal import *
 from random import randrange
 getcontext().prec = 17
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def date_now_milli():
     # returns seconds
