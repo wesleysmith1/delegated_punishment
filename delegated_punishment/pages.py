@@ -5,6 +5,7 @@ from otree.api import Currency as c, currency_range
 from .models import Constants, DefendToken, Player, Group, GameStatus
 from random import random
 from delegated_punishment.helpers import skip_round
+from delegated_punishment.income_distributions import IncomeDistributions
 
 import logging
 log = logging.getLogger(__name__)
@@ -111,8 +112,12 @@ class Intermission(Page):
             return False
 
     def vars_for_template(self):
+
+        config_key = self.session.config['civilian_income_config']
+        round_incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
+
         vars_dict = dict(
-            civilian_incomes=Constants.civilian_incomes_low,
+            civilian_incomes=round_incomes,
             steal_rate=Constants.civilian_steal_rate,
             fine=Constants.civilian_fine_amount,
             officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
