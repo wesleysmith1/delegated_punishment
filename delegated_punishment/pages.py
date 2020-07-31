@@ -50,8 +50,12 @@ class Game(Page):
             results = [obj.to_dict() for obj in officer_tokens]
             vars_dict['dtokens'] = json.dumps(results)
 
-        # group object must be retreived otherwide it is not updated with recent values
+        # group object must be retrieved otherwise it is not updated with recent values
         group = Group.objects.get(id=self.group.id)
+
+        # (bugfix) get player object to make sure that they are not stealing
+        player = Player.objects.get(id=self.player.id)
+        player.stop_stealing()
 
         log.info(f'loading template var for player {self.player.id}. group game status {group.game_status}')
 

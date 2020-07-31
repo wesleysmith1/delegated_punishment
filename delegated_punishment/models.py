@@ -11,6 +11,7 @@ from otree.api import (
 from otree.db.models import Model, ForeignKey
 from random import randrange
 from delegated_punishment.income_distributions import IncomeDistributions
+from delegated_punishment.helpers import date_now_milli
 
 import logging
 log = logging.getLogger(__name__)
@@ -283,6 +284,48 @@ class Player(BasePlayer):
 
     def other_players(self):
         return self.get_others_in_group()
+
+    def stop_stealing(self):
+        """called during vars_for_template on game page. this prevents stealing continuously"""
+        if self.map == 0:
+            return
+
+        event_time = date_now_milli()
+
+        game_data_dict = dict({'steal_reset': -1})
+
+        # update victim
+        victim = Player.objects.get(group_id=self.group_id, id_in_group=self.map)
+        victim.increase_roi(event_time, False)
+        game_data_dict.update({
+            "victim": victim.id_in_group,
+            "victim_roi": victim.roi,
+            "victim_balance": victim.balance,
+        })
+
+        # update player
+        self.decrease_roi(event_time, True)
+        self.map = 0
+        self.harvest_screen = True
+        self.save()
+
+        game_data_dict.update({
+            "event_type": "steal_reload",  # todo: this needs to be reviewed by jordan or something
+            "event_time": event_time,
+            "harvest_screen": self.harvest_screen,
+            "player": self.id_in_group,
+            "player_roi": self.roi,
+            "player_balance": self.balance,
+        })
+
+        GameData.objects.create(
+            event_time=event_time,
+            p=self.id,
+            g=self.group_id,
+            s=self.session_id,
+            round_number=self.round_number,
+            jdata=game_data_dict,
+        )
 
     def get_balance(self, time):
         # return calculated balance
