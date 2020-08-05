@@ -59,6 +59,33 @@ class Game(Page):
 
         log.info(f'loading template var for player {self.player.id}. group game status {group.game_status}')
 
+        # income configuration number
+        config_key = self.session.config['civilian_income_config']
+        lth = self.session.config['civilian_income_low_to_high']
+        group_incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
+
+        # todo: if tutorial or practice we need different variables
+        if self.round_number < 3:  # tutorial or practice round
+
+            tut_civ_income = self.session.config['tutorial_civilian_income']
+            tut_o_bonus = self.session.config['tutorial_officer_bonus']
+
+            start_modal_object = dict(
+                civilian_incomes=[tut_civ_income] * Constants.civilians_per_group,
+                steal_rate=Constants.civilian_steal_rate,
+                civilian_fine=Constants.civilian_fine_amount,
+                officer_bonus=tut_o_bonus,
+                officer_reprimand=Constants.officer_reprimand_amount,
+            )
+        else:
+            start_modal_object = dict(
+                civilian_incomes=group_incomes,
+                steal_rate=Constants.civilian_steal_rate,
+                civilian_fine=Constants.civilian_fine_amount,
+                officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
+                officer_reprimand=Constants.officer_reprimand_amount,
+            )
+
         config = dict(
             balance_update_rate=self.session.config['balance_update_rate'],
             defend_token_total=Constants.defend_token_total,
@@ -75,6 +102,8 @@ class Game(Page):
             players_per_group=Constants.players_per_group,
             civilians_per_group=Constants.civilians_per_group,
             steal_token_slots=Constants.steal_token_slots,
+            start_modal_seconds=Constants.start_modal_seconds,
+            start_modal_object=start_modal_object,
             results_modal_seconds=Constants.results_modal_seconds,
             game_status=group.game_status,
         )
@@ -118,15 +147,40 @@ class Intermission(Page):
     def vars_for_template(self):
 
         config_key = self.session.config['civilian_income_config']
-        round_incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
+        lth = self.session.config['civilian_income_low_to_high']
+        group_incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
 
-        vars_dict = dict(
-            civilian_incomes=round_incomes,
-            steal_rate=Constants.civilian_steal_rate,
-            fine=Constants.civilian_fine_amount,
-            officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-            officer_reprimand=Constants.officer_reprimand_amount
-        )
+        # todo: if tutorial or practice we need different variables
+        if self.round_number < 3:  # tutorial or practice round
+
+            tut_civ_income = self.session.config['tutorial_civilian_income']
+            tut_o_bonus = self.session.config['tutorial_officer_bonus']
+
+            vars_dict = dict(
+                civilian_incomes=[tut_civ_income] * Constants.civilians_per_group,
+                # harvest_income=player.income,
+                steal_rate=Constants.civilian_steal_rate,
+                civilian_fine=Constants.civilian_fine_amount,
+                officer_bonus=tut_o_bonus,
+                officer_reprimand=Constants.officer_reprimand_amount,
+            )
+        else:
+            vars_dict = dict(
+                civilian_incomes=group_incomes,
+                # harvest_income=player.income,
+                steal_rate=Constants.civilian_steal_rate,
+                civilian_fine=Constants.civilian_fine_amount,
+                officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
+                officer_reprimand=Constants.officer_reprimand_amount,
+            )
+
+        # vars_dict = dict(
+        #     civilian_incomes=round_incomes,
+        #     steal_rate=Constants.civilian_steal_rate,
+        #     fine=Constants.civilian_fine_amount,
+        #     officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
+        #     officer_reprimand=Constants.officer_reprimand_amount
+        # )
         if self.round_number == 2:
             vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
             info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'

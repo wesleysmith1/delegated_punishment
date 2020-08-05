@@ -69,6 +69,29 @@ let gameStatusComponent = {
                     <br>
                     <br>
                 </div>
+                <div class="probability-container">
+                    <div class="title">
+                        Probability {{ isOfficer ? 'you fine' : 'fined' }}
+                    </div>
+                    <div class="inner">
+                        <probability-bar-component
+                                :label="isOfficer ? 'An innocent' : 'If you are innocent'"
+                                :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
+                        </probability-bar-component>
+                        <br>
+                        <probability-bar-component
+                                :label="isOfficer ? 'The culprit' : 'If you are the culprit'"
+                                :percent=probabilityCulprit
+                        ></probability-bar-component>
+                        <br>
+                        <div class="title-small data-row">
+                            <div class="left">Officer tokens on investigate:</div>
+                            <div class="right bold-txt"><div class="number-right-align">{{investigationCount}}/{{defendTokenTotal}}</div></div>
+                        </div>
+                        <div style="clear: both;"></div>
+                        <br>
+                    </div>
+                </div>
                 <div class="officer-history">
                     <div class="title">
                         Officer history
@@ -88,28 +111,6 @@ let gameStatusComponent = {
                             <div class="left"># Reprimands: </div>
                             <div class="right"><strong>{{ reprimandsCount }}</strong></div>
                         </div>
-                    </div>
-                </div>
-                <div class="probability-container">
-                    <div class="title">
-                        Probability {{ isOfficer ? 'you fine' : 'fined' }}
-                    </div>
-                    <div class="inner">
-                        <div class="title-small data-row">
-                            <div class="left">Officer tokens on investigate:</div>
-                            <div class="right bold-txt"><div class="number-right-align">{{investigationCount}}/{{defendTokenTotal}}</div></div>
-                        </div>
-                        <div style="clear: both;"></div>
-                        <br>
-                        <probability-bar-component
-                                :label="isOfficer ? 'An innocent' : 'If you are innocent'"
-                                :percent="isOfficer ? probabilityInnocent * 3 : probabilityInnocent">
-                        </probability-bar-component>
-                        <br>
-                        <probability-bar-component
-                                :label="isOfficer ? 'The culprit' : 'If you are the culprit'"
-                                :percent=probabilityCulprit
-                        ></probability-bar-component>
                     </div>
                 </div>
             </div>

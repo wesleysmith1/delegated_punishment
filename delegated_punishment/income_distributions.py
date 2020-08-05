@@ -17,12 +17,18 @@ class IncomeDistributions:
     configurations = {1: one}
 
     @classmethod
-    def get_group_incomes(cls, round_num):
+    def get_group_incomes(cls, low_to_high, round_num):
         """return high or low incomes based off round"""
         if round_num < 7:
-            return cls.civilian_incomes_low
+            if low_to_high:
+                return cls.civilian_incomes_low
+            else:
+                return cls.civilian_incomes_high
         else:
-            return cls.civilian_incomes_high
+            if low_to_high:
+                return cls.civilian_incomes_high
+            else:
+                return cls.civilian_incomes_low
 
     @classmethod
     def format_round(cls, round_num):
@@ -35,11 +41,11 @@ class IncomeDistributions:
         return cls.configurations[config][cls.format_round(round_num)]
 
     @classmethod
-    def get_group_income_distribution(cls, config, round_num):
+    def get_group_income_distribution(cls, config, low_to_high, round_num):
         """return list of civilian income values"""
 
         income_keys = cls.get_group_income_keys(config, round_num)
-        income_values = cls.get_group_incomes(round_num)
+        income_values = cls.get_group_incomes(low_to_high, round_num)
 
         results = []
         for i in income_keys:

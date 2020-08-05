@@ -15,6 +15,7 @@
     <script src="{% static 'global/js/harvest.js' %}"></script>
     <script src="{% static 'global/js/steal.js' %}"></script>
     <script src="{% static 'global/js/game-status.js' %}"></script>
+    <script src="{% static 'global/js/info-modal.js' %}"></script>
     <script src="{% static 'global/js/results-modal.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'global/styles/game-status.css' %}">
@@ -53,7 +54,7 @@
 
     {% verbatim %}
     <div id="app">
-        <div class="outer-container" v-show="gameStarted">
+        <div class="outer-container" v-show="roundStarted">
             <officer-game-component
                 id="officerGame"
                 class="game-container"
@@ -123,8 +124,9 @@
                 @update-probability-reprimand="updateProbabilityReprimand"
             ></game-status-component>
             <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer"></results-modal-component>
+            <info-modal-component ref="infomodal" :start-object="infoModalObject" :is-officer="isOfficer" :group-player-id="groupPlayerId"></info-modal-component>
         </div>
-        <div v-show="!gameStarted" class="title">Loading...</div>
+        <div v-show="!roundStarted" class="title">Loading...</div>
     </div>
     {% endverbatim %}
 
@@ -148,6 +150,13 @@
             else return x.toFixed(0)
         }
 
+        const gameStatuses = {
+            SYNC: 0,
+            INFO: 1,
+            ACTIVE: 2,
+            RESULTS: 3,
+        }
+
         Vue.filter('integerFilter', integerFilter)
 
         let app = new Vue({
@@ -158,11 +167,12 @@
                 'officer-game-component': officerGameComponent,
                 'game-status-component': gameStatusComponent,
                 'probability-bar-component': probabilityBarComponent,
+                'info-modal-component': infoModalComponent,
                 'results-modal-component': resultsModalComponent,
                 'grain-image-component': grainImageComponent,
             },
             data: {
-                gameStarted: false,
+                roundStarted: false,
                 player: {},
                 isOfficer: true,
                 playerId: playerId,
@@ -202,8 +212,10 @@
                 roundOver: false,
 
                 hostSyncPoll: null, // an interval for host to check if all players are ready
+                validationInterval: null,
 
                 tutorialDuration: config.tutorial_duration_seconds * 1000,
+                infoModalDuration: config.start_modal_seconds * 1000,
                 resultsModalDuration: config.results_modal_seconds * 1000,
                 gameDuration: config.game_duration_seconds * 1000,
             },
@@ -222,59 +234,78 @@
             methods: {
                 setStartMilliseconds: function() {
 
-                    if (this.gameStatus === 0) {
-                        // SYNC: set game start time
-                        window.localStorage.setItem(this.gameStartKey, Date.now());
-                    } else if (this.gameStatus === 1) {
-                        // ACTIVE: game has already started. Get start time and calculate remaining time in round
+                    this.roundStarted = true;
 
-                        let val = window.localStorage.getItem(this.gameStartKey)
+                    if (this.gameStatus === gameStatuses.SYNC) {
+                        // SYNC: set game start time. This section of code should only be called if page was refreshed
+                        console.error('Game is in SYNC state. setStartMilliseconds should not have been executed')
 
-                        if (val === null) {
-                            console.error('Unable to find game start timer in localstorage')
-                            return
-                            // todo: reload here?
+                    } else if (this.gameStatus === gameStatuses.INFO) {
+                        // INFO: start modal has already started. Get start time and calculate remaining time in round
+
+                        let val = this.startTimeFromStorage(this.gameInfoKey)
+                        if (!val) {
+                            return // todo: reload here?
                         }
+                        this.infoModalDuration -= val;
 
-                        let startMilliseconds = parseInt(val);
+                        this.openInfoModal();
 
-                        let timeSinceStart = Date.now() - startMilliseconds;
-                        this.gameDuration -= timeSinceStart;
+                        // start timer until game start
+                        this.startInfoTimer()
 
-                        this.gameStarted = true;
+                        console.log("remaining time for start modal: ", this.infoModalDuration);
+
+                    } else if (this.gameStatus === gameStatuses.ACTIVE) {
+                        // ACTIVE: game has already started. Get active time and calculate remaining time in round
+
+                        let val = this.startTimeFromStorage(this.gameActiveKey)
+                        if (!val) {
+                            return // todo: reload here?
+                        }
+                        this.gameDuration -= val
+
+                        // start timer for game end
+                        this.startRoundTimer()
+                        this.subscribeToBalance()
 
                         console.log("Remaining time in the round is: ", this.gameDuration);
-                    } else if (this.gameStatus === 2) {
+                    } else if (this.gameStatus === gameStatuses.RESULTS) {
                         // RESULTS: game has ended and results stage started. Set remaining game time to 0, and calculate the remaining time results modal is displayed
 
                         this.gameDuration = 0;
                         this.tutorialDuration = 0;
 
                         // is there a value in the storage?
-                        let val = window.localStorage.getItem(this.resultsStartKey);
-
-                        // no value found in storage
-                        if (val === null) {
-                            // there is no value so we must display it or check the status of the game via event_hub
-                            console.error('No start time for results modal in localStorage');
-
-                            this.submit();
+                        let val = this.startTimeFromStorage(this.resultsStartKey);
+                        if (!val) {
+                            return // todo: reload here?
                         }
+                        this.resultsModalDuration -= val;
 
-                        // assign updated value for results modal
-                        let timeSinceResults = Date.now() - parseInt(val);
+                        console.log('Results modal remaining time', this.resultsModalDuration)
 
-                        this.resultsModalDuration -= timeSinceResults;
-
-                        this.gameStarted = true;
-
+                        // just in case
                         if (this.resultsModalDuration < 0) {
                             console.log("Time remaining for results modal is negative. Advancing to next page...")
                             this.submit();
-                        } else {
-                            console.log('opening results modal')
-                            this.endRound()
+                            return
                         }
+
+                        console.log('opening results modal')
+
+                        // start timer until round is advanced
+                        this.roundOver = true
+                        // get results from backend
+                        this.roundResultsEvent()
+
+                        // record when results modal opens in case of reload
+                        this.storeStartTime(this.resultsStartKey)
+
+                        // open modal
+                        this.openResultsModal()
+
+                        this.startResultsTimer()
 
                     } else {
                         // something went wrong: game status not recognized. Advance to next page
@@ -293,15 +324,17 @@
 
                        console.log('game sync connected')
                         // if game is in SYNCING stage signal that players are ready
-                        if (this.gameStatus === 0) {
-                            this.playerReady()
+                        if (this.gameStatus === gameStatuses.SYNC) {
+                            this.playerReadyEvent()
 
                             // host polls backend
-                            if (this.isHost) {
-                                this.hostSyncPoll = setInterval(() => {
-                                    this.checkSyncStatus()
-                                }, 2000);
-                            }
+                            this.startSyncPolling()
+
+                            this.startValidationPoll()
+                        } else {
+                            // the page was reloaded
+                            console.log('GAME STATUS IS NOT SYNC. NEED TO CALL FUNCTION TO HANDLE RELOADED PAGES')
+                            this.setStartMilliseconds();
                         }
                     };
 
@@ -310,51 +343,137 @@
 
                         // host (always p1) listens for signal that all players are ready
                         if (data.sync_status && this.isHost) {
-                            if (this.hostSyncPoll) {
-                                // stop host polling
-                                clearInterval(this.hostSyncPoll);
-                            }
+                            // players are ready
+
+                            // stop polling
+                            this.stopSyncPolling()
 
                             // prevent duplicate start events
-                            if (!this.gameStarted) {
-
-                                console.log('round start called by host')
-
-                                // inform event hub that game can start. This notifies all players the game has started
-                                this.gameUpdate({
-                                    'round_update': {'round_start': true},
-                                });
+                            if (!this.roundStarted) {
+                                this.roundInfoEvent()
                             }
+                        } else if (data.round_info) {
+                            // players should display start modal
+                            console.log('ROUND INFO RECEIVED')
+
+                            // save round info start time
+                            this.storeStartTime(this.gameInfoKey)
+
+                            this.roundStarted = true;
+                            this.openInfoModal()
+
+                            this.startInfoTimer()
+
+                        } else if (data.round_active) {
+                            // round is active for play
+                            console.log('ROUND ACTIVE RECEIVED')
+                            this.closeInfoModal();
+
+                            this.storeStartTime(this.gameActiveKey)
+
+                            // save start round active time
+                            this.startRoundTimer();
+                            this.subscribeToBalance();
+
+                        } else if (data.round_timeout) {
+                            console.log('ROUND OVER RECEIVED')
+
+                            // players stop game
+                            this.roundOver = true
+
+                            // create end round event
+                            this.roundEndEvent();
+
+                        } else if (data.round_end) {
+                            console.log('ROUND END RECEIVED')
+
+                            // save round active time
+                            this.storeStartTime(this.resultsStartKey)
+
+                            // display results modal
+                            this.openResultsModal();
+                            console.log('Opening results modal for ' + this.resultsModalDuration + ' milliseconds')
+
+                            // settimeout to close modal
+                            this.startResultsTimer()
+
+                            this.roundResultsEvent();
+
+                        }  else if (data.round_results) {
+                            this.resultsObj = data.round_results;
+                            this.balance = this.resultsObj.balance
+                        } else {
+                            console.log('There is no action for this data', data)
                         }
                     };
                 },
-                checkSyncStatus: function() {
-                    let data = {
-                        'group_id': this.groupId,
-                        'player_id': this.playerId,
-                        'round_number': this.roundNumber,
-                        'sync_status': true,
+                startValidationPoll: function() {
+                    if (!this.isHost) return
+
+                    this.validationInterval = setInterval(() => {
+                        this.syncValidationEvent()
+                    }, 3000)
+                },
+                stopValidationPoll: function() {
+                    clearInterval(this.validationInterval)
+                },
+                startSyncPolling: function() {
+                    if (!this.isHost) return
+
+                    this.hostSyncPoll = setInterval(() => {
+                        this.syncStatusEvent()
+                    }, 2000);
+                },
+                stopSyncPolling: function() {
+                    if (!this.hostSyncPoll) return
+
+                    clearInterval(this.hostSyncPoll)
+                },
+                startTimeFromStorage: function(key) {
+                    let val = window.localStorage.getItem(key)
+
+                    if (val == null) {
+                        console.log('Unable to find ' + key + ' in local storage')
+                        return null
                     }
-                    this.gameSyncSocket.send(JSON.stringify(data));
+
+                    let startMilliseconds = parseInt(val)
+                    return Date.now() - startMilliseconds
+
                 },
-                playerReady: function() {
-                    let data = {
-                        'group_id': this.groupId,
-                        'player_id': this.playerId,
-                        'round_number': this.roundNumber,
-                        'ready': true,
-                    };
-                    this.gameSyncSocket.send(JSON.stringify(data));
+                storeStartTime: function(key) {
+                    console.log('storing data for the following key: ', key)
+                    let time = Date.now()
+                    let item = window.localStorage.getItem(key)
+                    if (!item) {
+                        window.localStorage.setItem(key, time)
+                    } else {
+                        console.error('The item at following key was already found in local storage', key, item)
+                    }
                 },
+                // start timers
+                startInfoTimer: function() {
+                    setTimeout(() => {
+                        // host informs players of game start
+                        this.roundActiveEvent()
+                    }, this.infoModalDuration )
+                },
+                startResultsTimer: function() {
+                    setTimeout(()=>{
+                            this.closeGameSocket()
+
+                            // submit game
+                            console.log('results modal has timed out. Advancing to next page.')
+                            this.submit();
+                        },
+                        this.resultsModalDuration
+                    )
+                },
+
                 configureGame: function() {
                     this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
-                        console.log('game socket opened')
-
-                        if (this.gameStatus !== 0) {
-                            // the page was reloaded
-                            this.startGame()
-                        }
+                        console.log('Game socket opened')
 
                     };
 
@@ -364,12 +483,8 @@
 
                         // prevent sending events if round is over
                         if (this.roundOver) {
-                             if (data.round_results) {
-                                 console.log('round results')
-                                this.resultsObj = data.round_results
-                                this.balance = this.resultsObj.balance
-                            }
-                             return
+                            console.error('Round is over, data will not be processed', data)
+                            return
                         }
 
                         if (data.balance) {
@@ -399,15 +514,6 @@
 
                             this.investigationCount = data.investigation_update
 
-                        } else if (data.round_end) {
-
-                            this.endRound()
-
-                        } else if (data.round_start) {
-                            // this occurs when host informs players game has started
-                            console.log('Round Started')
-
-                            this.startGame();
                         }
                     };
 
@@ -439,45 +545,28 @@
                     this.stealLocation = parseInt(stealStart);
                 },
                 endRound: function() {
-                    // get results from backend
-                    this.getRoundResults()
                     this.roundOver = true
+                    // get results from backend
+                    this.roundResultsEvent()
+
+                    // record when results modal opens in case of reload
+                    this.storeStartTime(this.resultsStartKey)
+
                     // open modal
                     this.openResultsModal()
                 },
-                getRoundResults: function() {
-                    // players individually pull results
-                    let x = {
-                      'round_update': {
-                          'round_results': true
-                      }
-                    };
-                    this.gameUpdate(x);
+                openInfoModal: function() {
+                    this.$refs.infomodal.open();
+                },
+                closeInfoModal: function() {
+                    this.$refs.infomodal.close()
                 },
                 openResultsModal: function() {
-
-                    // record when results modal opens in case of reload
-                    if (!window.localStorage.getItem(this.resultsStartKey)) {
-                        window.localStorage.setItem(this.resultsStartKey, Date.now())
-                    }
 
                     // todo: this was changed from setTimeout and needs to be tested
                     this.$nextTick(() => {
                          this.$refs.resultsmodal.openModal();
                     });
-
-                    console.log('Opening results modal for ' + this.resultsModalDuration + ' milliseconds')
-
-                    // settimeout to close modal
-                    setTimeout(()=>{
-                            this.closeGameSocket()
-
-                            // submit game
-                            console.log('results modal has timed out. Advancing to next page.')
-                            this.submit();
-                        },
-                        this.resultsModalDuration
-                    )
                 },
                 closeGameSocket() {
                     console.log('Closing game socket')
@@ -501,10 +590,24 @@
                         this.harvestActive();
                     }
                 },
+                syncUpdate: function(data) {
+
+                    // check if open
+                    if (this.gameSyncSocket.readyState !== WebSocket.OPEN) {
+                        console.error('Sync socket is closed. Cannot send date to channel', data);
+                    }
+
+                    data.group_id = this.groupId
+                    data.player_id = this.playerId
+                    data.round_number = this.roundNumber
+                    data.session_id = this.sessionId
+
+                    this.gameSyncSocket.send(JSON.stringify(data));
+                },
                 gameUpdate: function(data) {
 
                     if (this.gameSocket.readyState !== WebSocket.OPEN) {
-                        console.log('Game socket is closed. Cannot send data to event hub', data);
+                        console.error('Game socket is closed. Cannot send data to channel', data);
                         return
                     }
 
@@ -554,29 +657,6 @@
                             console.log('the web socket is not connected')
                         }
                     }, this.balanceFrequency);
-                },
-                unsubscribeBalance: function() {
-                    if (this.balanceInterval)
-                        clearInterval(this.balanceInterval);
-                },
-                positionStealToken: function() {
-                    if (this.harvestScreen) // update this so we dont check multiple times
-                        return;
-                    this.$nextTick(() => {
-                         this.$refs.stealcomponent.setStealLocation();
-                    });
-                },
-                investigationUpdate: function(item) {
-                    // inform the api that the item is being dragged
-                    this.gameUpdate({
-                        'investigation_update': item,
-                    });
-                },
-                updateOfficerHistory: function(officerHistory) {
-                    // update officer_history
-                    this.interceptsCount = officerHistory.intercept;
-                    this.finesCount = officerHistory.fine;
-                    this.reprimandsCount = officerHistory.reprimand;
                 },
                 showIntersection: function (i, officerHistory) {
 
@@ -669,25 +749,38 @@
                     }
 
                 },
-                startGame: function() {
-
-                    this.setStartMilliseconds();
-
-                    this.gameStarted = true;
-
-                    this.subscribeToBalance();
-
+                startRoundTimer: function() {
                     setTimeout(() => {
-                        // officer records round end
-                        // todo: the round end event should originate from the api. schedule it when the game is started
-                        if (this.isHost) {
-                            this.unsubscribeBalance();
-                            this.roundEndEvent();
-                        }
-
+                        // host initiates round end event
+                        this.unsubscribeBalance();
+                        this.roundTimeoutEvent();
                         this.disableTokens()
                     }, this.tutorial? this.tutorialDuration : this.gameDuration );
+                },
+                unsubscribeBalance: function() {
+                    if (!this.isHost) return
 
+                    if (this.balanceInterval)
+                        clearInterval(this.balanceInterval);
+                },
+                positionStealToken: function() {
+                    if (this.harvestScreen) // update this so we dont check multiple times
+                        return;
+                    this.$nextTick(() => {
+                         this.$refs.stealcomponent.setStealLocation();
+                    });
+                },
+                investigationUpdate: function(item) {
+                    // inform the api that the item is being dragged
+                    this.gameUpdate({
+                        'investigation_update': item,
+                    });
+                },
+                updateOfficerHistory: function(officerHistory) {
+                    // update officer_history
+                    this.interceptsCount = officerHistory.intercept;
+                    this.finesCount = officerHistory.fine;
+                    this.reprimandsCount = officerHistory.reprimand;
                 },
                 disableTokens: function() {
                     if (this.isOfficer) {
@@ -696,15 +789,85 @@
                         this.$refs.stealcomponent.roundEnd()
                     }
                 },
+
+                // sync events
+                syncValidationEvent: function() {
+                    let data = {
+                        'validate_players': true
+                    }
+                    this.syncUpdate(data)
+                },
+                playerReadyEvent: function() {
+                    // player informs group channel their page has loaded
+                    let data = {
+                        'group_id': this.groupId,
+                        'player_id': this.playerId,
+                        'round_number': this.roundNumber,
+                        'player_ready': true, // todo: clean this up
+                    };
+                    this.gameSyncSocket.send(JSON.stringify(data));
+                },
+                syncStatusEvent: function() {
+                    if (!this.isHost) return
+
+                    console.log('SENDING SYNC STATUS EVENT')
+
+                    // host polls group channel
+                    let data = {
+                        'group_id': this.groupId,
+                        'player_id': this.playerId,
+                        'round_number': this.roundNumber,
+                        'sync_status': true, // todo: clean this up
+                    }
+                    this.gameSyncSocket.send(JSON.stringify(data));
+                },
+                roundInfoEvent: function() {
+                    if (!this.isHost) return
+
+                    console.log('SENDING ROUND INFO EVENT')
+
+                    this.syncUpdate({
+                        'round_info': true
+                    })
+                },
+                roundActiveEvent: function() {
+                    if (!this.isHost) return
+
+                    console.log('SENDING ROUND ACTIVE EVENT')
+
+                    this.syncUpdate({
+                        'round_active': true
+                    })
+                },
+                roundTimeoutEvent: function() {
+                    if (!this.isHost) return
+
+                    console.log('SENDING ROUND TIMEOUT EVENT')
+
+                    this.syncUpdate({
+                        'round_timeout': true,
+                    })
+                },
                 roundEndEvent: function() {
-                    if (this.gameStatus === 2) { // other players have already been notified
+                    if (!this.isHost) return
+
+                    console.log('SENDING ROUND END EVENT')
+
+                    if (this.gameStatus === gameStatuses.RESULTS) { // other players have already been notified
                         console.log('other players have already been notified of end round.');
                         return;
                     }
-                    this.gameUpdate({
-                        'round_update': { 'round_end': true },
+
+                    this.syncUpdate({
+                        'round_end': true
                     });
                 },
+                roundResultsEvent: function() {
+                    console.log('SENDING ROUND RESULTS EVENT')
+                    // players individually pull results
+                    this.syncUpdate({ 'round_results': true });
+                },
+                // game updates
                 updateProbabilityReprimand: function(value) {
                     this.probabilityReprimand = value
                 },
@@ -763,14 +926,16 @@
                 civilianFine() { return config.civilian_fine },
                 defendTokenSize() { return config.defend_token_size },
                 defendTokenTotal() { return config.defend_token_total },
-                gameStartKey() { return 'round' + this.roundNumber + 'group' + this.groupId },
+                gameActiveKey() { return 'round' + this.roundNumber + 'group' + this.groupId },
+                gameInfoKey() { return this.gameActiveKey + 'infomodal'},
                 gameStatus() { return config.game_status },
                 isHost() { return this.groupPlayerId === 1 },
                 mapSize() { return config.civilian_map_size },
                 playersPerGroup() { return config.players_per_group },
                 reprimandAmount() { return config.officer_reprimand_amount },
-                resultsStartKey() { return this.gameStartKey + 'results' },
+                resultsStartKey() { return this.gameActiveKey + 'results' },
                 reviewProbability() { return config.officer_review_probability },
+                infoModalObject() { return config.start_modal_object },
                 stealTimeoutMilli() { return config.steal_timeout_milli },
                 stealTokenSlots() { return config.steal_token_slots },
             },
@@ -778,6 +943,7 @@
 
         // allow other scripts to call vue instance methods
         function activateResults() {
+            // todo: cancel balance subscription and make sure that page is not advanced. remaining time on results modal would be optimal
             app.endRound()
         }
 

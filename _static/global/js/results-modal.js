@@ -24,14 +24,12 @@ let resultsModalComponent = {
             
             <div v-if="resultsObj" class="modal-content results-modal">
                 <h4 style="text-align: center;">{{ resultsObj.title }}</h4>
-                
-                <p style="text-align: center;">Balance</p>
-                
+                                
                 <div class="list-group" style="width: 350px; margin: auto;">
                     
                     <div v-if="resultsObj.balance != null" class="list-group-item">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>Net Earnings <grain-image-component :size=20></grain-image-component></div>
+                            <div>Balance <grain-image-component :size=20></grain-image-component></div>
                             <div>{{ resultsObj.balance | integerFilter }}</div>
                         </div>
                     </div>      

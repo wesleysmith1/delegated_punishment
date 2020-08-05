@@ -61,6 +61,7 @@ class Constants(BaseConstants):
     tutorial_duration_seconds = 1800
     game_duration_seconds = 198
     results_modal_seconds = 30
+    start_modal_seconds = 10
 
     """
     this defines how long a steal token remains on a map before resetting to the 'steal home'
@@ -98,7 +99,8 @@ class Subsession(BaseSubsession):
         groups = self.get_groups()
 
         config_key = self.session.config['civilian_income_config']
-        round_incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
+        lth = self.session.config['civilian_income_low_to_high']
+        round_incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
 
         # this code is the terrible way that officer income is determined for session
         if self.round_number == 1:
@@ -159,10 +161,12 @@ class Subsession(BaseSubsession):
 
 class GameStatus:
     SYNC = 0
-    ACTIVE = 1
-    RESULTS = 2
+    INFO = 1
+    ACTIVE = 2
+    RESULTS = 3
     CHOICES = (
         (SYNC, 'Sync'),
+        (INFO, 'Start'),
         (ACTIVE, 'Active'),
         (RESULTS, 'Results'),
     )
@@ -234,7 +238,8 @@ class Group(BaseGroup):
         group_id = officer_participant.vars['group_id']
 
         config_key = self.session.config['civilian_income_config']
-        incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
+        lth = self.session.config['civilian_income_low_to_high']
+        incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
 
         meta_data = dict(
             round_number=self.subsession.round_number,

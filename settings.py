@@ -75,6 +75,7 @@ SESSION_CONFIGS = [
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,
         civilian_income_config=1,
+        civilian_income_low_to_high=True,
         tutorial_civilian_income=40,
         tutorial_officer_bonus=260,
         grain_conversion=.1,

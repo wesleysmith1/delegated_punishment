@@ -393,7 +393,6 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
             victim.civilian_row(event_type, event_time, punished='0')
 
-            # add officer data todo: this appears even when there is not a fucking intersection
             officer.officer_row(event_type, event_time, formatted_defend_tokens(defend_tokens),
                                 intersection_data=formatted_intersection, punished=str(officer_reprimand))
 
