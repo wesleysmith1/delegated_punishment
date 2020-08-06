@@ -51,31 +51,31 @@ let infoModalComponent = {
                         <div class="list-group" style="width: 350px; margin: auto;">
                              <div class="list-group-item">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Officer bonus <grain-image-component :size=20></grain-image-component>:</div>
+                                    <div>Officer bonus <grain-image-component :size=20></grain-image-component></div>
                                     <div :style=officerItem>{{startObject.officer_bonus}}</div>
                                 </div>
                             </div>
                             <div class="list-group-item">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Officer reprimand <grain-image-component :size=20></grain-image-component>:</div>
+                                    <div>Officer reprimand <grain-image-component :size=20></grain-image-component></div>
                                     <div :style="officerItem">{{ startObject.officer_reprimand }}</div>
                                 </div>
                             </div>
                             <div class="list-group-item">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Civilian fine if punished <grain-image-component :size=20></grain-image-component>:</div>
+                                    <div>Civilian fine if punished <grain-image-component :size=20></grain-image-component></div>
                                     <div :style="civilianItem">{{ startObject.civilian_fine }}</div>
                                 </div>
                             </div>
                             <div class="list-group-item">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Civilian steal rate <grain-image-component :size=20></grain-image-component>:</div>
+                                    <div>Civilian steal rate <grain-image-component :size=20></grain-image-component></div>
                                     <div :style="civilianItem">{{ startObject.steal_rate }}</div>
                                 </div>
                             </div>
                             <div class="list-group-item">
                                 <div style="display: flex; justify-content: space-between;">
-                                    <div>Civilian harvest rates <grain-image-component :size=20></grain-image-component>:</div>
+                                    <div>Civilian harvest rates <grain-image-component :size=20></grain-image-component></div>
                                     <div>
                                         <span v-for="(income, index) in startObject.civilian_incomes" v-bind:style="incomeItem(index)">
                                             {{ income }}

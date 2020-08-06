@@ -13,26 +13,19 @@
         }
     </style>
 
-    <div style="font-size: 20px;">
+    <div style="font-size: 30px;">
         <p>{{ info }}</p>
 
         {% if player.id_in_group > 1 %}
-        <p>You will earn <strong>{{ player.income }}</strong> grain for each harvest and <strong>{{ steal_rate }}</strong> grain for each second of successful stealing.</p>
-
             <p>
                 <span>Civilian incomes in your group:</span>&emsp;
 
                 {% for income in civilian_incomes %}
-                    {% if income == player.income %}
-                        <strong>{{ income }}</strong>
-                    {% else %}
-                        {{income}}
-                    {% endif %}
+                    {{income}}
                     &emsp;
                 {% endfor %}
 
             </p>
-
         {% endif %}
 
         <p>The fine for convicted civilians is <strong>{{civilian_fine}}</strong>.</p>

@@ -54,6 +54,7 @@
 
     {% verbatim %}
     <div id="app">
+        {{gameStatus}}
         <div class="outer-container" v-show="roundStarted">
             <officer-game-component
                 id="officerGame"
@@ -926,14 +927,15 @@
                 civilianFine() { return config.civilian_fine },
                 defendTokenSize() { return config.defend_token_size },
                 defendTokenTotal() { return config.defend_token_total },
-                gameActiveKey() { return 'round' + this.roundNumber + 'group' + this.groupId },
-                gameInfoKey() { return this.gameActiveKey + 'infomodal'},
+                uniqueKey() { return 'player' + this.playerId + '-group' + this.groupId },
+                gameActiveKey() { return 'active-' + this.uniqueKey },
+                gameInfoKey() { return 'info-' + this.uniqueKey},
                 gameStatus() { return config.game_status },
                 isHost() { return this.groupPlayerId === 1 },
                 mapSize() { return config.civilian_map_size },
                 playersPerGroup() { return config.players_per_group },
                 reprimandAmount() { return config.officer_reprimand_amount },
-                resultsStartKey() { return this.gameActiveKey + 'results' },
+                resultsStartKey() { return 'results-' + this.uniqueKey },
                 reviewProbability() { return config.officer_review_probability },
                 infoModalObject() { return config.start_modal_object },
                 stealTimeoutMilli() { return config.steal_timeout_milli },
