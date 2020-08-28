@@ -24,7 +24,7 @@
 
 
   ### Install latest release of delegated_punishment
-  Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`
+  Login to server `ssh -i LightsailDefaultKey.pem ubuntu@44.232.29.84`
 
   To initially install
   ```bash
@@ -66,7 +66,7 @@
 
 ## Setup Server
 
-Login to server `ssh -i LightsailDefaultKey.pem ubuntu@34.215.160.83`, 
+Login to server `ssh -i LightsailDefaultKey.pem ubuntu@44.232.29.84`, 
 
 Can create new database for the session by running `otree resetdb` on server.
 *this will break all existing session urls in lab.*
@@ -91,7 +91,7 @@ Logout and exit the ssh connection to the server
 
 #### Manually Create Session on Admin PC
 
-Go to http://34.215.160.83/room_without_session/delegated_punishment/
+Go to http://44.232.29.84/room_without_session/delegated_punishment/
   * LOGIN username: `admin`
   * password: `password`
 
@@ -113,7 +113,7 @@ On admin PC, open `Lanschool`
 
 * Close any desktop software
 * Run software one computer at a time within each row (five participants are automatically grouped, and will exit their rows from the outside-in)
-  * `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe --kiosk --force-device-scale-factor=1.00 http://34.215.160.83/room/delegated_punishment/`
+  * `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe --kiosk --force-device-scale-factor=1.00 http://44.232.29.84/room/delegated_punishment/`
   * Manually check all screens, e.g., all chrome browsers have kiosk mode, fullscreen, zoom 100%.
   * Make sure Chrome starts fresh if there any issues
 
@@ -132,6 +132,7 @@ From Local Admin PC
   
 From Local Admin PC or Manually
  * Close all client connections / kill software
+ * Logout of Otree, Logout of PC
  * Collect instructions
 
 Login to Server
@@ -139,7 +140,7 @@ Login to Server
 
 ```bash
 mkdir /tmp/SessionData/
-scp -r -i LightsailDefaultKey.pem ubuntu@34.215.160.83:~/delegated_punishment/data/* /tmp/SessionData/
+scp -r -i LightsailDefaultKey.pem ubuntu@44.232.29.84:~/delegated_punishment/data/* /tmp/SessionData/
 ```
 
 ---
