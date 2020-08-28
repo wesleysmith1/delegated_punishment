@@ -54,7 +54,6 @@
 
     {% verbatim %}
     <div id="app">
-        {{gameStatus}}
         <div class="outer-container" v-show="roundStarted">
             <officer-game-component
                 id="officerGame"
@@ -412,6 +411,7 @@
                     if (!this.isHost) return
 
                     this.validationInterval = setInterval(() => {
+                        console.log('sync poll going off')
                         this.syncValidationEvent()
                     }, 3000)
                 },
@@ -793,61 +793,38 @@
 
                 // sync events
                 syncValidationEvent: function() {
-                    let data = {
-                        'validate_players': true
-                    }
-                    this.syncUpdate(data)
+                    this.syncUpdate({'validate_players': true})
                 },
                 playerReadyEvent: function() {
                     // player informs group channel their page has loaded
-                    let data = {
-                        'group_id': this.groupId,
-                        'player_id': this.playerId,
-                        'round_number': this.roundNumber,
-                        'player_ready': true, // todo: clean this up
-                    };
-                    this.gameSyncSocket.send(JSON.stringify(data));
+                    this.syncUpdate({'player_ready': true})
                 },
                 syncStatusEvent: function() {
                     if (!this.isHost) return
 
                     console.log('SENDING SYNC STATUS EVENT')
-
-                    // host polls group channel
-                    let data = {
-                        'group_id': this.groupId,
-                        'player_id': this.playerId,
-                        'round_number': this.roundNumber,
-                        'sync_status': true, // todo: clean this up
-                    }
-                    this.gameSyncSocket.send(JSON.stringify(data));
+                    this.syncUpdate({'sync_status': true})
                 },
                 roundInfoEvent: function() {
                     if (!this.isHost) return
 
                     console.log('SENDING ROUND INFO EVENT')
 
-                    this.syncUpdate({
-                        'round_info': true
-                    })
+                    this.syncUpdate({'round_info': true})
                 },
                 roundActiveEvent: function() {
                     if (!this.isHost) return
 
                     console.log('SENDING ROUND ACTIVE EVENT')
 
-                    this.syncUpdate({
-                        'round_active': true
-                    })
+                    this.syncUpdate({'round_active': true})
                 },
                 roundTimeoutEvent: function() {
                     if (!this.isHost) return
 
                     console.log('SENDING ROUND TIMEOUT EVENT')
 
-                    this.syncUpdate({
-                        'round_timeout': true,
-                    })
+                    this.syncUpdate({'round_timeout': true})
                 },
                 roundEndEvent: function() {
                     if (!this.isHost) return
@@ -859,9 +836,7 @@
                         return;
                     }
 
-                    this.syncUpdate({
-                        'round_end': true
-                    });
+                    this.syncUpdate({'round_end': true});
                 },
                 roundResultsEvent: function() {
                     console.log('SENDING ROUND RESULTS EVENT')
@@ -943,9 +918,8 @@
             },
         });
 
-        // allow other scripts to call vue instance methods
+        // allow other scripts to call vue instance methods. This is only called in tutorial.
         function activateResults() {
-            // todo: cancel balance subscription and make sure that page is not advanced. remaining time on results modal would be optimal
             app.endRound()
         }
 

@@ -7,11 +7,6 @@ let infoModalComponent = {
         isOfficer: Boolean,
         groupPlayerId: Number,
     },
-    data: function() {
-        return {
-
-        }
-    },
     methods: {
         open: function() {
             this.$refs.smodal.style.display = 'block';
@@ -19,9 +14,9 @@ let infoModalComponent = {
         close: function() {
             this.$refs.smodal.style.display = 'none';
         },
-        incomeItem(i) {
+        incomeStyle(id) {
             console.log('here is the index')
-            if (this.groupPlayerId === i + 2) {
+            if (this.groupPlayerId == id) {
                 return {fontWeight: 'bold'}
             } else {
                 return {}
@@ -36,6 +31,11 @@ let infoModalComponent = {
         civilianItem() {
             return this.isOfficer ? {} : {fontWeight: 'bold'}
         },
+        sortedIds() {
+            let sortedIds = Object.keys(this.startObject.civilian_incomes);
+            sortedIds.sort((a,b) => { return this.startObject.civilian_incomes[a] - this.startObject.civilian_incomes[b] });
+            return sortedIds
+        }
     },
     template:
         `
@@ -77,8 +77,8 @@ let infoModalComponent = {
                                 <div style="display: flex; justify-content: space-between;">
                                     <div>Civilian harvest rates <grain-image-component :size=20></grain-image-component></div>
                                     <div>
-                                        <span v-for="(income, index) in startObject.civilian_incomes" v-bind:style="incomeItem(index)">
-                                            {{ income }}
+                                        <span v-for="id in sortedIds" v-bind:style="incomeStyle(id)">
+                                            {{ startObject.civilian_incomes[id] }}
                                         </span>
                                     </div>
                                 </div>

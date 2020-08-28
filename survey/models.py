@@ -40,6 +40,7 @@ class Player(BasePlayer):
     strategy = models.StringField(label="How did you make your decisions during the experiment?")
     feedback = models.StringField(label="Is there anything else you would like to tell the experimenters about this experiment?")
 
-    payout = models.IntegerField(initial=-2)
+    identifier = models.IntegerField()
+    # payout = models.IntegerField()
 
 

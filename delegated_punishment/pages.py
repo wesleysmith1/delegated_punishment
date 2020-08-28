@@ -1,9 +1,8 @@
 from ._builtin import Page, WaitPage
 import json, math
-from otree.api import Currency as c, currency_range
+import operator
 
 from .models import Constants, DefendToken, Player, Group, GameStatus
-from random import random
 from delegated_punishment.helpers import skip_round
 from delegated_punishment.income_distributions import IncomeDistributions
 
@@ -62,24 +61,33 @@ class Game(Page):
         # income configuration number
         config_key = self.session.config['civilian_income_config']
         lth = self.session.config['civilian_income_low_to_high']
-        group_incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
+
+        civilian_ids = [x + Constants.players_per_group - Constants.civilians_per_group for x in
+               range(1, Constants.players_per_group + 1)]
 
         # todo: if tutorial or practice we need different variables
         if self.round_number < 3:  # tutorial or practice round
-
             tut_civ_income = self.session.config['tutorial_civilian_income']
             tut_o_bonus = self.session.config['tutorial_officer_bonus']
 
+            incomes = [tut_civ_income] * Constants.civilians_per_group
+            incomes_dict = dict(zip(civilian_ids, incomes))
+            incomes_dict = dict(sorted(incomes_dict.items(), key=operator.itemgetter(1)))
+
             start_modal_object = dict(
-                civilian_incomes=[tut_civ_income] * Constants.civilians_per_group,
+                civilian_incomes=incomes_dict,
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=tut_o_bonus,
                 officer_reprimand=Constants.officer_reprimand_amount,
             )
         else:
+            incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
+            incomes_dict = dict(zip(civilian_ids, incomes))
+            sorted(incomes_dict.values())
+
             start_modal_object = dict(
-                civilian_incomes=group_incomes,
+                civilian_incomes=incomes_dict,
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],

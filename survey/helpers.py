@@ -49,7 +49,8 @@ def generate_payouts(group):
         else:
             payout = -1
 
-        player.payout = payout
+        player.participant_code = player.participant.code
+        player.payoff = payout
         player.save()
 
 
@@ -63,11 +64,11 @@ def generate_survey_csv(group):
     f = open(file_name, 'w', newline='')
     with f:
         writer = csv.writer(f)
-        header = ['participant', 'payout', 'race_ethnicity', 'gender', 'strategy', 'feedback']
+        header = ['participant', 'payoff', 'race_ethnicity', 'gender', 'strategy', 'feedback']
 
         writer.writerow(header)
 
         for p in group.get_players():
-            survey_row = [p.participant.id_in_session, p.payout, p.race_ethnicity, p.gender, p.strategy, p.feedback]
+            survey_row = [p.participant.id_in_session, p.payoff, p.race_ethnicity, p.gender, p.strategy, p.feedback]
             writer.writerow(survey_row)
 
