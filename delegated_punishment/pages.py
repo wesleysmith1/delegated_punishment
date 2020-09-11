@@ -193,8 +193,9 @@ class Intermission(Page):
             vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
             info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
         else:
-            info = 'We are about to perform 4 periods sequentially.'
+            info = 'We are about to perform 4 rounds sequentially.'
         vars_dict['info'] = info
+        vars_dict['officer_review_probability'] = Constants.officer_review_probability*100
         return vars_dict
 
 

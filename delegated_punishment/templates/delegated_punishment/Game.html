@@ -481,6 +481,7 @@
                     this.gameSocket.onmessage = (e) => {
 
                         let data = JSON.parse(e.data);
+                        console.log(data);
 
                         // prevent sending events if round is over
                         if (this.roundOver) {
@@ -588,6 +589,10 @@
 
                         // reset harvest status and send toggle event to db
                         this.harvestScreen = !this.harvestScreen;
+
+                        // cancel the steal token timeout
+                        this.$refs.stealcomponent.cancelTimeout()
+
                         this.harvestActive();
                     }
                 },
@@ -606,6 +611,8 @@
                     this.gameSyncSocket.send(JSON.stringify(data));
                 },
                 gameUpdate: function(data) {
+
+                    console.log('Game update:', data)
 
                     if (this.gameSocket.readyState !== WebSocket.OPEN) {
                         console.error('Game socket is closed. Cannot send data to channel', data);

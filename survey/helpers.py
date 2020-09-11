@@ -49,7 +49,7 @@ def generate_payouts(group):
         else:
             payout = -1
 
-        player.participant_code = player.participant.code
+        player.identifier = player.participant.code
         player.payoff = payout
         player.save()
 

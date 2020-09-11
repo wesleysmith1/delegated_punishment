@@ -47,6 +47,7 @@ let stealGameComponent = {
             Draggable.get('#location').disable()
         },
         cancelTimeout: function() {
+            console.log('cancel timeout is called');
             if (this.timeout)
                 clearTimeout(this.timeout);
         },

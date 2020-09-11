@@ -16,23 +16,31 @@
     <div style="font-size: 30px;">
         <p>{{ info }}</p>
 
-        {% if player.id_in_group > 1 %}
+        <p>Civilians will see their harvest rates at the start of each round (and at the top of the harvesting screen during each period).</p>
+
+        <div style="padding-left: 75px;">
             <p>
-                <span>Civilian incomes in your group:</span>&emsp;
+                <span>The harvest rates for all civilians in your group:</span>&emsp;
 
                 {% for income in civilian_incomes %}
                     {{income}}
-                    &emsp;
                 {% endfor %}
-
             </p>
-        {% endif %}
 
-        <p>The fine for convicted civilians is <strong>{{civilian_fine}}</strong>.</p>
+            <p>The harvest rate for you changes each period and will be shown in <strong>bold</strong>.</p>
+        </div>
 
-        <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared and loses <strong>{{ officer_reprimand }}</strong> grain if they are reprimanded (which may happen when an innocent person is fined).</p>
+        <p>The officer will see their incentives at the start of each round (and in the middle of their defend/investigate screen during each period).</p>
 
-        <p>These periods will be used to calculate your payoffs at the end of the game.</p>
+        <div style="padding-left: 75px;">
+            <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared</p>
+
+            <p>The officer loses <strong>{{ officer_reprimand }}</strong> grain per crime cleared when reprimanded</p>
+
+            <p>(reprimands happen with <strong>{{officer_review_probability}}%</strong> probability when an innocent civilian is punished)</p>
+        </div>
+
+        <p>These periods will be used to calculate your payoffs at the end of the experiment.</p>
     </div>
 
     <p>{% next_button %}</p>
