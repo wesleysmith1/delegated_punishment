@@ -5,6 +5,7 @@ let resultsModalComponent = {
     props: {
         resultsObj: Object,
         isOfficer: Boolean,
+        income: Number, // needed to calculate officer breakdown
     },
     data: function() {
         return {
@@ -38,21 +39,65 @@ let resultsModalComponent = {
                 <br>
                 
                 <template v-if="isOfficer">
-                    <p style="text-align: center; margin-top: 15px;">Game summary</p>
+                    <p style="text-align: center; margin-top: 15px;">Breakdown</p>
                     <div class="list-group" style="width: 350px; margin: auto;">
                         
-                        <div v-if="resultsObj.fine_total != null" class="list-group-item list-group-item-primary">
+<!--                        <div v-if="resultsObj.fine_total != null" class="list-group-item list-group-item-primary">-->
+<!--                            <div style="display: flex; justify-content: space-between;">-->
+<!--                                <div>Total civilian reprimands:</div>-->
+<!--                                <div>{{ resultsObj.fine_total }}</div>-->
+<!--                            </div>-->
+<!--                        </div>          -->
+<!--                        <div v-if="resultsObj.bonus_total != null" class="list-group-item list-group-item-primary">-->
+<!--                            <div style="display: flex; justify-content: space-between;">-->
+<!--                                <div>Total officer bonuses:</div>-->
+<!--                                <div>{{ resultsObj.bonus_total }}</div>-->
+<!--                            </div>-->
+<!--&lt;!&ndash;                            todo&ndash;&gt;-->
+<!--                                intercepts-->
+<!--                                reprimands-->
+<!--                                reprimands-->
+<!--                        </div>    -->
+                        
+<!--                        new stuff          -->
+                        <div v-if="resultsObj.intercepts != null" class="list-group-item list-group-item-primary">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Base pay:</div>
+                                <div>{{ resultsObj.officer_base_pay }}</div>
+                            </div>
+                        </div>
+                        <div v-if="resultsObj.fines != null" class="list-group-item list-group-item-primary">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>Bonuses:</div>
+                                <div>{{ resultsObj.fines * income }}</div>
+                            </div>
+                        </div>
+                        <div v-if="resultsObj.reprimands != null" class="list-group-item list-group-item-primary">
                             <div style="display: flex; justify-content: space-between;">
                                 <div>Total civilian reprimands:</div>
-                                <div>{{ resultsObj.fine_total }}</div>
+                                <div>-{{ resultsObj.reprimands * resultsObj.officer_reprimand_amount }}</div>
                             </div>
-                        </div>          
-                        <div v-if="resultsObj.bonus_total != null" class="list-group-item list-group-item-primary">
-                            <div style="display: flex; justify-content: space-between;">
-                                <div>Total officer bonuses:</div>
-                                <div>{{ resultsObj.bonus_total }}</div>
-                            </div>
-                        </div>              
+                        </div>   
+                        
+                        
+<!--                        <div v-if="resultsObj.intercepts != null" class="list-group-item list-group-item-primary">-->
+<!--                            <div style="display: flex; justify-content: space-between;">-->
+<!--                                <div>Total intercepts:</div>-->
+<!--                                <div>{{ resultsObj.intercepts }}</div>-->
+<!--                            </div>-->
+<!--                        </div>  -->
+<!--                        <div v-if="resultsObj.fines != null" class="list-group-item list-group-item-primary">-->
+<!--                            <div style="display: flex; justify-content: space-between;">-->
+<!--                                <div>Bonuses:</div>-->
+<!--                                <div>{{ resultsObj.fines }}</div>-->
+<!--                            </div>-->
+<!--                        </div>  -->
+<!--                        <div v-if="resultsObj.reprimands != null" class="list-group-item list-group-item-primary">-->
+<!--                            <div style="display: flex; justify-content: space-between;">-->
+<!--                                <div>Total civilian reprimands:</div>-->
+<!--                                <div>{{ resultsObj.reprimands }}</div>-->
+<!--                            </div>-->
+<!--                        </div>  -->
                     </div>
                 </template>
 

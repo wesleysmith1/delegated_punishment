@@ -123,7 +123,7 @@
                 :review-probability="reviewProbability"
                 @update-probability-reprimand="updateProbabilityReprimand"
             ></game-status-component>
-            <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer"></results-modal-component>
+            <results-modal-component ref="resultsmodal" :results-obj="resultsObj" :is-officer="isOfficer" :income="income"></results-modal-component>
             <info-modal-component ref="infomodal" :start-object="infoModalObject" :is-officer="isOfficer" :group-player-id="groupPlayerId"></info-modal-component>
         </div>
         <div v-show="!roundStarted" class="title">Loading...</div>

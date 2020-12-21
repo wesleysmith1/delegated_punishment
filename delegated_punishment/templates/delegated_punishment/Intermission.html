@@ -40,7 +40,7 @@
             <p>(reprimands happen with <strong>{{officer_review_probability}}%</strong> probability when an innocent civilian is punished)</p>
         </div>
 
-        <p>These periods will be used to calculate your payoffs at the end of the experiment.</p>
+        <p>These periods will {% if subsession.round_number == 2 %}<span><strong>not</strong></span>{% endif %} be used to calculate your payoffs at the end of the experiment.</p>
     </div>
 
     <p>{% next_button %}</p>

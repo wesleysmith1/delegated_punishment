@@ -32,7 +32,7 @@ class Player(BasePlayer):
     )
 
     gender = models.StringField(
-        choices=[['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']],
+        choices=[['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other'], ['Prefer not to say', 'prefer not to say']],
         label='What is your gender?',
         widget=widgets.RadioSelect,
     )
@@ -40,7 +40,7 @@ class Player(BasePlayer):
     strategy = models.StringField(label="How did you make your decisions during the experiment?")
     feedback = models.StringField(label="Is there anything else you would like to tell the experimenters about this experiment?")
 
-    identifier = models.StringField()
-    # payout = models.IntegerField()
+    participant_code = models.StringField()
+    id_in_session = models.IntegerField()
 
 

@@ -49,7 +49,8 @@ def generate_payouts(group):
         else:
             payout = -1
 
-        player.identifier = player.participant.code
+        player.participant_code = player.participant.code
+        player.id_in_session = player.participant.id_in_session
         player.payoff = payout
         player.save()
 

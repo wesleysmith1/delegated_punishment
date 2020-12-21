@@ -74,7 +74,7 @@ class Constants(BaseConstants):
     """
     steal_token_slots = 20
 
-    officer_start_balance = 1000
+    officer_start_balance = 0
     civilian_start_balance = 0
 
 

@@ -186,10 +186,21 @@ class GameSyncConsumer(WebsocketConsumer):
 
             round_results = dict(balance=player.balance, title=title)
 
+            # civilian_fine_total = models.IntegerField(initial=0)
+            # officer_reprimand_total = models.IntegerField(initial=0)
+            # intercept_total = models.IntegerField(initial=0)
+
             if player.is_officer():
                 officer_results = dict(
-                    bonus_total=group.officer_bonus_total,
-                    fine_total=group.civilian_fine_total,
+                    # bonus_total=group.officer_bonus_total,
+                    # fine_total=group.civilian_fine_total,
+
+                    # intercepts=group.intercept_total,
+
+                    officer_base_pay=Constants.officer_start_balance,
+                    fines=group.civilian_fine_total,
+                    reprimands=group.officer_reprimand_total,
+                    officer_reprimand_amount=Constants.officer_reprimand_amount,
                 )
 
                 round_results.update(officer_results)
