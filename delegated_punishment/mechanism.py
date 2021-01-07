@@ -36,7 +36,7 @@ class SurveyMechanism:
 
         return [header]
 
-    def generate_csv(self, survey_responses, input_range, filename):
+    def generate_csv(self, survey_responses, filename, input_range):
 
         # csv file output per player
         f = open(filename, 'a', newline='')

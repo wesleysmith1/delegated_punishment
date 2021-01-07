@@ -117,8 +117,6 @@ class Constants(BaseConstants):
     dt_rebate = 0
     dt_e0 = None
     dt_q = 8
-    """
-
     # """
     #OGL
     dt_method = 1
@@ -785,7 +783,7 @@ class SurveyResponse(Model):
             raise KeyError
 
     def survey_row(self):
-        row = f"{self.player_id},{self.player.pariticipant_id},{self.group_id},"
+        row = f"{self.player_id},{self.player.participant_id},{self.group_id},"
         for key in self.response:
             row += f"{self.response[key]['total']},"
 

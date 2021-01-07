@@ -34,20 +34,14 @@ class DefendTokenConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
-        # print_padding = 25
 
         data_json = json.loads(text_data)
-
-        print(data_json)
 
         group_id = data_json['group_id']
         player_id = data_json['player_id']
         player = Player.objects.get(pk=player_id)
 
-        # print(f"groupid: {group_id} player_id {player_id}")
-
         survey_response = SurveyResponse.objects.get(player=player)
-        print(survey_response)
 
         if data_json.get('survey'):
 
@@ -61,17 +55,11 @@ class DefendTokenConsumer(WebsocketConsumer):
 
             MechanismInput.record(updated_input, player_id, group_id)
 
-            print(updated_input)
-
             # append to a table or something.
             survey_response.total = updated_input
             survey_response.save()
 
-            print('SURVEY RESPONSE UPDATED')
-
             survey_responses = SurveyResponse.objects.filter(group_id=group_id, participant=True)
-
-            print(f"SURVEY RESPONSES {survey_responses.values_list('total', flat=True)}")
 
             costs, totals = SurveyResponse.calculate_ogl(survey_responses)
             #
