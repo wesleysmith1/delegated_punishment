@@ -1,0 +1,1 @@
+steal_percentage = .01

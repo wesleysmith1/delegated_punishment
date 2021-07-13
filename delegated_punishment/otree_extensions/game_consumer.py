@@ -118,7 +118,7 @@ class GameConsumer(WebsocketConsumer):
                 if player.map != 0:
                     victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
 
-                    victim.increase_roi(event_time, False)
+                    victim.increase_roi(event_time, False, player.steal_rate)
                     victim.save()
 
                     game_data_dict.update({
@@ -127,7 +127,7 @@ class GameConsumer(WebsocketConsumer):
                         "victim_balance": victim.balance,
                     })
 
-                    player.decrease_roi(event_time, True)
+                    player.decrease_roi(event_time, True, player.steal_rate)
                 else:
                     pass
                 player.map = 0
@@ -229,7 +229,7 @@ class GameConsumer(WebsocketConsumer):
             # update victim roi
             victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
 
-            victim.increase_roi(event_time, False)
+            victim.increase_roi(event_time, False, player.steal_rate)
             victim.save()
 
             game_data_dict.update({
@@ -239,7 +239,7 @@ class GameConsumer(WebsocketConsumer):
             })
 
             # update player roi
-            player.decrease_roi(event_time, True)
+            player.decrease_roi(event_time, True, player.steal_rate)
 
             game_data_dict.update({
                 "player_roi": player.roi,
@@ -276,9 +276,11 @@ class GameConsumer(WebsocketConsumer):
 
             # update roi for stealing player and victim of the theft.
             if player.map > 0:
+
                 # update victim roi
                 victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
-                victim.increase_roi(event_time, False)
+                
+                victim.increase_roi(event_time, False, player.steal_rate)
                 victim.save()
 
                 game_data_dict.update({
@@ -288,7 +290,7 @@ class GameConsumer(WebsocketConsumer):
                 })
 
                 # update player roi
-                player.decrease_roi(event_time, True)
+                player.decrease_roi(event_time, True, player.steal_rate)
                 game_data_dict.update({
                     "player_roi": player.roi,
                     "player_balance": player.balance,
@@ -409,6 +411,7 @@ class GameConsumer(WebsocketConsumer):
             x = -1
             y = -1
             intersections = []
+            bump = None
 
             if data_json.get('defend_token_update'):
                 token_update = data_json['defend_token_update']
@@ -452,11 +455,11 @@ class GameConsumer(WebsocketConsumer):
                                 token.y <= p.y <= token.y2:
 
                             # update culprit
-                            p.decrease_roi(event_time, True)
+                            p.decrease_roi(event_time, True, player.steal_rate)
 
                             # update victim
                             victim = Player.objects.get(group_id=group_id, id_in_group=p.map) # map here represents the player id in group since they line up in every group/game
-                            victim.increase_roi(event_time, False)
+                            victim.increase_roi(event_time, False, player.steal_rate)
                             victim.save()
 
                             # we do this here so we don't reset player data to -1 in which case the ui can't display intersection dots.
@@ -546,24 +549,61 @@ class GameConsumer(WebsocketConsumer):
 
                 # if there was no intersection -> update the roi of player and victim
                 if player.map != 0:
-                    # update player roi
-                    player.increase_roi(event_time, True)
-
-                    game_data_dict.update({
-                        "culprit_roi": player.roi,
-                        "culprit_balance": player.balance,
-                    })
 
                     # get victim object and update roi
                     victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
-                    victim.decrease_roi(event_time, False)
-                    victim.save()
 
-                    game_data_dict.update({
-                        "victim": victim.id_in_group,
-                        "victim_roi": victim.roi,
-                        "victim_balance": victim.balance,
-                    })
+                    # players cannot steal from players with less than 0 balance
+                    if victim.balance < 0:
+                        bump = {
+                            # police log info
+                            'event_time': event_time,
+
+                            'culprit': player.id_in_group,
+                            'map': player.map,  # ?
+                            # 'token_number': token.number,
+
+                            # data for displaying intersections
+                            # 'culprit_y': y,
+                            # 'culprit_x': x,
+
+                            # 'token_x': token.x,
+                            # 'token_y': token.y,
+                            # 'token_x2': token.x2,
+                            # 'token_y2': token.y2,
+                            'steal_reset': randomize_location()
+                        }
+
+                        async_to_sync(self.channel_layer.group_send)(
+                            self.room_group_name,
+                            {
+                                'type': 'bump_update',
+                                'bump': bump,
+                            }
+                        )
+                        return
+                        
+                    else:
+                    
+                        # get player steal rate
+                        player.steal_rate = victim.balance * Constants.steal_percentage
+
+                        # update player roi
+                        player.increase_roi(event_time, True, player.steal_rate)
+
+                        game_data_dict.update({
+                            "culprit_roi": player.roi,
+                            "culprit_balance": player.balance,
+                        })
+
+                        victim.decrease_roi(event_time, False, player.steal_rate)
+                        victim.save()
+
+                        game_data_dict.update({
+                            "victim": victim.id_in_group,
+                            "victim_roi": victim.roi,
+                            "victim_balance": victim.balance,
+                        })
 
                 player.save()
 
@@ -700,6 +740,15 @@ class GameConsumer(WebsocketConsumer):
                 jdata=game_data_dict
             )
 
+    # Receive message from room group
+    def bump_update(self, event):
+        bump = event['bump']
+
+        # Send message to WebSocket
+        self.send(text_data=json.dumps({
+            'bump': bump,
+        }))
+    
     # Receive message from room group
     def intersections_update(self, event):
         intersections = event['intersections']

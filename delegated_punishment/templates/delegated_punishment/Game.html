@@ -99,6 +99,7 @@
                         :fine-notification="fineNotification"
                         :steal-timeout-milli="stealTimeoutMilli"
                         :steal-token-slots="stealTokenSlots"
+                        :balance-data="balanceData"
                         @location-drag="locationDrag"
                         @location-update="locationUpdate"
                         @location-token-reset="locationTokenReset"
@@ -218,6 +219,8 @@
                 infoModalDuration: config.start_modal_seconds * 1000,
                 resultsModalDuration: config.results_modal_seconds * 1000,
                 gameDuration: config.game_duration_seconds * 1000,
+
+                balanceData: {},
             },
             created: function () {
 
@@ -490,6 +493,7 @@
                         }
 
                         if (data.balance) {
+                            this.balanceData = data.balance
                             this.activeStealMaps = data.balance.active_maps;
                             let latestBalance = data.balance[this.groupPlayerId].balance;
                             this.activeSteal = data.balance[this.groupPlayerId].map;
@@ -516,12 +520,22 @@
 
                             this.investigationCount = data.investigation_update
 
+                        } else if (data.bump) {
+                            this.bump(data.bump)
                         }
                     };
 
                     this.gameSocket.onclose = (e) => {
                         console.log('GAME SOCKET HAS CLOSED');
                     };
+                },
+                bump: function(b) {
+                    // was player bumped
+                    if (b.culprit === this.groupPlayerId) {
+                            this.stealLocation = b.steal_reset;
+                            this.$refs.stealcomponent.cancelTimeout()
+                            this.positionStealToken()
+                        }
                 },
                 configureOfficerTokens: function() {
                     if (this.isOfficer) {

@@ -17,6 +17,7 @@ let stealGameComponent = {
         fineNotification: String,
         stealTimeoutMilli: Number,
         stealTokenSlots: Number,
+        balanceData: Object,
     },
     data: function () {
         return {
@@ -134,6 +135,7 @@ let stealGameComponent = {
     template:
         `
       <div class="steal">
+        balance data: {{balanceData}}
         <div class="game">
             <div id="steal-container" class="upper" ref="stealcontainer">
                 <div class='title'>Civilian Maps</div> 
@@ -154,6 +156,7 @@ let stealGameComponent = {
                                 </svg>
                             </div>
                             <div class="map-label">{{map+1 == groupPlayerId ? 'You' : 'Civilian ' + (map+1)}}</div>
+                            <div>Balance {{balanceData[map+1] ? balanceData[map+1].balance : null | integerFilter}}</div>
                       </div>
                     </div>
                     <div class="token-container">

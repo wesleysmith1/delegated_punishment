@@ -13,6 +13,8 @@ from random import randrange
 from delegated_punishment.income_distributions import IncomeDistributions
 from delegated_punishment.helpers import date_now_milli
 
+import config
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -58,8 +60,8 @@ class Constants(BaseConstants):
     """
     Tutorial, game and results modal durations are defined here and passed to frontend
     """
-    tutorial_duration_seconds = 1800
-    game_duration_seconds = 198
+    tutorial_duration_seconds = 9000 #todo:1800
+    game_duration_seconds = 9000 #todo: 198
     results_modal_seconds = 30
     start_modal_seconds = 15
 
@@ -75,7 +77,9 @@ class Constants(BaseConstants):
     steal_token_slots = 20
 
     officer_start_balance = 0
-    civilian_start_balance = 0
+    civilian_start_balance = 100
+
+    steal_percentage = config.steal_percentage
 
 
 class Subsession(BaseSubsession):
@@ -268,7 +272,7 @@ class Player(BasePlayer):
     y = models.FloatField(initial=0)
     map = models.IntegerField(initial=0)
     last_updated = models.FloatField(blank=True)
-    roi = models.IntegerField(initial=0)
+    roi = models.FloatField(initial=0)
     balance = models.FloatField(initial=Constants.civilian_start_balance)
     harvest_status = models.IntegerField(initial=0)
     harvest_screen = models.BooleanField(initial=True)
@@ -279,6 +283,7 @@ class Player(BasePlayer):
     steal_total = models.FloatField(initial=0)
     victim_total = models.FloatField(initial=0)
     ready = models.BooleanField(initial=False)
+    steal_rate = models.FloatField(initial=0)
 
     def is_officer(self):
         if self.id_in_group == 1:
@@ -301,7 +306,7 @@ class Player(BasePlayer):
 
         # update victim
         victim = Player.objects.get(group_id=self.group_id, id_in_group=self.map)
-        victim.increase_roi(event_time, False)
+        victim.increase_roi(event_time, False, player.steal_rate)
         game_data_dict.update({
             "victim": victim.id_in_group,
             "victim_roi": victim.roi,
@@ -309,7 +314,7 @@ class Player(BasePlayer):
         })
 
         # update player
-        self.decrease_roi(event_time, True)
+        self.decrease_roi(event_time, True, player.steal_rate)
         self.map = 0
         self.harvest_screen = True
         self.save()
@@ -343,7 +348,7 @@ class Player(BasePlayer):
             seconds_passed = time - self.last_updated
             return self.balance + (self.roi * seconds_passed)
 
-    def increase_roi(self, time, direct):
+    def increase_roi(self, time, direct, difference):
         """
             direct argument determines which status count variable to update
         """
@@ -354,7 +359,7 @@ class Player(BasePlayer):
             player.balance = player.get_balance(time)  # we need to set balance with event time here boi
             player.last_updated = time
             # update roi
-            player.roi += Constants.civilian_steal_rate
+            player.roi += difference #Constants.civilian_steal_rate
 
             if direct:
                 # victim no longer being stolen from by a player
@@ -365,7 +370,7 @@ class Player(BasePlayer):
 
             player.save()
 
-    def decrease_roi(self, time, direct):
+    def decrease_roi(self, time, direct, difference):
 
         with transaction.atomic():
             player = Player.objects.select_for_update().get(pk=self.pk)
@@ -374,7 +379,7 @@ class Player(BasePlayer):
             player.balance = player.get_balance(time)
             player.last_updated = time
             # update roi
-            player.roi -= Constants.civilian_steal_rate
+            player.roi -= difference  #Constants.civilian_steal_rate
 
             if direct:
                 player.steal_count -= 1
