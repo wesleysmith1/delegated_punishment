@@ -626,6 +626,7 @@ class GameConsumer(WebsocketConsumer):
                     civilian_fine += 1
 
                     # check if guilty player was convicted
+                    # todo: this can be simplified!
                     wrongful_conviction = True
                     if convicted_pid == culprit:
                         wrongful_conviction = False

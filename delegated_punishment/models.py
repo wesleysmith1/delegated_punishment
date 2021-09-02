@@ -35,9 +35,9 @@ class Constants(BaseConstants):
     civilian_steal_rate = 13
 
     """Chance that an intersection outcome will be reviewed"""
-    officer_review_probability = .33
+    officer_review_probability = .1 #.33 # todo: is this right?
     """P punishment for officer if innocent civilian is punished"""
-    officer_reprimand_amount = 600
+    officer_reprimand_amount = 10 # -> 100, 1 #600
 
     """Officer incomes. One for each group"""
     # officer_incomes = [0, 10, 20]
@@ -354,7 +354,9 @@ class Player(BasePlayer):
             player.balance = player.get_balance(time)  # we need to set balance with event time here boi
             player.last_updated = time
             # update roi
-            player.roi += Constants.civilian_steal_rate
+            # todo: why is this explicit conversion required here?
+            print(f"player roi {player.roi} steal rate {Constants.civilian_steal_rate}")
+            player.roi = int(player.roi + Constants.civilian_steal_rate)
 
             if direct:
                 # victim no longer being stolen from by a player
@@ -374,7 +376,7 @@ class Player(BasePlayer):
             player.balance = player.get_balance(time)
             player.last_updated = time
             # update roi
-            player.roi -= Constants.civilian_steal_rate
+            player.roi = int(player.roi - Constants.civilian_steal_rate)
 
             if direct:
                 player.steal_count -= 1
