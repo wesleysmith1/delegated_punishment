@@ -2,11 +2,19 @@ def prob_innocent_guilty(beta, a_max, num_civilians, num_investigators):
     # return 1 / num_players - num_investigators / 20,  1 / num_players + num_investigators / 10
     # return .225 - num_investigators * .0375, .225 + num_investigators * .1125
 
-    innocent_prob = beta * (1 / (num_civilians - 1) - (1 / (num_civilians - 1)) * (num_investigators / a_max))
+    # innocent_prob = beta * (1 / (num_civilians - 1) - (1 / (num_civilians - 1)) * (num_investigators / a_max))
 
-    guilty_prob = beta * (1 / (num_civilians - 1) + (
-                (num_civilians - 2) / (num_civilians - 1) * (
-                    num_investigators / a_max)))
+    # guilty_prob = beta * (1 / (num_civilians - 1) + (
+    #             (num_civilians - 2) / (num_civilians - 1) * (
+    #                 num_investigators / a_max)))
+
+    if num_investigators < 6:
+        innocent_prob = beta - num_investigators * 3
+        guilty_prob = beta + num_investigators * 12
+    else:
+        return .9, 0
+                
+
 
     return innocent_prob, guilty_prob
 

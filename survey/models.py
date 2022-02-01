@@ -23,19 +23,8 @@ class Group(BaseGroup):
 
 class Player(BasePlayer):
 
-    name = models.StringField(label="Please enter your name.")
-
-    race_ethnicity = models.StringField(
-        choices=['White', 'Black or African American', 'Asian', 'Indian or Pacific Islander', 'Hispanic', 'Multiracial', 'Other, Prefer not to say'],
-        label="What is your race/ethnicity",
-        widget=widgets.RadioSelect,
-    )
-
-    gender = models.StringField(
-        choices=[['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other'], ['Prefer not to say', 'prefer not to say']],
-        label='What is your gender?',
-        widget=widgets.RadioSelect,
-    )
+    first_name = models.StringField()
+    last_name = models.StringField()
 
     strategy = models.StringField(label="How did you make your decisions during the experiment?")
     feedback = models.StringField(label="Is there anything else you would like to tell the experimenters about this experiment?")

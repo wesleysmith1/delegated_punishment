@@ -1,5 +1,6 @@
 let officerGameComponent = {
     components: {
+        'grain-image-component': grainImageComponent,
     },
     props: {
         maps: Array,
@@ -13,6 +14,8 @@ let officerGameComponent = {
         defendTokenSize: Number,
         probabilityReprimand: Number,
         reprimandAmount: Number,
+        defendPauseDuration: Number,
+        playerBalances: Object
     },
     data: function () {
         return {
@@ -65,10 +68,11 @@ let officerGameComponent = {
             let selector = "#unit" + id;
             let dragToken = Draggable.get(selector);
             dragToken.disable();
-            // gsap.to(selector, {background: 'red'});
+            gsap.to(selector, 0, {background: 'black'});
             setTimeout(() => {
                 dragToken.enable()
-            }, 1000)
+                gsap.to(selector, 0, {background: '#001485'});
+            }, this.defendPauseDuration)
         },
         disableAllTokens() {
             // disable all tokens
@@ -153,7 +157,14 @@ let officerGameComponent = {
             // returns rand number 1-number of open defense token slots
             let count = Math.floor(Math.random() * this.activeCount) + 1;
             return count;
-        }
+        },
+        formatBalance(groupId) {
+            // console.log(this.playerBalances[groupId].balance)
+            if (this.playerBalances && this.playerBalances[groupId])
+                return this.playerBalances[groupId]['balance']
+            else    
+                return 0
+        },
     },
     template:
         `
@@ -171,16 +182,17 @@ let officerGameComponent = {
                             </svg>
                       </div>
                       <div class="map-label">
-                        Civilian {{map+1}}
-                      </div>
+                        {{'Civilian ' + (map+1) + ' '}} 
+                        (<grain-image-component :size=15></grain-image-component>{{formatBalance(map+1) | integerFilter}})
+                    </div>
                     </div>
                 </div>
                 <div class="token-container">
                     <div style="margin: 10px">
                         <div class="title-small officer-info-container">
                             <div class="title-small data-row">
-                                <div class="left">Amount earned per arrest: </div>
-                                <div class="right green-txt bold-txt"><div class="number-right-align">{{officerIncome}}</div></div>
+                                <div class="left">Amount earned per fine: </div>
+                                <div class="right green-txt bold-txt"><div class="number-right-align"><grain-image-component :size=35 color="green"></grain-image-component>{{officerIncome}}</div></div>
                             </div>
                         </div>
                         <div style="clear: both;"></div>
@@ -206,12 +218,12 @@ let officerGameComponent = {
                     <div class="officer-info-container">
                         <div class="title-small data-row">
                             <div class="left">Amount lost per reprimand: </div>
-                            <div class="right red-txt bold-txt"><div class="number-right-align">{{reprimandAmount}}</div></div>
+                            <div class="right red-txt bold-txt"><div class="number-right-align"><grain-image-component :size=35 style="color: red"></grain-image-component>{{reprimandAmount}}</div></div>
                         </div>
                         <div style="clear: both;"></div>
                         <div class="title-small data-row">
-                            <div class="left">Probability of reprimand: </div>
-                            <div class="right red-txt bold-txt"><div class="number-right-align">{{probabilityReprimand}}%</div></div>
+                            <div class="left">Probability of reprimand per fine: </div>
+                            <div class="right red-txt bold-txt"><div class="number-right-align">{{(probabilityReprimand / 100).toFixed(2)}}%</div></div>
                         </div>
                     </div>
                 </div>

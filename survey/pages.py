@@ -20,8 +20,10 @@ class SurveyWaitPage(WaitPage):
 
 class FinalWaitPage(WaitPage):
     def after_all_players_arrive(self):
-        from survey.helpers import generate_survey_csv
-        generate_survey_csv(self.group)
+        # check if session includes generating data (otherwise just a survey demo most likely)
+        if self.group.session.vars.get('session_start', 0):
+            from survey.helpers import generate_survey_csv
+            generate_survey_csv(self.group)
 
 
 class FinalPage(Page):
@@ -30,7 +32,7 @@ class FinalPage(Page):
 
 class MainSurvey(Page):
     form_model = 'player'
-    form_fields = ['gender', 'race_ethnicity', 'strategy', 'feedback']
+    form_fields = ['first_name', 'last_name', 'strategy', 'feedback']
 
 
 page_sequence = [SurveyWaitPage, Introduction, MainSurvey, FinalWaitPage, FinalPage]

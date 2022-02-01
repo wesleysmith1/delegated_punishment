@@ -56,11 +56,10 @@ class Game(Page):
         player = Player.objects.get(id=self.player.id)
         player.stop_stealing()
 
-        log.info(f'loading template var for player {self.player.id}. group game status {group.game_status}')
+        # log.info(f'loading template var for player {self.player.id}. group game status {group.game_status}')
 
         # income configuration number
         config_key = self.session.config['civilian_income_config']
-        lth = self.session.config['civilian_income_low_to_high']
 
         civilian_ids = [x + Constants.players_per_group - Constants.civilians_per_group for x in
                range(1, Constants.players_per_group + 1)]
@@ -79,19 +78,19 @@ class Game(Page):
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=tut_o_bonus,
-                officer_reprimand=Constants.officer_reprimand_amount,
+                officer_reprimand=self.group.officer_reprimand_amount,
             )
         else:
-            incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
+            incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
             incomes_dict = dict(zip(civilian_ids, incomes))
-            sorted(incomes_dict.values())
+            sorted(incomes_dict.values()) #todo: this is not working here
 
             start_modal_object = dict(
                 civilian_incomes=incomes_dict,
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-                officer_reprimand=Constants.officer_reprimand_amount,
+                officer_reprimand=self.group.officer_reprimand_amount,
             )
 
         config = dict(
@@ -103,7 +102,9 @@ class Game(Page):
             civilian_map_size=Constants.civilian_map_size,
             defend_token_size=Constants.defend_token_size,
             tutorial_duration_seconds=Constants.tutorial_duration_seconds,
-            officer_reprimand_amount=Constants.officer_reprimand_amount,
+            officer_reprimand_amount=self.group.officer_reprimand_amount,
+            steal_pause_duration=Constants.steal_pause_duration,
+            defend_pause_duration=Constants.defend_pause_duration,
             officer_review_probability=Constants.officer_review_probability,
             steal_timeout_milli=Constants.steal_timeout_milli,
             game_duration_seconds=Constants.game_duration_seconds,
@@ -128,15 +129,16 @@ class Wait(WaitPage):
 class ResultsWaitPage(WaitPage):
     def after_all_players_arrive(self):
         if Constants.num_rounds > 1 and self.round_number < 3:
-            # dont generate results for the tutorial and trial period
+            # dont generate results for the tutorial and trial round
             pass
         else:
-            self.group.generate_results()
-
-            # only for periods 3-10
+            # only for round 3-10
             if self.round_number > 2 or Constants.num_rounds == 1:
                 for player in self.group.get_players():
                     player.participant.vars['balances'].append(math.floor(player.balance))
+            # csv data added for rounds 
+            self.group.generate_results()
+
 
 
 class Intermission(Page):
@@ -147,7 +149,7 @@ class Intermission(Page):
         if skip_round(self.session, self.round_number):
             return False
 
-        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 7):
+        if Constants.num_rounds > 1 and (self.round_number == 2 or self.round_number == 3 or self.round_number == 8):
             return True
         else:
             return False
@@ -155,8 +157,7 @@ class Intermission(Page):
     def vars_for_template(self):
 
         config_key = self.session.config['civilian_income_config']
-        lth = self.session.config['civilian_income_low_to_high']
-        group_incomes = IncomeDistributions.get_group_income_distribution(config_key, lth, self.round_number)
+        group_incomes = IncomeDistributions.get_group_income_distribution(config_key, self.round_number)
 
         # todo: if tutorial or practice we need different variables
         if self.round_number < 3:  # tutorial or practice round
@@ -170,7 +171,7 @@ class Intermission(Page):
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=tut_o_bonus,
-                officer_reprimand=Constants.officer_reprimand_amount,
+                officer_reprimand=self.group.officer_reprimand_amount,
             )
         else:
             vars_dict = dict(
@@ -179,7 +180,7 @@ class Intermission(Page):
                 steal_rate=Constants.civilian_steal_rate,
                 civilian_fine=Constants.civilian_fine_amount,
                 officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-                officer_reprimand=Constants.officer_reprimand_amount,
+                officer_reprimand=self.group.officer_reprimand_amount,
             )
 
         # vars_dict = dict(
@@ -187,13 +188,13 @@ class Intermission(Page):
         #     steal_rate=Constants.civilian_steal_rate,
         #     fine=Constants.civilian_fine_amount,
         #     officer_bonus=self.group.get_player_by_id(1).participant.vars['officer_bonus'],
-        #     officer_reprimand=Constants.officer_reprimand_amount
+        #     officer_reprimand=self.group.officer_reprimand_amount
         # )
         if self.round_number == 2:
             vars_dict['officer_bonus'] = self.session.config['tutorial_officer_bonus']
-            info = 'We are about to perform a practice period to ensure everyone is familiar with the computer interface.'
+            info = 'We are about to perform a practice round to ensure everyone is familiar with the computer interface.'
         else:
-            info = 'We are about to perform 4 rounds sequentially.'
+            info = 'We are about to perform 5 rounds sequentially.'
         vars_dict['info'] = info
         vars_dict['officer_review_probability'] = Constants.officer_review_probability*100
         return vars_dict
@@ -201,7 +202,7 @@ class Intermission(Page):
 
 class AfterTrialAdvancePage(Page):
     def is_displayed(self):
-        if skip_round(self.session, self.round_number) or self.round_number == 2:
+        if skip_round(self.session, self.round_number) or self.round_number == 2 or self.round_number == 7:
             return True
 
         return False

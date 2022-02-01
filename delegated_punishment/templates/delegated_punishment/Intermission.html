@@ -16,7 +16,7 @@
     <div style="font-size: 30px;">
         <p>{{ info }}</p>
 
-        <p>Civilians will see their harvest rates at the start of each round (and at the top of the harvesting screen during each period).</p>
+        <p>Civilians will see their harvest rates at the start of each round (and at the top of the harvesting screen during each round).</p>
 
         <div style="padding-left: 75px;">
             <p>
@@ -27,20 +27,20 @@
                 {% endfor %}
             </p>
 
-            <p>The harvest rate for you changes each period and will be shown in <strong>bold</strong>.</p>
+            <p>The harvest rate for you changes each round and will be shown in <strong>bold</strong>.</p>
         </div>
 
-        <p>The officer will see their incentives at the start of each round (and in the middle of their defend/investigate screen during each period).</p>
+        <p>The officer will see their incentives at the start of each round (and in the middle of their defend/investigate screen during each round).</p>
 
         <div style="padding-left: 75px;">
-            <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per crime cleared</p>
+            <p>The officer earns <strong>{{ officer_bonus }}</strong> grain per civilian fined</p>
 
-            <p>The officer loses <strong>{{ officer_reprimand }}</strong> grain per crime cleared when reprimanded</p>
+            <p>The officer loses <strong>{{ officer_reprimand }}</strong> grain per reprimand</p>
 
-            <p>(reprimands happen with <strong>{{officer_review_probability}}%</strong> probability when an innocent civilian is punished)</p>
+            <p>(reprimands happen with <strong>{{officer_review_probability}}%</strong> probability when an innocent civilian is fined)</p>
         </div>
 
-        <p>These periods will {% if subsession.round_number == 2 %}<span><strong>not</strong></span>{% endif %} be used to calculate your payoffs at the end of the experiment.</p>
+        <p>{% if subsession.round_number == 2 %}This practice round will <span><strong>not</strong></span>{% else %}Each of these rounds may {% endif %} be used to calculate your payoffs at the end of the experiment.</p>
     </div>
 
     <p>{% next_button %}</p>

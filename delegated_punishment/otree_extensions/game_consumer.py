@@ -364,7 +364,7 @@ class GameConsumer(WebsocketConsumer):
             try:
                 token = DefendToken.objects.get(group_id=group_id, number=token_num)
             except DefendToken.DoesNotExist:
-                log.error('ERROR INVESTIGATION=: token not found')
+                # log.error('ERROR INVESTIGATION=: token not found')
                 token = None
 
             token.x = token.y = token.x2 = token.y2 = -1
@@ -422,7 +422,7 @@ class GameConsumer(WebsocketConsumer):
                     token = DefendToken.objects.get(group_id=group_id, number=token_num)
                 except DefendToken.DoesNotExist:
                     token = None
-                    log.error('ERROR: NO TOKEN WAS FOUND')
+                    # log.error('ERROR: NO TOKEN WAS FOUND')
 
                 token.map = map
                 token.x = x
@@ -582,22 +582,21 @@ class GameConsumer(WebsocketConsumer):
                 culprit = inter["culprit"]
                 innocent = inter["map"]  # also victim
 
+                # probability no player player convicted
+                probability_none = Constants.calculated_probabilities[num_investigators][2]
+
                 if num_investigators >= Constants.a_max:
                     innocent_prob = 0
-                    guilty_prob = Constants.beta
+                    # get largest probability since they are all the same after 6 tokens
+                    guilty_prob = Constants.calculated_probabilities[-1][1]
                 else:
-                    # innocent_prob = 1 / 4 - num_investigators / 20
-                    # innocent_prob = (6 - num_investigators) * (9/240)
-                    # innocent_prob = probability_innocent(4, num_investigators)
-                    innocent_prob = Constants.beta * ((1/(Constants.civilians_per_group -1) - (1/(Constants.civilians_per_group -1)) * (num_investigators/Constants.a_max)))
+                    innocent_prob = Constants.calculated_probabilities[num_investigators][0]
 
-                    # guilty_prob = 1 / 4 + num_investigators / 10
-                    # guilty_prob = (2+num_investigators) * (9/80)
-                    # guilty_prob = probability_guilty(4, num_investigators)
-                    guilty_prob = Constants.beta * (1/(Constants.civilians_per_group - 1) + ((Constants.civilians_per_group - 2) / (Constants.civilians_per_group - 1) * (num_investigators/Constants.a_max)))
+                    guilty_prob = Constants.calculated_probabilities[num_investigators][1]
+
 
                 # todo: this should be dynamic or documented that it is tied to num_civilians
-                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, 1-Constants.beta]
+                multi = [0, innocent_prob, innocent_prob, innocent_prob, innocent_prob, innocent_prob, probability_none]
 
                 # subtract 1 for 0 based index
                 multi[culprit - 1] = guilty_prob
@@ -650,7 +649,7 @@ class GameConsumer(WebsocketConsumer):
                     if audit:
                         if wrongful_conviction:
                             officer.officer_reprimand()
-                            officer_reprimand = Constants.officer_reprimand_amount
+                            officer_reprimand = player.group.officer_reprimand_amount
                             total_reprimand += 1
 
                     officer.save()

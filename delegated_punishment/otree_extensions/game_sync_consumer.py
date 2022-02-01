@@ -41,12 +41,12 @@ class GameSyncConsumer(WebsocketConsumer):
             player.ready = True
             player.save()
 
-            log.info(f"player {player_id} ready")
+            # log.info(f"player {player_id} ready")
 
         elif data_json.get('sync_status'):
             # host polls to check if all players are ready
             ready_players = len(Player.objects.filter(group_id=group_id, ready=True))
-            log.info(f"host {player_id} is checking sync status. status is {ready_players}")
+            # log.info(f"host {player_id} is checking sync status. status is {ready_players}")
 
             if ready_players == Constants.players_per_group:
                 async_to_sync(self.channel_layer.group_send)(
@@ -62,12 +62,12 @@ class GameSyncConsumer(WebsocketConsumer):
             if group.game_status != GameStatus.ACTIVE:
                 return
 
-            time = date_now_milli() - 3
+            time = date_now_milli() - 9 # todo: make this time period dynamic
 
             invalid_players = Player.objects.filter(group_id=group_id, last_updated__lt=time, map__gt=0)
 
             for player in invalid_players:
-                player.stop_stealing()
+                player.stop_stealing() # todo: if this remains we need to log it
 
         elif data_json.get('round_info'):
             # notify players to display round info modal
@@ -76,7 +76,7 @@ class GameSyncConsumer(WebsocketConsumer):
             group = Group.objects.get(id=group_id)
             group.game_status = GameStatus.INFO
             group.save()
-            log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
+            # log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -104,7 +104,7 @@ class GameSyncConsumer(WebsocketConsumer):
             group = Group.objects.get(id=group_id)
             group.game_status = GameStatus.ACTIVE
             group.save()
-            log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
+            # log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
 
             GameData.objects.create(
                 event_time=event_time,
@@ -149,7 +149,7 @@ class GameSyncConsumer(WebsocketConsumer):
             group = Group.objects.get(id=group_id)
             group.game_status = GameStatus.RESULTS
             group.save()
-            log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
+            # log.info(f'group {group_id} game_status updated to {Group.objects.get(id=group_id).game_status}')
 
             # inform players that round is over
             async_to_sync(self.channel_layer.group_send)(
@@ -196,11 +196,11 @@ class GameSyncConsumer(WebsocketConsumer):
                     # fine_total=group.civilian_fine_total,
 
                     # intercepts=group.intercept_total,
-
+                    officer_bonus=player.income,
                     officer_base_pay=Constants.officer_start_balance,
                     fines=group.civilian_fine_total,
                     reprimands=group.officer_reprimand_total,
-                    officer_reprimand_amount=Constants.officer_reprimand_amount,
+                    officer_reprimand_amount=group.officer_reprimand_amount,
                 )
 
                 round_results.update(officer_results)

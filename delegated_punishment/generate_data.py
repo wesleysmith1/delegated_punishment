@@ -25,7 +25,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
         session_start = 0
         session_date = "1992_0414"
         officer_bonus = -1
-        income_distribution = [-1, -1, -1, -1]
+        income_distribution = [-1, -1, -1, -1] #todo this list length is wrong
     else:
         steal_starts = meta_data['steal_starts']
         player_ids_in_session = meta_data['player_ids_in_session']
@@ -50,13 +50,13 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
     try:
         tf = TimeFormatter(game_data.first().event_time)
-        log.info(f'START TIME FOR TIME FORMATTER:{game_data.first().event_time}')
+        # log.info(f'START TIME FOR TIME FORMATTER:{game_data.first().event_time}')
     except:
         tf = None
 
     players = init_players(session_start, steal_starts, player_ids_in_session, tf)
 
-    log.info("THERE ARE {} EVENTS FOR THIS ROUND".format(len(game_data)))
+    # log.info("THERE ARE {} EVENTS FOR THIS ROUND".format(len(game_data)))
 
     for event in game_data:
         # get JSON data
@@ -408,7 +408,7 @@ def generate_csv(session=None, subsession=None, meta_data=None):
 
         elif event_type == 'round_start':
             round_start = event_time
-            log.info(f'START TIME FOR EXPERIMENT:{round_start}')
+            # log.info(f'START TIME FOR EXPERIMENT:{round_start}')
             for i in range(1, Constants.players_per_group+1):
 
                 if i > 1:
@@ -429,7 +429,8 @@ def generate_csv(session=None, subsession=None, meta_data=None):
             break
 
         else:
-            log.info('ERROR: EVENT TYPE NOT RECOGNIZED')
+            pass
+            # log.info('ERROR: EVENT TYPE NOT RECOGNIZED')
 
     # generate file directory
     if 'session_identifier' in session.config:
@@ -475,6 +476,10 @@ def csv_header():
         'Player_DefendTokens',
         'Group_PunishmentEvents',
         'Group_PK',
+        'Group_ReprimandAmount',
+        'Group_stealTechnology',
+        'Player_HarvestAmount',
+        'Group_ID_Description',
     ]
     return labels
 
@@ -491,7 +496,7 @@ def format_row(pid, r, round_start, meta_data, id_in_session):
             "a min 1 , a max 10",
             Constants.defend_token_size,
             Constants.civilian_map_size,
-            Constants.officer_reprimand_amount,
+            # Constants.officer_reprimand_amount[meta_data['round_number'] - 1], #this needs to be fixed because it is dynamic now.
             Constants.officer_review_probability,
             datetime.datetime.fromtimestamp(meta_data['session_start']).strftime('%d/%m/%Y %H:%M:%S')
         ],  # session global params
@@ -512,6 +517,10 @@ def format_row(pid, r, round_start, meta_data, id_in_session):
         r['defend_tokens'],
         r['intersection_events'],
         meta_data['group_pk'],
+        meta_data['reprimand'], #Group_ReprimandAmount,
+        'Constant',
+        0 if pid == 1 else meta_data['income_distribution'][pid-2], #Player_HarvestAmount
+        'Constant - M/H', #todo: make dynamic
     ]
 
 
@@ -608,7 +617,7 @@ class CPlayer:
         if self.roi == 0:
             return self.balance
         elif not event_time or not self.last_updated:
-            log.error('ERROR: START DATE OR END DATE MISSING WHEN CALCULATING')
+            # log.error('ERROR: START DATE OR END DATE MISSING WHEN CALCULATING')
             return -99
         else:
             return self.balance + self.roi * (event_time - self.last_updated)

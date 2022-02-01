@@ -22,7 +22,7 @@ DATABASES = {
         'PORT': '5432'
     }
 }
-"""
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -64,7 +64,6 @@ LOGGING = {
         },
     }
 }
-"""
 
 SESSION_CONFIGS = [
     dict(
@@ -75,25 +74,23 @@ SESSION_CONFIGS = [
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,
         civilian_income_config=1,
-        civilian_income_low_to_high=True,
         tutorial_civilian_income=40,
-        tutorial_officer_bonus=260,
-        grain_conversion=.1,
+        tutorial_officer_bonus=20,
+        grain_conversion=0.0147, # exchange rate
         showup_payment=7,
-        participant_endowment=10,
-        balance_update_rate=250,
+        balance_update_rate=100,
         skip_to_round=1,
     ),
     dict(
         name='survey',
         display_name='survey',
-        num_demo_participants=5,
+        num_demo_participants=1,
         app_sequence=['survey'],
     ),
     dict(
         name='welcome',
         display_name='welcome',
-        num_demo_participants=5,
+        num_demo_participants=1,
         app_sequence=['welcome'],
     ),
 ]
@@ -105,7 +102,7 @@ LANGUAGE_CODE = 'en'
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = False
-DEBUG = True
+DEBUG = True 
 
 
 ROOMS = [

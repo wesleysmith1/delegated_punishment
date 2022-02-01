@@ -33,25 +33,29 @@ let gameStatusComponent = {
     computed: {
         probabilityCulprit() {
             if (this.investigationCount > this.aMax)
-                return this.beta * 100;
+                return 90;
             else {
-                let guilty = this.beta * (1/(this.civiliansPerGroup - 1) + ((this.civiliansPerGroup - 2) / (this.civiliansPerGroup - 1) * (this.investigationCount/this.aMax)))
-                return Math.round(guilty*10000) / 100
+                // let guilty = this.beta * (1/(this.civiliansPerGroup - 1) + ((this.civiliansPerGroup - 2) / (this.civiliansPerGroup - 1) * (this.investigationCount/this.aMax)))
+                let guilty = this.beta + this.investigationCount * 12
+                return guilty
+                // return Math.round(guilty*10000) / 100
             }
         },
         probabilityInnocent() {
             if (this.investigationCount > this.aMax)
                 return 0;
             else {
-                let innocent = this.beta * ((1/(this.civiliansPerGroup -1) - (1/(this.civiliansPerGroup -1)) * (this.investigationCount/this.aMax)))
+                // let innocent = this.beta * ((1/(this.civiliansPerGroup -1) - (1/(this.civiliansPerGroup -1)) * (this.investigationCount/this.aMax)))
+
+                let innocent = this.beta - this.investigationCount * 3
 
                 // calculate probability of officer reprimand because it depends on probability innocent
                 if (this.isOfficer) {
                     let probabilityReprimand = Math.round(this.reviewProbability * 3 * innocent * 10000) / 100
                     this.$emit('update-probability-reprimand', probabilityReprimand)
                 }
-
-                return Math.round(innocent*10000) / 100
+                return innocent
+                // return Math.round(innocent*10000) / 100
             }
         },
     },

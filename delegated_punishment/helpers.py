@@ -23,10 +23,10 @@ def write_session_dir(session_identifier):
         try:
             os.mkdir(path)
         except OSError:
-            log.error("Creation of the directory %s failed" % path)
+            # log.error("Creation of the directory %s failed" % path)
             path = 'data/'
-        else:
-            log.info("Successfully created the directory %s " % path)
+        # else:
+            # log.info("Successfully created the directory %s " % path)
 
     return path
 
