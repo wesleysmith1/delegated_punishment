@@ -6,8 +6,8 @@ import numpy as np
 from delegated_punishment.helpers import date_now_milli
 from django.db import transaction
 
-import logging
-log = logging.getLogger(__name__)
+# import logging
+# log = logging.getLogger(__name__)
 
 from delegated_punishment.models import Player, Group, DefendToken, Constants, GameData, randomize_location, GameStatus
 
@@ -215,6 +215,14 @@ class GameConsumer(WebsocketConsumer):
             #     map: 0
             # }
 
+            temp_map = player.map
+            player.map = 0
+            player.save()
+
+            if temp_map == 0:
+                # there must have been an intersection! no timeout required
+                return
+
             # get token and save it's location as 0
             location = data_json['steal_token_timeout']['steal_location']
 
@@ -227,7 +235,10 @@ class GameConsumer(WebsocketConsumer):
 
             # update roi for stealing player and victim of the theft.
             # update victim roi
-            victim = Player.objects.get(group_id=group_id, id_in_group=player.map)
+            try:
+                victim = Player.objects.get(group_id=group_id, id_in_group=temp_map)
+            except Player.DoesNotExist:
+                return
 
             victim.increase_roi(event_time, False)
             victim.save()
@@ -246,7 +257,8 @@ class GameConsumer(WebsocketConsumer):
                 "player_balance": player.balance,
             })
 
-            player.x = player.y = player.map = 0
+            # player.x = player.y = player.map = 0
+            player.x = player.y = 0
             player.save()
 
             GameData.objects.create(
@@ -411,6 +423,7 @@ class GameConsumer(WebsocketConsumer):
             intersections = []
 
             if data_json.get('defend_token_update'):
+
                 token_update = data_json['defend_token_update']
                 token_num = token_update['number']
 
@@ -443,49 +456,49 @@ class GameConsumer(WebsocketConsumer):
                     "token_y2": token.y2,
                 })
 
-                players_in_prop = Player.objects.filter(group_id=group_id, map=token.map, id_in_group__gt=1)  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
+                players_in_prop = Player.objects.filter(group_id=group_id, map=token.map, id_in_group__gt=1, x__range=[token.x, token.x2], y__range=[token.y, token.y2])  # todo check why this was changing the roi and updating the balance for the officer incorrectly?
 
-                if players_in_prop:
-                    for p in players_in_prop:
+                for p in players_in_prop:
 
-                        if token.x <= p.x <= token.x2 and \
-                                token.y <= p.y <= token.y2:
+                    temp_map = p.map
+                    p.map = 0
+                    p.save()
 
-                            # update culprit
-                            p.decrease_roi(event_time, True)
+                    # update culprit
+                    p.decrease_roi(event_time, True)
 
-                            # update victim
-                            victim = Player.objects.get(group_id=group_id, id_in_group=p.map) # map here represents the player id in group since they line up in every group/game
-                            victim.increase_roi(event_time, False)
-                            victim.save()
+                    # update victim
+                    victim = Player.objects.get(group_id=group_id, id_in_group=temp_map) # map here represents the player id in group since they line up in every group/game
+                    victim.increase_roi(event_time, False)
+                    victim.save()
 
-                            # we do this here so we don't reset player data to -1 in which case the ui can't display intersection dots.
-                            # create intersection data
-                            data = {
-                                # police log info
-                                'event_time': event_time,
+                    # we do this here so we don't reset player data to -1 in which case the ui can't display intersection dots.
+                    # create intersection data
+                    data = {
+                        # police log info
+                        'event_time': event_time,
 
-                                'culprit': p.id_in_group,
-                                'culprit_y': p.y,
-                                'culprit_x': p.x,
-                                'culprit_balance': p.balance,
-                                'map': p.map,
-                                'victim': victim.id_in_group,
-                                'victim_roi': victim.roi,
-                                'victim_balance': victim.balance,
-                                'token_x': token.x,
-                                'token_y': token.y,
-                                'token_x2': token.x2,
-                                'token_y2': token.y2,
-                                'steal_reset': randomize_location()
-                            }
+                        'culprit': p.id_in_group,
+                        'culprit_y': p.y,
+                        'culprit_x': p.x,
+                        'culprit_balance': p.balance,
+                        'map': temp_map,
+                        'victim': victim.id_in_group,
+                        'victim_roi': victim.roi,
+                        'victim_balance': victim.balance,
+                        'token_x': token.x,
+                        'token_y': token.y,
+                        'token_x2': token.x2,
+                        'token_y2': token.y2,
+                        'steal_reset': randomize_location()
+                    }
 
-                            # update player info
-                            p.map = 0
-                            p.x = p.y = -1
-                            p.save()
+                    # update player info
+                    # p.map = 0
+                    p.x = p.y = -1
+                    p.save()
 
-                            intersections.append(data)
+                    intersections.append(data)
 
             elif data_json.get('steal_token_update'):
 

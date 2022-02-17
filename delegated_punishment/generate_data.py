@@ -638,10 +638,6 @@ def init_players(start, steal_starts, player_ids_in_session, tf):
     return x
 
 
-def format_steal_token(token_number, x, y, steal_map, defend_token):
-    return "[{}, {}, {}, {}, {}]".format(token_number, x, y, steal_map, defend_token)
-
-
 def format_defend_token(token_number, x1, y1, x2, y2, defend_map):
     return "[{}, {}, {}, {}, {}, {}]".format(token_number, x1, y1, x2, y2, defend_map)
 

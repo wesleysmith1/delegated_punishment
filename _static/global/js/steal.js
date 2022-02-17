@@ -35,7 +35,7 @@ let stealGameComponent = {
         let that = this;
         let selector = '#location';
         Draggable.create(selector, {
-            minimumMovement: .01,
+            minimumMovement: 1,
             bounds: that.$refs.stealcontainer,
             onDragStart: function () {
                 that.locationDragStart()
@@ -99,8 +99,17 @@ let stealGameComponent = {
 
                 this.resetDisableIndicator()
                 let num = this.randomLocation();
+
+                this.tempStealDisable()
+
                 this.$emit('location-token-timeout', num);
             }, this.stealTimeoutMilli)
+        },
+        tempStealDisable: function() {
+            this.disableLocation()
+            setTimeout(() => {
+                this.enableLocation()
+            }, 250)
         },
         setStealLocation: function() {
 

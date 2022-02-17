@@ -485,6 +485,7 @@
                 configureGame: function() {
                     this.gameSocket = new WebSocket('ws://' + window.location.host + '/delegated_punishment/' + this.groupId + '/');
                     this.gameSocket.onopen = (e) => {
+                        console.log(e)
                         console.log('Game socket opened')
 
                     };
@@ -580,6 +581,7 @@
                             this.balance = latestBalance;
 
                         } else if (data.intersections) {
+
                             // update officer history
                             this.updateOfficerHistory(data.officer_history);
 
@@ -593,6 +595,7 @@
                     };
 
                     this.gameSocket.onclose = (e) => {
+                        console.error(e)
                         console.log('GAME SOCKET HAS CLOSED');
                     };
                 },
@@ -792,6 +795,7 @@
                     } else {
                         // was player the culprit
                         if (i.culprit === this.groupPlayerId) {
+                            this.$refs.stealcomponent.tempStealDisable()
                             this.stealLocation = i.steal_reset;
                             this.$refs.stealcomponent.cancelTimeout()
                             this.positionStealToken()

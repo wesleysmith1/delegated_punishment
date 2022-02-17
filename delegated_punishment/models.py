@@ -42,7 +42,7 @@ class Constants(BaseConstants):
     m = 80
     h = 320
     # treatment variables including tutorial
-    officer_reprimand_amount = [m,m,m,m,m,m,m,h,h,h,h,h]
+    officer_reprimand_amount = [m,m,m,m,m,m,m,l,l,l,l,l]
 
     """Officer income (bonus). One for each group"""
     officer_income = 20
