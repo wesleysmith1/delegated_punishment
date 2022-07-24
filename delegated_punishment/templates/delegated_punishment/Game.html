@@ -107,6 +107,7 @@
                         @location-update="locationUpdate"
                         @location-token-reset="locationTokenReset"
                         @location-token-timeout="locationTokenTimeout"
+                        :defend-token-size="defendTokenSize"
                 >
                 </steal-game-component>
                 <div v-show="!isOfficer" @click='toggle' class='toggle'>{{ harvestScreen ? 'Steal' : 'Harvest'}}</div>
@@ -586,6 +587,7 @@
                             this.updateOfficerHistory(data.officer_history);
 
                             data.intersections.forEach((i) => {
+                                console.log(i)
                                 this.showIntersection(i);
                             })
                         } else if (data.investigation_update || data.investigation_update === 0) {
@@ -826,6 +828,19 @@
                         let circleSelector = '#indicator-' + i.map + '-' + i.culprit + '-circle';
                         let x = i.culprit_x - 10;
                         let y = i.culprit_y - 10;
+
+                        // ==============================================================================
+
+                        let dtElement = this.$refs.stealcomponent.$refs['defend-token'+i.token_number]
+                        let mapElement = this.$refs.stealcomponent.$refs['prop'+i.map][0].getBoundingClientRect()
+
+                        let tz = gsap.timeline();
+
+                        tz.to(dtElement, 0, {left: mapElement.x + i.token_x + 1, top: mapElement.y + i.token_y + 1});
+                        tz.to(dtElement, {visibility: 'visible'});
+                        tz.to(dtElement, {visibility: 'hidden', delay: 1});
+
+                        // ==============================================================================
 
                         let tl = gsap.timeline();
 

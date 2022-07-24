@@ -183,7 +183,6 @@ let officerGameComponent = {
                       </div>
                       <div class="map-label">
                         {{'Civilian ' + (map+1) + ' '}} 
-                        (<grain-image-component :size=15></grain-image-component>{{formatBalance(map+1) | integerFilter}})
                     </div>
                     </div>
                 </div>

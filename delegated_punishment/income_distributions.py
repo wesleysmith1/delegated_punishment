@@ -1,5 +1,5 @@
 class IncomeDistributions:
-    civilian_incomes = [15, 20, 25, 30, 35]
+    civilian_incomes = [10, 15, 20, 25, 30]
 
     one = (
         (1,5,4,3,2),

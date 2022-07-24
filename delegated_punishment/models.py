@@ -39,18 +39,18 @@ class Constants(BaseConstants):
 
     """P punishment for officer if innocent civilian is punished"""
     l = 1
-    m = 80
-    h = 320
+    m = 200
+    h = 800
     # treatment variables including tutorial
-    officer_reprimand_amount = [m,m,m,m,m,m,m,l,l,l,l,l]
+    officer_reprimand_amount = [m,m,m,m,m,m,m,h,h,h,h,h]
 
     """Officer income (bonus). One for each group"""
-    officer_income = 20
+    officer_income = 50
 
     """ 
     this is the size of the tokens and maps are defined. 
     """
-    defend_token_size = 152
+    defend_token_size = 150
     civilian_map_size = 200 * 1.5
 
     """Probability innocent and guilty are calculated when the number of investigation tokens is >= this number"""
@@ -81,23 +81,23 @@ class Constants(BaseConstants):
     """
     steal_token_slots = 20
 
-    officer_start_balance = 800
-    civilian_start_balance = 600
+    officer_start_balance = 1400
+    civilian_start_balance = 1400
 
 
     # probability calculations
     # key=#probabilities -> innocent, culprit, prob nobody
     # the index
     calculated_probabilities = [
-        (.18, .18, .28), # 0 defense tokens tokens
-        (.15, .30, .25), # 1 defense ...
-        (.12, .42, .22), # 2 ...
-        (.09, .54, .19), # 3 ...
-        (.06, .66, .16), # 4 ...
-        (.03, .78, .13), # 5 ...
-        (0, .9, .1), # 6 ...
-        (0, .9, .1), # 7 ...
-        (0, .9, .1), # 8 ...
+        (.2, .2, .2), # 0 defense tokens tokens
+        (.18, .26, .2), # 1 defense ...
+        (.16, .32, .2), # 2 ...
+        (.14, .38, .2), # 3 ...
+        (.12, .44, .2), # 4 ...
+        (.10, .50, .2), # 5 ...
+        (.08, .56, .2), # 6 ...
+        (.06, .62, .2), # 7 ...
+        (.04, .68, .2), # 8 ...
     ]
 
 

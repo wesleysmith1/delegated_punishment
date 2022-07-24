@@ -20,6 +20,7 @@ let stealGameComponent = {
         pauseDuration: Number,
         stealTokenSlots: Number,
         playerBalances: Object,
+        defendTokenSize: Number,
     },
     data: function () {
         return {
@@ -231,14 +232,13 @@ let stealGameComponent = {
                             </div>
                             <div class="map-label">
                                 {{map+1 == groupPlayerId ? 'You' : 'Civilian ' + (map+1) + ' '}} 
-                                (<grain-image-component :size=15></grain-image-component>{{formatBalance(map+1) | integerFilter}})
                             </div>
                       </div>
                     </div>
                     <div class="token-container">
                         <div class="steal-locations-container">
                             <div class="steal-location" ref="steallocation1" id="steallocation1">
-                                <svg id="location" height="21" width="21">
+                                <svg id="location" height="21" width="21" style="position: absolute;">
                                     <line id="locationline1" x1="0" y1="0" x2="21" y2="21" class="steal-token-line"/>       
                                     <line id="locationline2" x1="21" y1="0" x2="0" y2="21" class="steal-token-line"/>       
                                         
@@ -253,6 +253,13 @@ let stealGameComponent = {
                       <div>
                     </div>
               </div>
+        </div>
+        <div 
+                v-for="ii in defendTokenTotal" 
+                :ref='"defend-token" + ii'
+                class="officer-unit dt-indicator" 
+                v-bind:style="{ height: defendTokenSize + 'px', width: defendTokenSize + 'px' }"
+            >
         </div>
       </div>
 

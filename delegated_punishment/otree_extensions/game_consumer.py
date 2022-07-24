@@ -490,6 +490,7 @@ class GameConsumer(WebsocketConsumer):
                         'token_y': token.y,
                         'token_x2': token.x2,
                         'token_y2': token.y2,
+                        'token_number': token.number,
                         'steal_reset': randomize_location()
                     }
 
@@ -546,6 +547,7 @@ class GameConsumer(WebsocketConsumer):
                                 'token_y': token.y,
                                 'token_x2': token.x2,
                                 'token_y2': token.y2,
+                                'token_number': token.number,
                                 'steal_reset': randomize_location()
                             }
                             intersections.append(data)

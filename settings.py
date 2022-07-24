@@ -19,7 +19,7 @@ DATABASES = {
         'USER': environ.get('DB_USER', 'postgres'),
         'PASSWORD': environ.get('DB_PASSWORD', 'password'),
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
     }
 }
 
@@ -74,9 +74,9 @@ SESSION_CONFIGS = [
         app_sequence=['welcome', 'delegated_punishment', 'survey'],
         session_identifier=0,
         civilian_income_config=1,
-        tutorial_civilian_income=25,
-        tutorial_officer_bonus=20,
-        grain_conversion=0.0147, # exchange rate 1/68
+        tutorial_civilian_income=20,
+        tutorial_officer_bonus=50,
+        grain_conversion=0.011111, # exchange rate 1/90
         showup_payment=7,
         balance_update_rate=100,
         skip_to_round=1,
@@ -102,7 +102,7 @@ LANGUAGE_CODE = 'en'
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = False
-DEBUG = True 
+DEBUG = False
 
 
 ROOMS = [
